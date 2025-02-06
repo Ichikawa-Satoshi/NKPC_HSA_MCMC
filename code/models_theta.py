@@ -39,7 +39,7 @@ def model_1(pi, pi_expect, Y, l):
     # Parameters
     beta = numpyro.sample("beta", numpyro.distributions.Normal(1, 1))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
-    rho = numpyro.sample("rho", numpyro.distributions.HalfNormal(0.5))
+    rho = numpyro.sample("rho", numpyro.distributions.Normal(0,1))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     # state space model
     sigma_eta = numpyro.sample("sigma_eta", numpyro.distributions.HalfCauchy(scale=1))
@@ -51,7 +51,7 @@ def model_1(pi, pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample(f"z", numpyro.distributions.Normal(- rho * z_prev, sigma_eta))
+        z = numpyro.sample(f"z", numpyro.distributions.Normal(rho * z_prev, sigma_eta))
         pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
         t_carry = t + 1
@@ -66,7 +66,7 @@ def model_2(pi, pi_prev, pi_expect, Y, l):
     beta = numpyro.sample("beta", numpyro.distributions.Normal(1))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
-    rho = numpyro.sample("rho", numpyro.distributions.HalfNormal(0.5))
+    rho = numpyro.sample("rho", numpyro.distributions.Normal(0,1))
     
     # Latent variable parameters
     sigma_eta = numpyro.sample("sigma_eta", numpyro.distributions.HalfCauchy(scale=1))
@@ -79,7 +79,7 @@ def model_2(pi, pi_prev, pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample(f"z", numpyro.distributions.Normal(- rho * z_prev, sigma_eta))
+        z = numpyro.sample(f"z", numpyro.distributions.Normal(rho * z_prev, sigma_eta))
         pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
         t_carry = t + 1
@@ -94,7 +94,7 @@ def model_3(pi, pi_expect, Y, Y_prev, l):
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     rho1 = numpyro.sample("rho1", numpyro.distributions.Normal(0, 1))
-    rho2 = numpyro.sample("rho2", numpyro.distributions.HalfNormal(0.5))
+    rho2 = numpyro.sample("rho2", numpyro.distributions.Normal(0, 1))
 
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
@@ -109,7 +109,7 @@ def model_3(pi, pi_expect, Y, Y_prev, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev - rho2 * Y_prev[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * Y_prev[t], sigma_eta))
         z_carry = z
         pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -124,7 +124,7 @@ def model_4(pi, pi_prev, pi_expect, Y, Y_prev, l):
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     rho1 = numpyro.sample("rho1", numpyro.distributions.Normal(0, 1))
-    rho2 = numpyro.sample("rho2", numpyro.distributions.HalfNormal(0.5))
+    rho2 = numpyro.sample("rho2", numpyro.distributions.Normal(0, 1))
 
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
@@ -139,7 +139,7 @@ def model_4(pi, pi_prev, pi_expect, Y, Y_prev, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev - rho2 * Y_prev[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * Y_prev[t], sigma_eta))
         z_carry = z
         pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -200,7 +200,7 @@ def model_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * pi_prev[t] - rho3 * Y_prev[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * pi_prev[t] + rho3 * Y_prev[t], sigma_eta))
         z_carry = z
         pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -214,7 +214,7 @@ def model_7(pi, pi_expect, Y, l):
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     rho1 = numpyro.sample("rho1", numpyro.distributions.Normal(0, 1))
-    rho2 = numpyro.sample("rho2", numpyro.distributions.HalfNormal(0.5))
+    rho2 = numpyro.sample("rho2", numpyro.distributions.Normal(0,1))
 
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
@@ -229,7 +229,7 @@ def model_7(pi, pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev - rho2 * Y[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * Y[t], sigma_eta))
         z_carry = z
         pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -244,7 +244,7 @@ def model_8(pi, pi_prev, pi_expect, Y, l):
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     rho1 = numpyro.sample("rho1", numpyro.distributions.Normal(0, 1))
-    rho2 = numpyro.sample("rho2", numpyro.distributions.HalfNormal(0.5))
+    rho2 = numpyro.sample("rho2", numpyro.distributions.Normal(0, 1))
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
     sigma_eta = numpyro.sample("sigma_eta", numpyro.distributions.HalfCauchy(scale=1))
@@ -257,7 +257,7 @@ def model_8(pi, pi_prev, pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev - rho2 * Y[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho1 * z_prev + rho2 * Y[t], sigma_eta))
         z_carry = z
         pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -270,7 +270,7 @@ def model_9(pi, pi_expect, Y, l):
     beta = numpyro.sample("beta", numpyro.distributions.Normal(0, 1))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
-    rho = numpyro.sample("rho", numpyro.distributions.HalfNormal(0.5))
+    rho = numpyro.sample("rho", numpyro.distributions.Normal(0,1))
 
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
@@ -285,7 +285,7 @@ def model_9(pi, pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(- rho * Y[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y[t], sigma_eta))
         z_carry = z
         pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
@@ -299,7 +299,7 @@ def model_10(pi, pi_prev , pi_expect, Y, l):
     alpha = numpyro.sample("alpha", numpyro.distributions.Normal(0, 1))
     kappa = numpyro.sample("kappa", numpyro.distributions.HalfNormal(0.5))
     theta = numpyro.sample("theta", numpyro.distributions.HalfNormal(0.5))
-    rho = numpyro.sample("rho", numpyro.distributions.HalfNormal(0.5))
+    rho = numpyro.sample("rho", numpyro.distributions.Normal(0, 1))
 
     # error terms
     sigma_eps = numpyro.sample("sigma_eps", numpyro.distributions.HalfCauchy(scale=1))
@@ -314,7 +314,7 @@ def model_10(pi, pi_prev , pi_expect, Y, l):
     def transition(carry, _):
         z_prev = carry[0]
         t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(- rho * Y[t], sigma_eta))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y[t], sigma_eta))
         z_carry = z
         pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])

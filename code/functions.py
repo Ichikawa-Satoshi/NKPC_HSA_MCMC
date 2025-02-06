@@ -6,7 +6,7 @@ warnings.simplefilter('ignore')
 
 
 def plot_z(year,z_mean,z_lower,z_upper,Y):
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(8, 4))
     plt.plot(year, z_mean, label="Mean of z_t", color="blue", marker="o")
     plt.fill_between(year, z_lower, z_upper, color="blue", alpha=0.2, label="95% Credible Interval")
     plt.title("Estimated Latent Variable z_t with 95% Credible Interval")
