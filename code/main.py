@@ -16,56 +16,67 @@ warnings.simplefilter('ignore')
 
 def set_prior_distributions():
     priors = {
-        "beta" : dist.Uniform(0, 1),
-        "kappa": dist.Gamma(concentration=2, rate=10),
-        "theta": dist.Gamma(concentration=2, rate=10),
-        "gamma": dist.Gamma(concentration=2, rate=10),
-        "rho"  : dist.Normal(0, 0.2),
-        # "rho" : dist.TruncatedNormal(0,1,high=0),
-        "delta": dist.Gamma(concentration=2, rate=10),
-        "sigma_eps": dist.HalfCauchy(scale=1),
-        "sigma_eta": dist.HalfCauchy(scale=1)
+        # NKPC params
+        "beta"       : dist.Uniform(0, 1),
+        "kappa"      : dist.Gamma(concentration=2, rate=10),
+        "theta"      : dist.Gamma(concentration=2, rate=10),
+        # State equation (z) params
+        "gamma"      : dist.Gamma(concentration=2, rate=10),
+        "delta"      : dist.Gamma(concentration=2, rate=10),   
+        "rho"        : dist.Normal(0, 0.2),
+        # State equation (kappa) params
+        "rho_kappa"  : dist.Normal(0, 0.2),
+        "rho_z"      : dist.Normal(0, 0.2),
+        # initial
+        "z_init"     : dist.Normal(0, 0.2),
+        "kappa_init" : dist.Gamma(concentration=2, rate=10),
+        # Sigma
+        "sigma_eps"  : dist.HalfCauchy(scale=1),
+        "sigma_kappa": dist.HalfCauchy(scale=1),
+        "sigma_eta"  : dist.HalfCauchy(scale=1)
     }
     return priors
 
 
 # normal NKPC
 def model_0_0(pi, pi_expect, Y):
-    # Parameters
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
-    # state space model
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     pi_pred = beta * pi_expect + kappa * Y
     numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi)
 
 def model_0_1(pi, pi_prev, pi_expect, Y):
-    # Parameters
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
     alpha = 1 - beta
     numpyro.deterministic("alpha",alpha)
-    # state space model
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
+    # model
     pi_pred = alpha * pi_prev + beta * pi_expect + kappa * Y
     numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi)
 
 #--------------------------------------------------------------------------------
 # z_{t-1}
 def model_1(pi, pi_expect, Y, l):
-    # Parameters
     priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
+    # NKPC params
+    beta  = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     theta = numpyro.sample("theta", priors["theta"])
-    # state space model
+    # Sigma
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
     sigma_eps = numpyro.sample("sigma_e", priors["sigma_eps"])
-    z_init = 1
-    
+    # inital
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state space model
     timesteps = jnp.arange(l)
     t = 0
     def transition(carry, _):
@@ -80,19 +91,20 @@ def model_1(pi, pi_expect, Y, l):
     scan(transition, [z_init, t], timesteps)
 
 def model_2(pi, pi_prev, pi_expect, Y, l):
-    # Parameters
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     alpha = 1 - beta
     numpyro.deterministic("alpha",alpha)
     kappa = numpyro.sample("kappa", priors["kappa"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     theta = numpyro.sample("theta", priors["theta"])
-    # state space model
+    # Sigma
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    
-    z_init = 1
+    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])  
+    # inital z
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -109,17 +121,18 @@ def model_2(pi, pi_prev, pi_expect, Y, l):
 #--------------------------------------------------------------------------------
 # Y_{t-1}
 def model_3(pi, pi_expect, Y, Y_prev, l):
-    # Parameters
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
     theta = numpyro.sample("theta", priors["theta"])
+    # State equation (z) params
     rho = numpyro.sample("rho", priors["rho"])
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    # initial z
-    z_init = 1
+    # initial
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -137,20 +150,19 @@ def model_3(pi, pi_expect, Y, Y_prev, l):
 
 def model_4(pi, pi_prev , pi_expect, Y, Y_prev, l):
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     alpha = 1 - beta
     numpyro.deterministic("alpha",alpha)
     kappa = numpyro.sample("kappa", priors["kappa"])
     theta = numpyro.sample("theta", priors["theta"])
+    # State equation (z) params
     rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
+    # initial 
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -168,19 +180,18 @@ def model_4(pi, pi_prev , pi_expect, Y, Y_prev, l):
 # z_{t-1} + Y_{t-1}
 def model_5(pi, pi_expect, Y, Y_prev, l):
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
     theta = numpyro.sample("theta", priors["theta"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
+    # initial
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -197,21 +208,20 @@ def model_5(pi, pi_expect, Y, Y_prev, l):
 
 def model_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     alpha = 1 - beta
     numpyro.deterministic("alpha",alpha)
     theta = numpyro.sample("theta", priors["theta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
+    # initial
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -230,20 +240,19 @@ def model_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
 # z_{t-1} + Y_{t-1} + π_{t-1}
 def model_7(pi, pi_prev, pi_expect, Y, Y_prev, l):
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
     theta = numpyro.sample("theta", priors["theta"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     rho = numpyro.sample("rho", priors["rho"])
     delta = numpyro.sample("delta", priors["delta"])
-
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
+    # initial 
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -260,22 +269,21 @@ def model_7(pi, pi_prev, pi_expect, Y, Y_prev, l):
 
 def model_8(pi, pi_prev, pi_expect, Y, Y_prev, l):
     priors = set_prior_distributions()
+    # NKPC params
     beta = numpyro.sample("beta", priors["beta"])
     alpha = 1 - beta
     numpyro.deterministic("alpha",alpha)
     theta = numpyro.sample("theta", priors["theta"])
     kappa = numpyro.sample("kappa", priors["kappa"])
+    # State equation (z) params
     gamma = numpyro.sample("gamma", priors["gamma"])
     delta = numpyro.sample("delta", priors["delta"])
     rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
+    # Sigma
     sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
     sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
+    # initial 
+    z_init = numpyro.sample("z_init", priors["z_init"])
     # state space model
     timesteps = jnp.arange(l)
     t = 0
@@ -291,207 +299,824 @@ def model_8(pi, pi_prev, pi_expect, Y, Y_prev, l):
     scan(transition, [z_init, t], timesteps)
 
 #--------------------------------------------------------------------------------
-# Y_{t}
-def model_9(pi, pi_expect, Y, l):
-    priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    theta = numpyro.sample("theta", priors["theta"])
-    rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y[t], sigma_eta))
-        z_carry = z
-        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
-
-def model_10(pi, pi_prev , pi_expect, Y, l):
-    priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    alpha = 1 - beta
-    numpyro.deterministic("alpha",alpha)
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    theta = numpyro.sample("theta", priors["theta"])
-    rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y[t], sigma_eta))
-        z_carry = z
-        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
+# time varient (AR1) kappa
 #--------------------------------------------------------------------------------
-# z_{t-1} + Y_{t} 
-def model_11(pi, pi_expect, Y, l):
+# z_{t-1}
+def model_t_1(pi, pi_expect, Y, l):
     priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    theta = numpyro.sample("theta", priors["theta"])
-    gamma = numpyro.sample("gamma", priors["gamma"])
-    rho = numpyro.sample("rho", priors["rho"])
-
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y[t], sigma_eta))
-        z_carry = z
-        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
-
-def model_12(pi, pi_prev, pi_expect, Y, l):
-    priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    alpha = 1 - beta
-    numpyro.deterministic("alpha",alpha)
-    theta = numpyro.sample("theta", priors["theta"])
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    gamma = numpyro.sample("gamma", priors["gamma"])
-    rho = numpyro.sample("rho", priors["rho"])
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    # initial z
-    z_init = 1
-    
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y[t], sigma_eta))
-        z_carry = z
-        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
-
-#--------------------------------------------------------------------------------
-# z_{t-1} + Y_{t} + π_{t-1}
-def model_13(pi, pi_prev, pi_expect, Y, l):
-    priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    theta = numpyro.sample("theta", priors["theta"])
-    gamma = numpyro.sample("gamma", priors["gamma"])
-    rho = numpyro.sample("rho", priors["rho"])
-    delta = numpyro.sample("delta", priors["delta"])
-
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    
-    # initial z
-    z_init = 1
-    
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y[t] + delta * pi_prev[t], sigma_eta))
-        z_carry = z
-        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
-
-def model_14(pi, pi_prev, pi_expect, Y, l):
-    priors = set_prior_distributions()
-    beta =     delta = numpyro.sample("beta", priors["beta"])
-    alpha = 1 - beta
-    numpyro.deterministic("alpha",alpha)
-    theta = numpyro.sample("theta", priors["theta"])
-    kappa = numpyro.sample("kappa", priors["kappa"])
-    gamma = numpyro.sample("gamma", priors["gamma"])
-    rho = numpyro.sample("rho", priors["rho"])
-    delta = numpyro.sample("delta", priors["delta"])
-    # error terms
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    # initial z
-    z_init = 1
-    # state space model
-    timesteps = jnp.arange(l)
-    t = 0
-    def transition(carry, _):
-        z_prev = carry[0]
-        t = carry[1]
-        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y[t] + delta * pi_prev[t], sigma_eta))
-        z_carry = z
-        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
-        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
-        t_carry = t + 1
-        return [z_carry, t_carry], None
-    scan(transition, [z_init, t], timesteps)
-
-
-def sub_model_0_1(pi, pi_prev, pi_expect, Y, l):
-    # Parameters
-    priors = set_prior_distributions()
-    beta = numpyro.sample("beta", priors["beta"])
-    alpha = 1 - beta
-    numpyro.deterministic("alpha",alpha)
-    sigma_eta = numpyro.sample("sigma_eta", priors["sigma_eta"])
-    sigma_eps = numpyro.sample("sigma_eps", priors["sigma_eps"])
-    # initial kappa
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
     kappa_init = numpyro.sample("kappa_init", priors["kappa"])
-    a = numpyro.sample("a", numpyro.distributions.Uniform(-1,1))
-    # state space model
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
     timesteps = jnp.arange(l)
     t = 0
+    # state space model
     def transition(carry, _):
-        kappa_prev = carry[0]
-        t = carry[1]
-        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(a * kappa_prev, sigma_eta, low=0))
-        kappa_carry = kappa
-        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t]
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
         numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
         t_carry = t + 1
-        return [kappa_carry, t_carry], None
-    scan(transition, [kappa_init, t], timesteps)
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_t_2(pi, pi_prev, pi_expect, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Y_{t-1}
+def model_t_3(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_t_4(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}
+def model_t_5(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_t_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}, π_{t-1}
+def model_t_7(pi, pi_prev, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",     priors["delta"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_t_8(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",  priors["delta"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred =alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+
+
+#--------------------------------------------------------------------------------
+# time varient z_{t-1}
+#--------------------------------------------------------------------------------
+# z_{t-1}
+def model_z_1(pi, pi_expect, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    # state equation params(kappa)
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    # state equation params(z)
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_z_2(pi, pi_prev, pi_expect, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    # state equation params(kappa)
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    # state equation params(z)
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Y_{t-1}
+def model_z_3(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho     = numpyro.sample("rho",     priors["rho"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t], sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_z_4(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}
+def model_z_5(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_z_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}, π_{t-1}
+def model_z_7(pi, pi_prev, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",     priors["delta"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_z_8(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",  priors["delta"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+
+#--------------------------------------------------------------------------------
+# time varient (AR1) kappa + z
+#--------------------------------------------------------------------------------
+# z_{t-1}
+def model_tz_1(pi, pi_expect, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    # state equation params(kappa)
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    # state equation params(z)
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_tz_2(pi, pi_prev, pi_expect, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    # state equation params(kappa)
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    # state equation params(z)
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev, sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Y_{t-1}
+def model_tz_3(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho * Y_prev[t], sigma_eta))
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_tz_4(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}
+def model_tz_5(pi, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_tz_6(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho + Y_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+#--------------------------------------------------------------------------------
+# Z_{t-1}, Y_{t-1}, π_{t-1}
+def model_tz_7(pi, pi_prev, pi_expect, Y_prev, Y, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",     priors["delta"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred = beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
+
+def model_tz_8(pi, pi_prev, pi_expect, Y, Y_prev, l):
+    priors = set_prior_distributions()
+    beta   = numpyro.sample("beta", priors["beta"])
+    alpha = 1 - beta
+    numpyro.deterministic("alpha",alpha)
+    theta  = numpyro.sample("theta", priors["theta"])
+    kappa_init = numpyro.sample("kappa_init", priors["kappa"])
+    z_init = numpyro.sample("z_init", priors["z_init"])
+    # state equation params
+    rho_kappa = numpyro.sample("rho_kappa", priors["rho_kappa"])
+    rho_z = numpyro.sample("rho_z", priors["rho_z"])
+    gamma = numpyro.sample("gamma", priors["gamma"])
+    rho     = numpyro.sample("rho",     priors["rho"])
+    delta    = numpyro.sample("delta",  priors["delta"])
+    # sigma
+    sigma_eta   = numpyro.sample("sigma_eta",   priors["sigma_eta"])
+    sigma_eps   = numpyro.sample("sigma_e",     priors["sigma_eps"])
+    sigma_kappa = numpyro.sample("sigma_kappa", priors["sigma_kappa"])
+    timesteps = jnp.arange(l)
+    t = 0
+    # state space model
+    def transition(carry, _):
+        # t-1
+        z_prev = carry[0]
+        kappa_prev = carry[1]
+        t = carry[2]
+        kappa = numpyro.sample("kappa", numpyro.distributions.TruncatedNormal(rho_kappa * kappa_prev + rho_z * z_prev, sigma_kappa, low=0))
+        z = numpyro.sample("z", numpyro.distributions.Normal(gamma * z_prev + rho * Y_prev[t] + delta * pi_prev[t], sigma_eta))
+        pi_pred = alpha * pi_prev[t] + beta * pi_expect[t] + kappa * Y[t] - theta * z
+        numpyro.sample(f"pi_obs", numpyro.distributions.Normal(pi_pred, sigma_eps), obs=pi[t])
+        t_carry = t + 1
+        z_carry = z
+        kappa_carry = kappa
+        return [z_carry, kappa_carry, t_carry], None
+    scan(transition, [z_init, kappa_init, t], timesteps)
