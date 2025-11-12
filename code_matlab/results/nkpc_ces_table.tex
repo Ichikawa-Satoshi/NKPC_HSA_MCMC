@@ -1,0 +1,23 @@
+\begin{frame}[label=gibbs_ces]{Estimation: Gibbs Sampling (CES)}
+$$\pi_t = \alpha \pi_{t-1} + (1-\alpha)\mathbb{E}_t\pi_{t+1} + \kappa_t x_t^{*} - \theta \hat N_t + v_t$$
+\small
+\setlength{\tabcolsep}{8pt}
+\renewcommand{\arraystretch}{1.3}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+$x_t$ & \textbf{Output gap (BN)} & \textbf{Unemployment gap} & \textbf{Inverse of markup (BN)} \\
+\midrule
+\multicolumn{4}{l}{\textbf{No measurement error:} $x_t^{*}=x_t$} \\[2pt]
+$\alpha$ & 0.705 {\footnotesize [0.648, 0.663]} & $\kappa$ & 0.093 {\footnotesize [0.081, -0.014]} & \\[6pt]\midrule
+\multicolumn{4}{l}{\textbf{With measurement error:} $x_t^{*}=x_t + u_t$} \\[2pt]
+$\alpha$ & 0.705 {\footnotesize [0.649, 0.663]} & $\kappa$ & 0.094 {\footnotesize [0.082, -0.012]} & \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\scriptsize Numbers in brackets are 95\% credible intervals.
+\end{center}
+\hyperlink{post_ces}{\beamerreturnbutton{Posterior distributions}}
+\hyperlink{post_ces_xerror}{\beamerreturnbutton{Posterior distributions: with measurement error}}
+\end{frame}

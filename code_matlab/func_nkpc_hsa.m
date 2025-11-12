@@ -27,7 +27,6 @@ function results = func_nkpc_hsa(pi_data, pi_prev_data, Epi_data, x_data, Nhat_d
     if any(~isfinite([pi_t; pi_tm1; E_pi_tp1; x_t; Nhat]))
         error('Input data contain non-finite values.');
     end
-
     %% Priors with defaults
     if nargin < 8 || isempty(priors), priors = struct(); end
     mu_alpha    = getd(priors,'mu_alpha',    0.5);
@@ -41,7 +40,6 @@ function results = func_nkpc_hsa(pi_data, pi_prev_data, Epi_data, x_data, Nhat_d
     if any([sigma_alpha, sigma_kappa, sigma_theta, a_v, b_v] <= 0)
         error('Priors must be positive where applicable.');
     end
-
     %% Options with defaults
     if nargin < 9 || isempty(opts), opts = struct(); end
     alpha     = getd(opts,'alpha0',     0.6);
@@ -51,9 +49,7 @@ function results = func_nkpc_hsa(pi_data, pi_prev_data, Epi_data, x_data, Nhat_d
     seed      = getd(opts,'seed',       []);
     verbose   = getd(opts,'verbose',    true);
     store_every = max(1, getd(opts,'store_every', 1));
-    constrain_alpha = getd(opts,'constrain_alpha', false);
     if ~isempty(seed), rng(seed); end
-
     %% Storage
     n_store = ceil(n_keep / store_every);
     alpha_draws = zeros(n_store,1);

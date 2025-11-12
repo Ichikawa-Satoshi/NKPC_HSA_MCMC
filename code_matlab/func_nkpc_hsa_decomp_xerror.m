@@ -96,8 +96,6 @@ function results = func_nkpc_hsa_decomp_xerror(pi_data, pi_prev_data, Epi_data, 
     seed      = getd(opts,'seed',       []);
     verbose   = getd(opts,'verbose',    true);
     store_every = max(1, getd(opts,'store_every', 1));
-
-    constrain_alpha   = getd(opts,'constrain_alpha', false);
     enforce_station   = getd(opts,'enforce_stationary', true);
     r_target_scale    = getd(opts,'r_target_scale', 0.1);
     r_rw_scale        = getd(opts,'r_rw_scale',     0.1);
@@ -389,15 +387,20 @@ function Nhat_new = sample_ar2_states_ffbs_ext(y_target, rho1, rho2, sigma_eps2,
 
     % Backward sampling
     Nhat_states = zeros(2,T);
+    % last period
     Nhat_states(:,T) = mvnrnd(m(:,T), force_pd(P(:,:,T)))';
+    % we can treat smoothed moments as current draw for t+1
+    C_s_next = P(:,:,T);  % smoothed covariance at T is just P(:,:,T)
     for t = T-1:-1:1
-        if t>=2
+        if t >= 2
             A = P(:,:,t) * F' / P_pred(:,:,t+1);
             m_s = m(:,t) + A*(Nhat_states(:,t+1) - m_pred(:,t+1));
-            P_s = P(:,:,t) - A*(P_pred(:,:,t+1) - P(:,:,t))*A';
+            P_s = P(:,:,t) - A*(P_pred(:,:,t+1) - C_s_next)*A';
             Nhat_states(:,t) = mvnrnd(m_s, force_pd(P_s))';
+            C_s_next = P_s;  % pass smoothed covariance backward
         else
             Nhat_states(:,t) = Nhat_states(:,t+1);
+            % you could also update C_s_next here if needed
         end
     end
     Nhat_new = Nhat_states(1,:)';

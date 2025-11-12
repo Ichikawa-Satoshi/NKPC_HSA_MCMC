@@ -10,7 +10,7 @@ function data = func_load_data()
     toTT    = @(t) table2timetable(t, 'RowTimes', 'DATE');
 
     %% ---- SPF data (xlsx) ----
-    spf = readtable('./data/inflation/Inflation.xlsx');
+    spf = readtable('../data/inflation/Inflation.xlsx');
     spf.DATE = qstart(spf.YEAR, spf.QUARTER);
     spf.Epi_spf_gdp = spf.INFPGDP1YR;
     spf.Epi_spf_cpi = spf.INFCPI1YR;
@@ -18,7 +18,7 @@ function data = func_load_data()
     tt_spf = toTT(spf);
 
     %% ---- CPI headline (CSV, quarterly, YoY%) ----
-    cpi = readtable('./data/inflation/CPIAUCSL.csv');
+    cpi = readtable('../data/inflation/CPIAUCSL.csv');
     if ~isdatetime(cpi.DATE), cpi.DATE = datetime(cpi.DATE, 'InputFormat','yyyy-MM-dd'); end
     tt_cpi_m = toTT(cpi(:, {'DATE','CPIAUCSL'}));
     tt_cpi_q = retime(tt_cpi_m, 'regular', 'mean', 'TimeStep', calquarters(1));
@@ -26,7 +26,7 @@ function data = func_load_data()
     tt_cpi_q = tt_cpi_q(:, 'pi_cpi');
 
     %% ---- Core CPI (CSV, log YoY) ----
-    core = readtable('./data/inflation/CPILFESL.csv');
+    core = readtable('../data/inflation/CPILFESL.csv');
     if any(strcmpi(core.Properties.VariableNames, 'observation_date'))
         core.DATE = datetime(core.observation_date, 'InputFormat','yyyy-MM-dd');
     elseif ~any(strcmpi(core.Properties.VariableNames,'DATE'))
@@ -37,21 +37,21 @@ function data = func_load_data()
     tt_core = tt_core(:, 'pi_cpi_core');
 
     %% ---- PCE headline (CSV, log YoY) ----
-    pce = readtable('./data/inflation/PCEPI.csv');
+    pce = readtable('../data/inflation/PCEPI.csv');
     pce.DATE = datetime(pce.observation_date, 'InputFormat','yyyy-MM-dd');
     tt_pce = toTT(pce(:, {'DATE','PCEPI'}));
     tt_pce.pi_pce = log_yoy(tt_pce.PCEPI);
     tt_pce = tt_pce(:, 'pi_pce');
 
     %% ---- PCE core (CSV, log YoY) ----
-    pce_core = readtable('./data/inflation/PCEPILFE.csv');
+    pce_core = readtable('../data/inflation/PCEPILFE.csv');
     pce_core.DATE = datetime(pce_core.observation_date, 'InputFormat','yyyy-MM-dd');
     tt_pce_core = toTT(pce_core(:, {'DATE','PCEPILFE'}));
     tt_pce_core.pi_pce_core = log_yoy(tt_pce_core.PCEPILFE);
     tt_pce_core = tt_pce_core(:, 'pi_pce_core');
 
     %% ---- HHI / number of firms (annual -> quarterly cubic interp) ----
-    hhi = readtable('./data/competition/BN_N_26.csv');
+    hhi = readtable('../data/competition/BN_N_26.csv');
     hhi.N = hhi.original_series;
     hhi.year = year(datetime(hhi.date, 'InputFormat','yyyy-MM-dd'));
     y = year(datetime(hhi.year,1,1));
@@ -63,7 +63,7 @@ function data = func_load_data()
     tt_hhi_q = tt_hhi_q(:, {'N'});
 
     %% ---- N_BN (annual -> quarterly cubic interp) ----
-    nb = readtable('./data/competition/BN_N_26.csv');
+    nb = readtable('../data/competition/BN_N_26.csv');
     nb.N_BN = nb.cycle;
     nb.year = year(datetime(nb.date, 'InputFormat','yyyy-MM-dd'));
     nb.DATE = datetime(nb.year,1,1);
@@ -72,33 +72,40 @@ function data = func_load_data()
     tt_nb = toTT(nb);
     tt_nb_q = retime(tt_nb, 'regular', 'pchip', 'TimeStep', calquarters(1));
     tt_nb_q = tt_nb_q(:, 'N_BN');
+    %% ---- N_trend (annual -> quarterly cubic interp) ----
+    ntrend = readtable('../data/competition/BN_N_26.csv');
+    ntrend.N_BN_trend = ntrend.trend;
+    ntrend.year = year(datetime(ntrend.date, 'InputFormat','yyyy-MM-dd'));
+    ntrend.DATE = datetime(ntrend.year,1,1);
+    ntrend = ntrend(:, {'DATE','N_BN_trend'});
+    ntrend = ntrend(~any(ismissing(ntrend),2), :);
+    tt_ntrend = toTT(ntrend);
+    tt_ntrend_q = retime(tt_ntrend, 'regular', 'pchip', 'TimeStep', calquarters(1));
+    tt_ntrend_q = tt_ntrend_q(:, 'N_BN_trend');
     %% N projected
-    n_proj =  readtable('./data/num_firm/projected_n_bn.csv');
+    n_proj =  readtable('../data/num_firm/projected_n_bn.csv');
     n_proj.N_p_BN = n_proj.cycle;
     n_proj.year = year(datetime(n_proj.date, 'InputFormat','yyyy-MM-dd'));
     n_proj.DATE = datetime(n_proj.year,1,1);
     n_proj = n_proj(:, {'DATE','N_p_BN'});
-    tt_n_proj = toTT(n_proj);
     %% ---- Markup (levels) ----
-    mk = readtable('./data/markup/nekarda_ramey_markups.xlsx');
+    mk = readtable('../data/markup/nekarda_ramey_markups.xlsx');
     mk.DATE = datetime(mk.qdate, 'InputFormat','yyyy-MM-dd');
     mk.markup = mk.mu_bus;
     mk = mk(:, {'DATE','markup'});
     mk = mk(~any(ismissing(mk),2), :);
     tt_mk = toTT(mk);
-
     %% ---- Detrended Markup (BN inverse) ----
-    mk_bn = readtable('./data/markup/BN_markup_inv.csv');
+    mk_bn = readtable('../data/markup/BN_markup_inv.csv');
     mk_bn.markup_BN_inv = mk_bn.cycle;
     mk_bn.DATE = datetime(mk_bn.date, 'InputFormat','yyyy-MM-dd');
     mk_bn = mk_bn(:, {'DATE','markup_BN_inv'});
     mk_bn = mk_bn(~any(ismissing(mk_bn),2), :);
     tt_mk_bn = toTT(mk_bn);
-
     %% ---- Unemployment gap (NROU - UNRATENSA) ----
-    nairu = readtable('./data/unemp_gap/NROU.csv');
+    nairu = readtable('../data/unemp_gap/NROU.csv');
     nairu.DATE = datetime(nairu.observation_date, 'InputFormat','yyyy-MM-dd');
-    unemp = readtable('./data/unemp_gap/UNRATENSA.csv');
+    unemp = readtable('../data/unemp_gap/UNRATENSA.csv');
     unemp.DATE = datetime(unemp.observation_date, 'InputFormat','yyyy-MM-dd');
 
     tt_nairu = toTT(nairu(:, {'DATE','NROU'}));
@@ -109,7 +116,7 @@ function data = func_load_data()
     tt_gap = rmmissing(tt_gap);
 
     %% ---- Output gap data (BN filter) ----
-    out = readtable('./data/output_gap/BN_filter_GDPC1_quaterly.csv');
+    out = readtable('../data/output_gap/BN_filter_GDPC1_quaterly.csv');
     out.output_BN = out.GDPC1_transformed_series;
     out.output_gap_BN = out.cycle;
     out.output = log(out.GDPC1_original_series * 0.01);
@@ -120,7 +127,7 @@ function data = func_load_data()
     tt_out = toTT(out);
 
     %% ---- One-year inflation expectations (quarterly mean, *100) ----
-    epi = readtable('./data/inflation/one_year_inflation_expectation.csv');
+    epi = readtable('../data/inflation/one_year_inflation_expectation.csv');
     epi.DATE = datetime(epi.Date, 'InputFormat','yyyy-MM-d');
     if ~isnumeric(epi.Epi)
         tmp = string(epi.Epi);
@@ -136,7 +143,7 @@ function data = func_load_data()
     tt_epi = retime(tt_epi_m, 'regular', 'mean', 'TimeStep', calquarters(1));
 
     %% ---- Oil prices (WTI deflated by CPI, log YoY) ----
-    oil = readtable('./data/others/WTISPLC_CPIAUCSL.csv');
+    oil = readtable('../data/others/WTISPLC_CPIAUCSL.csv');
     oil.DATE = datetime(oil.observation_date, 'InputFormat','yyyy-MM-dd');
     tt_oil = toTT(oil(:, {'DATE','WTISPLC_CPIAUCSL'}));
     tt_oil.log_oil = log(tt_oil.WTISPLC_CPIAUCSL);
@@ -145,7 +152,7 @@ function data = func_load_data()
 
     %% ---- Merge all by DATE (outer union) ----    
     data = synchronize( ...
-        tt_cpi_q, tt_epi, tt_spf, tt_core, tt_out, tt_hhi_q, tt_nb_q, ...
+        tt_cpi_q, tt_epi, tt_spf, tt_core, tt_out, tt_hhi_q, tt_nb_q, tt_ntrend_q, ...
         tt_mk, tt_pce_core, tt_pce, tt_mk_bn, tt_gap, tt_oil, ...
         'union');
 
@@ -157,6 +164,7 @@ function data = func_load_data()
 
     %% ---- Drop rows with any NaNs (like pandas dropna) ----
     data = rmmissing(data);
+    data.Properties.RowTimes = dateshift(data.Properties.RowTimes, 'end', 'quarter');
 end
 
 %% ---- Local helper: simple lag with k periods for vectors/timetable vars ----

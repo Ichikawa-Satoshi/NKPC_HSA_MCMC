@@ -9,7 +9,7 @@ load('results/ols_ces.mat','ols_ces');
 load('results/ols_hsa.mat','ols_hsa');
 
 % s = [0.1, 0.2, 0.5, 1, 10, 100];
-s = 100;
+s = 1;
 load(sprintf('results/nkpc_ces_outputgap_sigma%.2f.mat', s),'nkpc_ces_outputgap');
 load(sprintf('results/nkpc_ces_unempgap_sigma%.2f.mat', s),'nkpc_ces_unempgap');
 load(sprintf('results/nkpc_ces_markupinv_sigma%.2f.mat', s),'nkpc_ces_markupinv');
@@ -18,7 +18,7 @@ model_names_ces  = {'Output gap (BN)','Unemployment gap', 'Inverse of markup (BN
 load(sprintf('results/nkpc_ces_outputgap_xerror_sigma%.2f.mat', s),'nkpc_ces_outputgap_xerror');
 load(sprintf('results/nkpc_ces_unempgap_xerror_sigma%.2f.mat', s),'nkpc_ces_unempgap_xerror');
 load(sprintf('results/nkpc_ces_markupinv_xerror_sigma%.2f.mat', s),'nkpc_ces_markupinv_xerror');
-results_list_ces_xerror = {nkpc_ces_outputgap, nkpc_ces_unempgap, nkpc_ces_markupinv};
+results_list_ces_xerror = {nkpc_ces_outputgap_xerror, nkpc_ces_unempgap_xerror, nkpc_ces_markupinv_xerror};
 model_names_ces_xerror  = {'Output gap (BN)','Unemployment gap', 'Inverse of markup (BN)'};
 load(sprintf('results/nkpc_hsa_outputgap_sigma%.2f.mat', s),'nkpc_hsa_outputgap');
 load(sprintf('results/nkpc_hsa_unempgap_sigma%.2f.mat', s),'nkpc_hsa_unempgap');
@@ -113,7 +113,7 @@ function T = summarize_results(results_list, names, label, opts)
     if nargin < 4, opts = struct; end
     if ~isfield(opts,'null_kappa'), opts.null_kappa = 0; end
     if ~isfield(opts,'null_theta'), opts.null_theta = 0; end
-    if ~isfield(opts,'null_alpha'), opts.null_alpha = []; end 
+    if ~isfield(opts,'null_alpha'), opts.null_alpha = 0; end 
 
     n = numel(results_list);
     data = cell(n, 8);
@@ -126,7 +126,7 @@ function T = summarize_results(results_list, names, label, opts)
         a_mean = R.alpha.mean;
         mu_a   = getd(pr,'mu_alpha',0.5);
         sd_a   = getd(pr,'sigma_alpha',1);
-        a_sddr = NaN;
+        a_sddr = local_sddr(R.alpha.draws, opts.null_alpha, mu_a, sd_a);
         if ~isempty(opts.null_alpha)
             a_sddr = local_sddr(R.alpha.draws, opts.null_alpha, mu_a, sd_a);
         end
@@ -207,18 +207,37 @@ T2 = summarize_results(results_list, model_names, 'HSA');
 T3 = summarize_results(results_list_xerror, xerror_names, 'HSA + xerror');
 T4 = summarize_results(results_list_decomp, decomp_names, 'HSA (decomp)');
 T5 = summarize_results(results_list_decomp_xerror, xerror_names_decomp, 'HSA (decomp + xerror)');
-% ---- OLS summary ----
+%% ---- OLS summary ----
 T_ols_ces = summarize_ols_for_merge(ols_ces, 'CES（OLS）');
 T_ols_hsa = summarize_ols_for_merge(ols_hsa, 'HSA (OLS)');
-% ---- Combine all ----
-AllTables = [T_ols_ces; T_ols_hsa; T0; T1; T2; T3; T4; T5;];
+AllTables = [T_ols_ces; T_ols_hsa;];
 AllTables = sortrows(AllTables, {'GapMeasure'});
-%% -------- Display --------
 disp('================================================================');
+disp('OLS')
 disp('Posterior Summary (mean [2.5%,97.5%]) for α, κ, θ');
 disp('================================================================');
 disp(AllTables);
-
-% %% -------- Export to Excel --------
-outpath = 'results/hsa_summary_tables.xlsx';
-writetable(AllTables, outpath, 'Sheet','Results');
+%% ---- CES with and without error by gibbs sampling----
+AllTables = [T0; T1;];
+AllTables = sortrows(AllTables, {'GapMeasure'});
+disp('================================================================');
+disp('CES by gibbs sampling')
+disp('Posterior Summary (mean [2.5%,97.5%]) for α, κ, θ');
+disp('================================================================');
+disp(AllTables);
+%% ---- HSA with and without error by gibbs sampling----
+AllTables = [T2; T3;];
+AllTables = sortrows(AllTables, {'GapMeasure'});
+disp('================================================================');
+disp('HSA by gibbs sampling')
+disp('Posterior Summary (mean [2.5%,97.5%]) for α, κ, θ');
+disp('================================================================');
+disp(AllTables);
+%% ---- HSA with jonint estimation and without error by gibbs sampling----
+AllTables = [T4; T5;];
+AllTables = sortrows(AllTables, {'GapMeasure'});
+disp('================================================================');
+disp('HSA with jonint estimation by gibbs sampling')
+disp('Posterior Summary (mean [2.5%,97.5%]) for α, κ, θ');
+disp('================================================================');
+disp(AllTables);

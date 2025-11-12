@@ -1,6 +1,6 @@
 clear all;
 % s = [0.1, 0.2, 0.5, 1, 10, 100];
-s = 0.2;
+s = 1;
 load(sprintf('results/nkpc_ces_outputgap_sigma%.2f.mat', s),'nkpc_ces_outputgap');
 load(sprintf('results/nkpc_ces_unempgap_sigma%.2f.mat', s),'nkpc_ces_unempgap');
 load(sprintf('results/nkpc_ces_markupinv_sigma%.2f.mat', s),'nkpc_ces_markupinv');

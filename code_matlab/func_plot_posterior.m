@@ -22,7 +22,7 @@ function out = func_plot_posterior(results_list, model_names, opts)
         R = results_list{m};
         mname = model_names{m};
 
-        %==== priors (fallbackあり) ====
+        %==== priors (fallback) ====
         pr = struct;
         if isfield(R,'priors') && isstruct(R.priors), pr = R.priors; end
         mu_a      = getd(pr,'mu_alpha',    0.5);

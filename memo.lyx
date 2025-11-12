@@ -1,0 +1,1458 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children no
+\language american
+\language_package default
+\inputencoding utf8
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tablestyle default
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content true
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Section*
+Slope of NKPC and the competition
+\end_layout
+
+\begin_layout Standard
+NKPC under HSA is written as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi_{t}=\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\frac{1}{\chi}\left[-\frac{s'(z)z}{s(z)}\right]x_{t}+\frac{1}{\chi}\left[\frac{s'(z)z}{s(z)}-\frac{\frac{s''(z)z}{s'(z)}}{1-\frac{s(z)}{s'(z)z}}\right]\hat{z}_{t}+v_{t}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+From the symmetric equilibrium,
+ the market share is expressed by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s(\frac{p_{t}}{A_{t}})=s(z_{t})=\frac{1}{N_{t}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then,
+ 
+\begin_inset Formula 
+\[
+\hat{N}_{t}=-\frac{s'(z)z}{s(z)}\hat{z_{t}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi_{t}=\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\underset{\kappa}{\underbrace{\frac{\zeta(z)-1}{\chi}}}x_{t}-\underset{\theta}{\underbrace{\frac{1-\rho(z)}{\rho(z)\chi}}}\hat{N}_{t}+v_{t}
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\zeta(z)=1-\frac{s'(z)z}{s(z)}:$
+\end_inset
+
+ the price elasticity function 
+\begin_inset Formula $\zeta(z)>1$
+\end_inset
+
+ ,
+ 
+\begin_inset Formula $\rho(z)=\left[1-\frac{d\ln\!\left(\frac{\zeta(z)}{\zeta(z)-1}\right)}{d\ln(z)}\right]^{-1}$
+\end_inset
+
+:
+ path-through rate function
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+N\downarrow(concentration)\longrightarrow s\uparrow(share)\longrightarrow z\downarrow\longrightarrow\zeta(z)\downarrow\longrightarrow\frac{\zeta(z)-1}{\chi}\downarrow=\kappa\downarrow
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+The construction of the number of the firm data
+\end_layout
+
+\begin_layout Standard
+The Herfindahl-Hirschman Index (HHI) is written as 
+\begin_inset Formula $HHI=\Sigma_{i=1}^{I}s_{i}^{2}$
+\end_inset
+
+,
+ where s is the market share of firm i.
+\end_layout
+
+\begin_layout Standard
+Then,
+ since we assume all firms are symmetric,
+ we obtain
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+HHI=\Sigma_{n=1}^{N}s_{n}^{2}=\Sigma_{n=1}^{N}\left(\frac{1}{N}\right)^{2}=\frac{1}{N}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+So the number of firm must be 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+N=\frac{1}{HHI}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+State Space Modeling ideas
+\end_layout
+
+\begin_layout Standard
+Model:
+ not state-space (N is decomposed by BN)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi_{t}=\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\kappa x_{t}-\theta\hat{N}_{t}+v_{t}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{t}\sim N(0,\sigma_{v}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Model:
+ state-space
+\end_layout
+
+\begin_layout Standard
+We have data of 
+\begin_inset Formula $\pi_{t}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathbb{E}_{t}\pi_{t+1}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $x_{t}$
+\end_inset
+
+ ,
+ 
+\begin_inset Formula $N_{t}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\pi_{t} & =\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\kappa x_{t}-\theta\hat{N}_{t}+v_{t}\\
+N_{t} & =\hat{N_{t}}+\bar{N_{t}}\\
+\hat{N_{t}} & =\rho_{1}\hat{N}_{t-1}+\rho_{2}\hat{N}_{t-2}+e_{t}\\
+\bar{N_{t}} & =n+\bar{N}_{t-1}+\epsilon_{t}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{t}\sim N(0,\sigma_{v}^{2})\quad e_{t}\sim N(0,\sigma_{e}^{2}),\quad\epsilon_{t}\sim N(0,\sigma_{\epsilon}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Matrix form
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+z_{t} & =H_{t}\,s_{t}+r_{t}\\
+s_{t} & =F\,s_{t-1}+c+G\,w_{t}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{bmatrix}\pi_{t}-\alpha\pi_{t-1}-(1-\alpha)\mathbb{E}_{t}\pi_{t+1}-\kappa x_{t}\\
+N_{t}
+\end{bmatrix}=\begin{bmatrix}-\theta & 0 & 0 & 0\\
+1 & 0 & 1 & 0
+\end{bmatrix}\left[\begin{array}{c}
+\hat{N}_{t}\\
+\hat{N}_{t-1}\\
+\bar{N}_{t}\\
+\bar{N}_{t-1}
+\end{array}\right]+\begin{bmatrix}v_{t}\\
+0
+\end{bmatrix}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left[\begin{array}{c}
+\hat{N}_{t}\\
+\hat{N}_{t-1}\\
+\bar{N}_{t}\\
+\bar{N}_{t-1}
+\end{array}\right]=\left[\begin{array}{cccc}
+\rho_{1} & \rho_{2} & 0 & 0\\
+1 & 0 & 0 & 0\\
+0 & 0 & 1 & 0\\
+0 & 0 & 1 & 0
+\end{array}\right]\left[\begin{array}{c}
+\hat{N}_{t-1}\\
+\hat{N}_{t-2}\\
+\bar{N}_{t-1}\\
+\bar{N}_{t-2}
+\end{array}\right]+\left[\begin{array}{c}
+0\\
+0\\
+n\\
+0
+\end{array}\right]+\left[\begin{array}{cc}
+1 & 0\\
+0 & 0\\
+0 & 1\\
+0 & 0
+\end{array}\right]\left[\begin{array}{c}
+e_{t}\\
+\epsilon_{t}
+\end{array}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+The equations for Gibbs Sampling
+\end_layout
+
+\begin_layout Standard
+Conditional Posterior for Parameters
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+For parameters (
+\begin_inset Formula $\alpha$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\kappa$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\theta$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\rho_{1},\rho_{2}$
+\end_inset
+
+) :
+\end_layout
+
+\begin_layout Standard
+Priors 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\alpha\sim\mathcal{N}(\mu_{\alpha},\sigma_{\alpha}^{2}),\kappa\sim\mathcal{N}(\mu_{\kappa},\sigma_{\kappa}^{2}),\theta\sim\mathcal{N}(\mu_{\theta},\sigma_{\theta}^{2}),\rho_{1}\sim\mathcal{N}(\mu_{\rho_{1}},\sigma_{\rho_{1}}^{2}),\rho_{2}\sim\mathcal{N}(\mu_{\rho_{2}},\sigma_{\rho_{2}}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Posterior
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\alpha\mid\cdot\sim\mathcal{N}(\mu_{\alpha|\cdot},\sigma_{\alpha|\cdot}^{2}),\quad\sigma_{\alpha|\cdot}^{-2}=\sigma_{\alpha}^{-2}+\sigma_{v}^{-2}\sum_{t}(x_{t}^{(\alpha)})^{2},\qquad\mu_{\alpha|\cdot}=\sigma_{\alpha|\cdot}^{2}\left(\sigma_{\alpha}^{-2}\mu_{\alpha}+\sigma_{v}^{-2}\sum_{t}x_{t}^{(\alpha)}y_{t}^{(\alpha)}\right).
+\]
+
+\end_inset
+
+See the appendix if you want to see the derivation of this posterior mean and variance.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+For n :
+ 
+\end_layout
+
+\begin_layout Standard
+Prior
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n\sim\mathcal{N}(\mu_{n},\sigma_{n}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y_{t}^{(n)}=\bar{N}_{t}-\bar{N}_{t-1}=n+\eta_{t},
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+so that
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+n\mid\cdot\sim\mathcal{N}(\mu_{n|\cdot},\sigma_{n|\cdot}^{2}),\quad\sigma_{n|\cdot}^{-2}=\sigma_{n}^{-2}+\frac{T-1}{\sigma_{\eta}^{2}},\quad\mu_{n|\cdot}=\sigma_{n|\cdot}^{2}\left(\sigma_{n}^{-2}\mu_{n}+\frac{1}{\sigma_{\eta}^{2}}\sum_{t}y_{t}^{(n)}\right).
+\]
+
+\end_inset
+
+
+\series bold
+Variance Parameters (
+\begin_inset Formula $\sigma_{v}^{2}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\sigma_{\varepsilon}^{2}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\sigma_{\eta}^{2}$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+Priors 
+\begin_inset Formula 
+\[
+\sigma_{v}^{2}\sim\text{InvGamma}(a_{v},b_{v}),\sigma_{\varepsilon}^{2}\sim\text{InvGamma}(a_{\varepsilon},b_{\varepsilon}),\sigma_{\eta}^{2}\sim\text{InvGamma}(a_{\eta},b_{\eta}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Posterior
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{v}^{2}\mid\cdot\sim\text{InvGamma}\!\left(a_{v}+\frac{T}{2},\,b_{v}+\frac{1}{2}\sum_{t}r_{v,t}^{2}\right),
+\]
+
+\end_inset
+
+
+\series bold
+ Latent State Equations
+\end_layout
+
+\begin_layout Standard
+Define the state vector:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{t}=\begin{bmatrix}\hat{N}_{t}\\
+\hat{N}_{t-1}
+\end{bmatrix},\quad s_{t}=Fs_{t-1}+w_{t},\quad w_{t}\sim\mathcal{N}(0,Q),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+with
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+F=\begin{bmatrix}\rho_{1} & \rho_{2}\\
+1 & 0
+\end{bmatrix},\quad Q=\begin{bmatrix}\sigma_{\varepsilon}^{2} & 0\\
+0 & 0
+\end{bmatrix}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Two “pseudo-observations” are combined:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y_{t}=\begin{bmatrix}N_{t}-\bar{N}_{t}\\
+\alpha\pi_{t-1}+(1-\alpha)E_{t}\pi_{t+1}+\kappa x_{t}-\pi_{t}
+\end{bmatrix}=H_{t}s_{t}+u_{t},\quad u_{t}\sim\mathcal{N}(0,R_{t}),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+H_{t}=\begin{bmatrix}1 & 0\\
+\theta & 0
+\end{bmatrix},\quad R_{t}=\text{diag}(0,\sigma_{v}^{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\bar{N}_{t}=\bar{N}_{t-1}+n+\eta_{t},\quad N_{t}-\hat{N}_{t}=\bar{N}_{t},\quad\eta_{t}\sim\mathcal{N}(0,\sigma_{\eta}^{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Each block is sampled by FFBS (Forward Filtering and Backward Sampling):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(\hat{N}_{1:T}\mid\text{data,params}),\quad p(\bar{N}_{1:T}\mid\text{data,params}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+FFBS:
+ 
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Forward Filtering (Kalman Filter Recursion)
+\end_layout
+
+\begin_layout Standard
+The goal is to estimate the distribution of the state 
+\begin_inset Formula $s_{t}$
+\end_inset
+
+ given data up to time t:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(s_{t}\mid y_{1:t})=\mathcal{N}(m_{t},C_{t})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+1.
+ Prediction (Time Update)
+\end_layout
+
+\begin_layout Standard
+Using the state equation
+\begin_inset Formula $s_{t}=Fs_{t-1}+w_{t}$
+\end_inset
+
+,
+ with 
+\begin_inset Formula $w_{t}\sim\mathcal{N}(0,Q)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+a_{t}=Fm_{t-1},\quad P_{t}=FC_{t-1}F’+Q
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+(
+\begin_inset Formula $E[s_{t}\mid y_{1:t-1}]=FE[s_{t-1}\mid y_{1:t-1}]=Fm_{t-1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathrm{Var}(s_{t}\mid y_{1:t-1})=\mathrm{Var}(Fs_{t-1}+w_{t})=F\,\mathrm{Var}(s_{t-1})\,F\text{’}+\mathrm{Var}(w_{t})=FC_{t-1}F\text{’}+Q$
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Standard
+Here,
+ a_t and P_t are the predicted mean and covariance of s_t before observing 
+\begin_inset Formula $y_{t}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+2.
+ Update (Measurement Update)
+\end_layout
+
+\begin_layout Standard
+After observing 
+\begin_inset Formula $y_{t}=H_{t}s_{t}+u_{t}$
+\end_inset
+
+,
+ with 
+\begin_inset Formula $u_{t}\sim\mathcal{N}(0,R_{t})$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{t}=y_{t}-H_{t}a_{t}\quad(\text{innovation})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+S_{t}=H_{t}P_{t}H_{t}’+R_{t}\quad(\text{innovation covariance})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+K_{t}=P_{t}H_{t}’S_{t}^{-1}\quad(\text{Kalman gain})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+update
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+m_{t}=a_{t}+K_{t}v_{t}\quad(\text{updated mean})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+C_{t}=P_{t}-K_{t}S_{t}K_{t}’\quad(\text{updated covariance})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+After this step,
+ the filtered distribution is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{t}\mid y_{1:t}\sim\mathcal{N}(m_{t},C_{t})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These 
+\begin_inset Formula $(m_{t},C_{t})$
+\end_inset
+
+ pairs are stored for the backward pass.
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+Backward Sampling
+\end_layout
+
+\begin_layout Standard
+Starting from the last period 
+\begin_inset Formula $T$
+\end_inset
+
+,
+ we simulate the full path 
+\begin_inset Formula $\{s_{t}\}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
+Step 1 (Initialization):
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{T}\sim\mathcal{N}(m_{T},C_{T}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Step 2 (Backward recursion for 
+\begin_inset Formula $t=T-1,\dots,1$
+\end_inset
+
+):
+\end_layout
+
+\begin_layout Standard
+Compute the “smoothing gain”
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+J_{t}=C_{t}F'P_{t+1}^{-1}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then the smoothed mean and covariance are
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{aligned}\tilde{m}_{t} & =m_{t}+J_{t}(s_{t+1}-a_{t+1}),\\
+\tilde{C}_{t} & =C_{t}-J_{t}(P_{t+1}-\tilde{C}_{t+1})J_{t}'.
+\end{aligned}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Sample
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s_{t}\sim\mathcal{N}(\tilde{m}_{t},\tilde{C}_{t}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+After this step,
+ we obtain a full draw 
+\begin_inset Formula $s_{1:T}$
+\end_inset
+
+ consistent with the
+\end_layout
+
+\begin_layout Standard
+joint posterior 
+\begin_inset Formula $p(s_{1:T}\mid\text{data},\text{parameters})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection*
+
+\series bold
+Gibbs Sampling Integration
+\end_layout
+
+\begin_layout Standard
+1.
+ Initialization
+\end_layout
+
+\begin_layout Standard
+Set initial values for all parameters and for the latent state paths
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\hat{N}_{{1:T}}$
+\end_inset
+
+ and 
+\begin_inset Formula $\bar{N}_{{1:T}}$
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+2.
+ State Sampling 1 (Cycle component)
+\end_layout
+
+\begin_layout Standard
+Conditional on the current parameters,
+ run the FFBS (Forward Filtering–Backward Sampling) algorithm for the cycle block to sample 
+\begin_inset Formula $\hat{N}_{1:T}$
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+3.
+ State Sampling 2 (Trend component)
+\end_layout
+
+\begin_layout Standard
+Given the newly sampled 
+\begin_inset Formula $\hat{N}_{{1:T}}$
+\end_inset
+
+,
+ run FFBS for the trend block to sample 
+\begin_inset Formula $\bar{N}_{{1:T}}$
+\end_inset
+
+.
+\begin_inset Newline newline
+\end_inset
+
+4.
+ Parameter Updates
+\end_layout
+
+\begin_layout Standard
+Update model parameters conditional on the sampled states:
+\end_layout
+
+\begin_layout Standard
+• From the inflation equation:
+ 
+\begin_inset Formula $\alpha,\kappa,\theta,\sigma_{v}^{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+• From the cycle equation:
+\begin_inset Formula $\rho_{1},\rho_{2},\sigma_{e}^{2}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+• From the trend equation:
+ 
+\begin_inset Formula $n,\sigma_{\eta}^{2}$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+5.
+ Repeat
+\end_layout
+
+\begin_layout Standard
+Return to step 1 and iterate until convergence.
+\end_layout
+
+\begin_layout Section*
+The equations for Hamiltonian Monte Carlo
+\end_layout
+
+\begin_layout Section*
+Model:
+ state-space time-variant kappa
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+\pi_{t} & =\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\kappa_{t}x_{t}-\theta\hat{N}_{t}+v_{t}\\
+N_{t} & =\hat{N_{t}}+\bar{N_{t}}\\
+\hat{N_{t}} & =\rho_{1}\hat{N}_{t-1}+\rho_{2}\hat{N}_{t-2}+e_{t}\\
+\bar{N_{t}} & =n+\bar{N}_{t-1}+\epsilon_{t}\\
+\kappa_{t} & =\kappa_{t-1}+\beta\Delta\bar{N}_{t}+u_{t}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+v_{t}\sim N(0,\sigma_{v}^{2})\quad e_{t}\sim N(0,\sigma_{e}^{2}),\quad\epsilon_{t}\sim N(0,\sigma_{\epsilon}^{2}),\quad u_{t}\sim N(0,\sigma_{u}^{2})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Matrix form
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{align*}
+z_{t} & =H_{t}\,s_{t}+r_{t}\\
+s_{t} & =F\,s_{t-1}+c+G\,w_{t}
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{bmatrix}\pi_{t}-\alpha\pi_{t-1}-(1-\alpha)\mathbb{E}_{t}\pi_{t+1}\\
+N_{t}
+\end{bmatrix}=\begin{bmatrix}-\theta & 0 & 0 & 0 & x_{t}\\
+1 & 0 & 1 & 0 & 0
+\end{bmatrix}\begin{bmatrix}\hat{N}_{t}\\
+\hat{N}_{t-1}\\
+\bar{N}_{t}\\
+\bar{N}_{t-1}\\
+\kappa_{t}
+\end{bmatrix}+\begin{bmatrix}v_{t}\\
+0
+\end{bmatrix}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\begin{bmatrix}\hat{N}_{t}\\
+\hat{N}_{t-1}\\
+\bar{N}_{t}\\
+\bar{N}_{t-1}\\
+\kappa_{t}
+\end{bmatrix}=\begin{bmatrix}\rho_{1} & \rho_{2} & 0 & 0 & 0\\
+1 & 0 & 0 & 0 & 0\\
+0 & 0 & 1 & 0 & 0\\
+0 & 0 & 1 & 0 & 0\\
+0 & 0 & 0 & 0 & 1
+\end{bmatrix}\begin{bmatrix}\hat{N}_{t-1}\\
+\hat{N}_{t-2}\\
+\bar{N}_{t-1}\\
+\bar{N}_{t-2}\\
+\kappa_{t-1}
+\end{bmatrix}+\begin{bmatrix}0\\
+0\\
+n\\
+0\\
+\beta n
+\end{bmatrix}+\begin{bmatrix}1 & 0 & 0\\
+0 & 0 & 0\\
+0 & 1 & 0\\
+0 & 0 & 0\\
+0 & \beta & 1
+\end{bmatrix}\begin{bmatrix}e_{t}\\
+\epsilon_{t}\\
+u_{t}
+\end{bmatrix}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section*
+Appendix:
+ Derivation of the Posterior Normal (Gaussian–Gaussian Updating)}
+\end_layout
+
+\begin_layout Standard
+In the NKPC block,
+ several parameters (e.g.
+ 
+\begin_inset Formula $\alpha,\kappa,\theta$
+\end_inset
+
+) are updated by using a 
+\begin_inset Formula $\emph{normal prior}$
+\end_inset
+
+ and a 
+\begin_inset Formula $\emph{Gaussian likelihood}$
+\end_inset
+
+ that is linear in the parameter.
+ Here we show the generic derivation;
+ the formulas in the main text follow as a special case.
+ Consider a scalar parameter $
+\backslash
+beta$ (this will stand for 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ or 
+\begin_inset Formula $\kappa$
+\end_inset
+
+ or 
+\begin_inset Formula $\theta$
+\end_inset
+
+).
+ Suppose the model for 
+\begin_inset Formula $t=1,\dots,T$
+\end_inset
+
+ is
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+y_{t}=x_{t}\beta+\varepsilon_{t},\qquad\varepsilon_{t}\sim\mathcal{N}(0,\sigma^{2}),
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+where 
+\begin_inset Formula $\{y_{t}\}$
+\end_inset
+
+ and 
+\begin_inset Formula $\{x_{t}\}$
+\end_inset
+
+ are known,
+ and 
+\begin_inset Formula $\sigma^{2}$
+\end_inset
+
+ is known (in the Gibbs sampler,
+ 
+\begin_inset Formula $\sigma^{2}$
+\end_inset
+
+ is the current draw of 
+\begin_inset Formula $\sigma_{v}^{2}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+Assume a normal prior
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\beta\sim\mathcal{N}(\mu_{0},\sigma_{0}^{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Our goal is to obtain the posterior distribution
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(\beta\mid y_{1:T},x_{1:T},\sigma^{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Likelihood in Exponential Form
+\end_layout
+
+\begin_layout Standard
+The likelihood is
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(y_{1:T}\mid\beta,\sigma^{2})=\prod_{t=1}^{T}\frac{1}{\sqrt{2\pi\sigma^{2}}}\exp\left\{ -\frac{1}{2\sigma^{2}}(y_{t}-x_{t}\beta)^{2}\right\} .
+\]
+
+\end_inset
+
+Ignoring the constant factor (w.r.t.
+\begin_inset Formula $\beta$
+\end_inset
+
+),
+ we can write
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(y_{1:T}\mid\beta,\sigma^{2})\propto\exp\left\{ -\frac{1}{2\sigma^{2}}\sum_{t=1}^{T}(y_{t}-x_{t}\beta)^{2}\right\} .
+\]
+
+\end_inset
+
+Expand the quadratic term:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{t=1}^{T}(y_{t}-x_{t}\beta)^{2}=\sum_{t=1}^{T}\left(y_{t}^{2}-2y_{t}x_{t}\beta+x_{t}^{2}\beta^{2}\right)=\sum_{t=1}^{T}y_{t}^{2}-2\beta\sum_{t=1}^{T}y_{t}x_{t}+\beta^{2}\sum_{t=1}^{T}x_{t}^{2}.
+\]
+
+\end_inset
+
+Therefore
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(y_{1:T}\mid\beta,\sigma^{2})\propto\exp\left\{ -\frac{1}{2\sigma^{2}}\left(\sum_{t=1}^{T}y_{t}^{2}-2\beta\sum_{t=1}^{T}y_{t}x_{t}+\beta^{2}\sum_{t=1}^{T}x_{t}^{2}\right)\right\} .
+\]
+
+\end_inset
+
+The prior is
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(\beta)=\frac{1}{\sqrt{2\pi\sigma_{0}^{2}}}\exp\left\{ -\frac{1}{2\sigma_{0}^{2}}(\beta-\mu_{0})^{2}\right\} \propto\exp\left\{ -\frac{1}{2\sigma_{0}^{2}}(\beta^{2}-2\mu_{0}\beta+\mu_{0}^{2})\right\} .
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The posterior is proportional to likelihood times prior:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(\beta\mid y_{1:T},x_{1:T},\sigma^{2})\propto\exp\left\{ -\frac{1}{2\sigma^{2}}\left(\sum_{t=1}^{T}y_{t}^{2}-2\beta\sum_{t=1}^{T}y_{t}x_{t}+\beta^{2}\sum_{t=1}^{T}x_{t}^{2}\right)\right\} \cdot\exp\left\{ -\frac{1}{2\sigma_{0}^{2}}(\beta^{2}-2\mu_{0}\beta+\mu_{0}^{2})\right\} .
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\log p(\beta\mid\cdot)=-\frac{1}{2\sigma^{2}}\sum_{t=1}^{T}y_{t}^{2}-\frac{1}{2\sigma_{0}^{2}}\mu_{0}^{2}-\frac{1}{2}\left(\frac{1}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\beta^{2}\sum_{t=1}^{T}x_{t}^{2}\right)\beta^{2}-\left(\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}y_{t}x_{t}\right)\beta
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\log p(\beta\mid\cdot)=\text{const}-\frac{1}{2}\left[\left(\frac{1}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}^{2}\right)\beta^{2}-2\left(\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}y_{t}x_{t}\right)\beta\right].
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This is a quadratic form in 
+\begin_inset Formula $\beta$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $\lambda_{0}:=\frac{1}{\sigma_{0}^{2}},\qquad\lambda:=\frac{1}{\sigma^{2}},\qquad S_{xx}:=\sum_{t=1}^{T}x_{t}^{2},\qquad S_{xy}:=\sum_{t=1}^{T}x_{t}y_{t}.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\log p(\beta\mid\cdot)=\text{const}-\frac{1}{2}\left[(\lambda_{0}+\lambda S_{xx})\beta^{2}-2(\lambda_{0}\mu_{0}+\lambda S_{xy})\beta\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A normal density in 
+\begin_inset Formula $\beta$
+\end_inset
+
+ has the form
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\log\mathcal{N}(\beta\mid m,V)=\text{const}-\frac{1}{2V}(\beta-m)^{2}=\text{const}-\frac{1}{2V}(\beta^{2}-2m\beta+m^{2}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Comparing with the expression above,
+ we identify
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{1}{V_{\text{post}}}=\lambda_{0}+\lambda S_{xx},\qquad\frac{m_{\text{post}}}{V_{\text{post}}}=\lambda_{0}\mu_{0}+\lambda S_{xy}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Therefore
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+V_{\text{post}}=\frac{1}{\lambda_{0}+\lambda S_{xx}}=\frac{1}{\frac{1}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}^{2}},\quad m_{\text{post}}=V_{\text{post}}\left(\lambda_{0}\mu_{0}+\lambda S_{xy}\right)=\frac{\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}y_{t}}{\frac{1}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}^{2}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Hence
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boxed{\beta\mid y_{1:T},x_{1:T},\sigma^{2}\sim\mathcal{N}\!\left(m_{\text{post}},V_{\text{post}}\right)}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+with
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\boxed{V_{\text{post}}=\left(\frac{1}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}^{2}\right)^{-1},\qquad m_{\text{post}}=V_{\text{post}}\left(\frac{\mu_{0}}{\sigma_{0}^{2}}+\frac{1}{\sigma^{2}}\sum_{t=1}^{T}x_{t}y_{t}\right).}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

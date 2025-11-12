@@ -74,18 +74,14 @@ function results = func_nkpc_hsa_decomp(pi_data, pi_prev_data, Epi_data, x_data,
     sigma_v2  = getd(opts,'sigma_v20',  1.0);
     sigma_eps2= getd(opts,'sigma_eps20',0.5);
     sigma_eta2= getd(opts,'sigma_eta20',0.1);
-
     seed      = getd(opts,'seed',       []);
     verbose   = getd(opts,'verbose',    true);
     store_every = max(1, getd(opts,'store_every', 1));
-
-    constrain_alpha   = getd(opts,'constrain_alpha', false);
     enforce_station   = getd(opts,'enforce_stationary', true);
     r_target_scale    = getd(opts,'r_target_scale', 0.1);
     r_rw_scale        = getd(opts,'r_rw_scale',     0.1);
 
     if ~isempty(seed), rng(seed); end
-
     %% Initialize states by simple smoothing of N_obs
     Nbar = zeros(T,1);
     Nbar(1:min(2,T)) = N_obs(1:min(2,T));
@@ -107,7 +103,6 @@ function results = func_nkpc_hsa_decomp(pi_data, pi_prev_data, Epi_data, x_data,
     % Thinned state storage (diagnostics)
     Nbar_draws = zeros(n_store, T);
     Nhat_draws = zeros(n_store, T);
-
     if verbose
         fprintf('Gibbs start: burn-in=%d, keep=%d (thin=%d)\n', n_burn, n_keep, store_every);
     end
@@ -115,7 +110,6 @@ function results = func_nkpc_hsa_decomp(pi_data, pi_prev_data, Epi_data, x_data,
     %% Gibbs
     total_iter = n_burn + n_keep;
     store_idx = 0;
-
     for iter = 1:total_iter
         % ---- NKPC: π_t = α π_{t-1} + (1−α)Eπ_{t+1} + κ x_t − θ N̂_t + v_t
         % alpha | .
@@ -293,40 +287,37 @@ end
 %% FFBS for AR(2) with external noise scaling
 function Nhat_new = sample_ar2_states_ffbs_ext(y_target, rho1, rho2, sigma_eps2, ...
     pi_t, alpha, pi_tm1, E_pi_tp1, kappa, x_t, theta, sigma_v2, r_target_scale)
-
     T = length(y_target);
     if T < 3, Nhat_new = y_target; return; end
-
     F = [rho1, rho2; 1, 0];
     Q = [sigma_eps2, 0; 0, 0];
     m = zeros(2,T); P = zeros(2,2,T);
     m_pred = zeros(2,T); P_pred = zeros(2,2,T);
-
+    % State vector is [N̂_t; N̂_{t-1}]
+    % Initialize: state at t=1 is [N̂_1; 0] where 0 represents N̂_0
     m(:,1) = [y_target(1); 0];
     P(:,:,1) = eye(2)*10;
-
     for t=2:T
         if t>2
+            % AR(2) dynamics apply: [N̂_t; N̂_{t-1}] = F * [N̂_{t-1}; N̂_{t-2}] + [ε_t; 0]
             m_pred(:,t) = F*m(:,t-1);
             P_pred(:,:,t) = F*P(:,:,t-1)*F' + Q;
         else
+            % For t=2, AR(2) doesn't apply yet (need N̂_0). 
+            % Just propagate uncertainty forward. Observation will update m(:,2).
             m_pred(:,t) = m(:,t-1);
             P_pred(:,:,t) = P(:,:,t-1);
         end
-
         % Observation 1: target proxy Nhat ~ y_target (small noise)
         H1 = [1,0];
         R1 = sigma_eps2 * r_target_scale;
-
         % Observation 2: NKPC-implied relation for Nhat_t
         nkpc_obs = alpha*pi_tm1(t) + (1-alpha)*E_pi_tp1(t) + kappa*x_t(t) - pi_t(t);
         H2 = [theta, 0];
         R2 = sigma_v2;
-
         H = [H1; H2];
         y = [y_target(t); nkpc_obs];
         R = diag([R1, R2]);
-
         S = H * P_pred(:,:,t) * H' + R;
         K = P_pred(:,:,t) * H' / S;
         m(:,t) = m_pred(:,t) + K*(y - H*m_pred(:,t));
@@ -335,15 +326,20 @@ function Nhat_new = sample_ar2_states_ffbs_ext(y_target, rho1, rho2, sigma_eps2,
 
     % Backward sampling
     Nhat_states = zeros(2,T);
+    % last period
     Nhat_states(:,T) = mvnrnd(m(:,T), force_pd(P(:,:,T)))';
+    % we can treat smoothed moments as current draw for t+1
+    C_s_next = P(:,:,T);  % smoothed covariance at T is just P(:,:,T)
     for t = T-1:-1:1
-        if t>=2
+        if t >= 2
             A = P(:,:,t) * F' / P_pred(:,:,t+1);
             m_s = m(:,t) + A*(Nhat_states(:,t+1) - m_pred(:,t+1));
-            P_s = P(:,:,t) - A*(P_pred(:,:,t+1) - P(:,:,t))*A';
+            P_s = P(:,:,t) - A*(P_pred(:,:,t+1) - C_s_next)*A';
             Nhat_states(:,t) = mvnrnd(m_s, force_pd(P_s))';
+            C_s_next = P_s;  % pass smoothed covariance backward
         else
             Nhat_states(:,t) = Nhat_states(:,t+1);
+            % you could also update C_s_next here if needed
         end
     end
     Nhat_new = Nhat_states(1,:)';
@@ -353,10 +349,8 @@ end
 function Nbar_new = sample_rw_states_ffbs_ext(y_target, n_drift, sigma_eta2, r_rw_scale)
     T = length(y_target);
     if T < 2, Nbar_new = y_target; return; end
-
     m = zeros(T,1); P = zeros(T,1);
     m(1) = y_target(1); P(1) = 10;
-
     for t=2:T
         m_pred = n_drift + m(t-1);
         P_pred = P(t-1) + sigma_eta2;
@@ -365,7 +359,6 @@ function Nbar_new = sample_rw_states_ffbs_ext(y_target, n_drift, sigma_eta2, r_r
         m(t) = m_pred + K*(y_target(t) - m_pred);
         P(t) = (1-K)*P_pred;
     end
-
     Nbar_new = zeros(T,1);
     Nbar_new(T) = m(T) + sqrt(max(P(T),1e-8))*randn;
     for t = T-1:-1:1

@@ -14,8 +14,8 @@ opts.store_every = 2;
 opts.r_target_scale = 0.05;
 opts.r_rw_scale = 0.05;
 
-sample = 4000;
-burn_in = 1000;
+sample = 15000;
+burn_in = 5000;
 sigma_list = [0.1, 0.2, 0.5, 1, 10, 100];
 for s = sigma_list
     fprintf("=== Running Gibbs with sigma = %.2f ===\n", s);

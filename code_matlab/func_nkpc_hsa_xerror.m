@@ -72,9 +72,7 @@ function results = func_nkpc_hsa_xerror(pi_data, pi_prev_data, Epi_data, x_data,
     seed      = getd(opts,'seed',       []);
     verbose   = getd(opts,'verbose',    true);
     store_every = max(1, getd(opts,'store_every', 1));
-    constrain_alpha = getd(opts,'constrain_alpha', false);
     if ~isempty(seed), rng(seed); end
-
     %% Initialize latent x_star
     x_star = x_t;  % Start from observed values
 

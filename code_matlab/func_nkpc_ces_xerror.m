@@ -1,15 +1,14 @@
 function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data, n_burn, n_keep, priors, opts)
 % Estimates NKPC CES parameters (alpha, kappa, sigma_v^2, sigma_u^2) via Gibbs sampling
 % with i.i.d. measurement error in x: x_t = x*_t + u_t, u_t ~ N(0, sigma_u^2)
-%
 % Priors and options are supplied externally.
-%
+
 % priors fields (all optional, defaults in parentheses):
 %   mu_alpha(0.5), sigma_alpha(0.2)
 %   mu_kappa(0.0), sigma_kappa(0.5)
 %   a_sig(2.0), b_sig(2.0)   % Inv-Gamma(shape=a_sig, scale=b_sig) for sigma_v^2
 %   a_sigu(2.0), b_sigu(0.5) % Inv-Gamma(shape=a_sigu, scale=b_sigu) for sigma_u^2
-%
+
 % opts fields (all optional):
 %   alpha0(0.5), kappa0(0.1), sigma_v20(0.1), sigma_u20(0.01)
 %   seed([] -> no rng set), constrain_alpha(false), verbose(true), store_every(1)
@@ -19,12 +18,10 @@ function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data,
     pi_tm1   = pi_prev_data(:);
     E_pi_tp1 = Epi_data(:);
     x_obs    = x_data(:);  % observed x with measurement error
-
     T_obs = numel(pi_t);
     if any([numel(pi_tm1), numel(E_pi_tp1), numel(x_obs)] ~= T_obs)
         error('Input vectors must have the same length.');
     end
-
     %% Priors (with safe defaults)
     if nargin < 7 || isempty(priors), priors = struct(); end
     mu_alpha    = getfield_with_default(priors, 'mu_alpha',    0.5);
@@ -35,11 +32,9 @@ function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data,
     b_sig       = getfield_with_default(priors, 'b_sig',       2.0);
     a_sigu      = getfield_with_default(priors, 'a_sigu',      2.0);
     b_sigu      = getfield_with_default(priors, 'b_sigu',      0.5);
-
     if sigma_alpha <= 0 || sigma_kappa <= 0 || a_sig <= 0 || b_sig <= 0 || a_sigu <= 0 || b_sigu <= 0
         error('Prior hyperparameters must be positive where applicable.');
     end
-
     %% Options
     if nargin < 8 || isempty(opts), opts = struct(); end
     alpha    = getfield_with_default(opts, 'alpha0',    0.5);
@@ -50,18 +45,14 @@ function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data,
     constrain_alpha = getfield_with_default(opts, 'constrain_alpha', false);
     verbose = getfield_with_default(opts, 'verbose', true);
     store_every = max(1, getfield_with_default(opts, 'store_every', 1));
-
     if ~isempty(seed), rng(seed); end
-
     % Initialize latent x* at observed values
     x_star = x_obs;
-
     if verbose
         fprintf('Initial: alpha=%.3f, kappa=%.3f, sigma_v2=%.3f, sigma_u2=%.4f\n', ...
                 alpha, kappa, sigma_v2, sigma_u2);
         fprintf('Burn-in: %d, Keep: %d (store every %d)\n', n_burn, n_keep, store_every);
     end
-
     %% Storage
     n_store = ceil(n_keep / store_every);
     alpha_draws   = zeros(n_store,1);
@@ -69,48 +60,37 @@ function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data,
     sigma_v_draws = zeros(n_store,1);
     sigma_u_draws = zeros(n_store,1);
     x_star_draws  = zeros(n_store, T_obs);  % store latent x*
-
     store_idx = 0;
-
     %% Gibbs
     total_iter = n_burn + n_keep;
     for iter = 1:total_iter
-
         % ---- Sample x*_t | alpha, kappa, sigma_v2, sigma_u2, data (for each t)
         % Posterior for x*_t is normal:
         % From NKPC: π_t - α π_{t-1} - (1-α)E[π_{t+1}] = κ x*_t + v_t
         % From measurement: x_obs_t = x*_t + u_t
-        
         for t = 1:T_obs
             % Precision from measurement equation
             prec_u = 1/sigma_u2;
-            
             % Precision from structural equation
             prec_v = kappa^2 / sigma_v2;
-            
             % Posterior precision and variance
             post_prec_x = prec_u + prec_v;
-            post_var_x = 1 / post_prec_x;
-            
+            post_var_x = 1 / post_prec_x;          
             % Posterior mean
             y_resid = pi_t(t) - alpha * pi_tm1(t) - (1 - alpha) * E_pi_tp1(t);
-            post_mean_x = post_var_x * (prec_u * x_obs(t) + (kappa / sigma_v2) * y_resid);
-            
+            post_mean_x = post_var_x * (prec_u * x_obs(t) + (kappa / sigma_v2) * y_resid);            
             x_star(t) = post_mean_x + sqrt(post_var_x) * randn;
         end
 
         % ---- Sample alpha | kappa, sigma_v2, x*, data
         y_alpha = pi_t - E_pi_tp1 - kappa .* x_star;
         X_alpha = pi_tm1 - E_pi_tp1;
-
         prior_prec_a = 1/(sigma_alpha^2);
         data_prec_a  = (X_alpha' * X_alpha) / sigma_v2;
         post_prec_a  = prior_prec_a + data_prec_a;
         post_var_a   = 1 / post_prec_a;
         post_mean_a  = post_var_a * (prior_prec_a * mu_alpha + (X_alpha' * y_alpha) / sigma_v2);
-
         alpha_draw = post_mean_a + sqrt(post_var_a) * randn;
-
         if constrain_alpha
             max_trials = 10000;
             trials = 0;
@@ -123,31 +103,25 @@ function results = func_nkpc_ces_xerror(pi_data, pi_prev_data, Epi_data, x_data,
             end
         end
         alpha = alpha_draw;
-
         % ---- Sample kappa | alpha, sigma_v2, x*, data
         y_kappa = pi_t - alpha .* pi_tm1 - (1 - alpha) .* E_pi_tp1;
         X_kappa = x_star;
-
         prior_prec_k = 1/(sigma_kappa^2);
         data_prec_k  = (X_kappa' * X_kappa) / sigma_v2;
         post_prec_k  = prior_prec_k + data_prec_k;
         post_var_k   = 1 / post_prec_k;
         post_mean_k  = post_var_k * (prior_prec_k * mu_kappa + (X_kappa' * y_kappa) / sigma_v2);
-
         kappa = post_mean_k + sqrt(post_var_k) * randn;
-
         % ---- Sample sigma_v^2 | alpha, kappa, x*, data
         resid = pi_t - alpha .* pi_tm1 - (1 - alpha) .* E_pi_tp1 - kappa .* x_star;
         a_post_v = a_sig + T_obs/2;
         b_post_v = b_sig + 0.5 * sum(resid.^2);
         sigma_v2 = 1 / gamrnd(a_post_v, 1/b_post_v);
-
         % ---- Sample sigma_u^2 | x*, data
         resid_u = x_obs - x_star;
         a_post_u = a_sigu + T_obs/2;
         b_post_u = b_sigu + 0.5 * sum(resid_u.^2);
         sigma_u2 = 1 / gamrnd(a_post_u, 1/b_post_u);
-
         % ---- Store after burn-in (with thinning)
         if iter > n_burn
             if mod(iter - n_burn, store_every) == 0
