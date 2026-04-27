@@ -1,0 +1,174 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children no
+\language american
+\language_package default
+\inputencoding utf8
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tablestyle default
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content true
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Section*
+Slope of NKPC and the competition
+\end_layout
+
+\begin_layout Standard
+NKPC under HSA is written as
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi_{t}=\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\frac{1}{\chi}\left[-\frac{s'(z)z}{s(z)}\right]x_{t}+\frac{1}{\chi}\left[\frac{s'(z)z}{s(z)}-\frac{\frac{s''(z)z}{s'(z)}}{1-\frac{s(z)}{s'(z)z}}\right]\hat{z}_{t}+v_{t}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+From the symmetric equilibrium,
+ the market share is expressed by
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+s(\frac{p_{t}}{A_{t}})=s(z_{t})=\frac{1}{N_{t}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Then,
+ 
+\begin_inset Formula 
+\[
+\hat{N}_{t}=-\frac{s'(z)z}{s(z)}\hat{z_{t}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\pi_{t}=\alpha\pi_{t-1}+(1-\alpha)\mathbb{E}_{t}\pi_{t+1}+\underset{\kappa}{\underbrace{\frac{\zeta(z)-1}{\chi}}}x_{t}-\underset{\theta}{\underbrace{\frac{1-\rho(z)}{\rho(z)\chi}}}\hat{N}_{t}+v_{t}
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\zeta(z)=1-\frac{s'(z)z}{s(z)}:$
+\end_inset
+
+ the price elasticity function 
+\begin_inset Formula $\zeta(z)>1$
+\end_inset
+
+ ,
+ 
+\begin_inset Formula $\rho(z)=\left[1-\frac{d\ln\!\left(\frac{\zeta(z)}{\zeta(z)-1}\right)}{d\ln(z)}\right]^{-1}$
+\end_inset
+
+:
+ path-through rate function
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+N\downarrow(concentration)\longrightarrow s\uparrow(share)\longrightarrow z\downarrow\longrightarrow\zeta(z)\downarrow\longrightarrow\frac{\zeta(z)-1}{\chi}\downarrow=\kappa\downarrow
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
