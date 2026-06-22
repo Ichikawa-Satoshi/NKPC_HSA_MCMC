@@ -1,0 +1,140 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{float}
+\geometry{margin=1in}
+\title{NKPC HSA Bayesian State-Space Estimation: Unemployment gap}
+\author{}
+\date{\today}
+\begin{document}
+\maketitle
+
+\section{Data and Transformations}
+Raw data are read from \texttt{data/raw/}. Processed model-ready data are written to
+\texttt{data/processed/}. The HSA competition aggregator convention is
+$N_t = 100\log(N^{level}_t)$ unless a run metadata file explicitly states
+that the series was already transformed.
+
+\section{Model Specifications}
+The CES benchmark is
+\[
+\pi_t=\alpha \pi_{t-1}+(1-\alpha)E_t\pi_{t+1}+\kappa x_t+e_t.
+\]
+The dynamic HSA specification is
+\[
+\pi_t=\alpha \pi_{t-1}+(1-\alpha)E_t\pi_{t+1}+\kappa x_t-\theta\hat N_t+e_t.
+\]
+The steady HSA specification is
+\[
+\pi_t=\alpha \pi_{t-1}+(1-\alpha)E_t\pi_{t+1}+(\kappa_0+\delta\bar N_t)x_t+e_t.
+\]
+The both-effects HSA specification is
+\[
+\pi_t=\alpha \pi_{t-1}+(1-\alpha)E_t\pi_{t+1}
++(\kappa_0+\delta\bar N_t)x_t-(\theta_0+\gamma\bar N_t)\hat N_t+e_t.
+\]
+The maintained HSA decomposition is
+\[
+N_t=\hat N_t+\bar N_t,\quad
+\hat N_t=\rho_1\hat N_{t-1}+\rho_2\hat N_{t-2}+u_t,\quad
+\bar N_t=n+\bar N_{t-1}+\epsilon_t.
+\]
+
+\section{Unit and Covariance Conventions}
+Priors for \(\kappa\), \(\kappa_0\), and \(\delta\) are specified in
+physical units. Legacy Gibbs samplers internally use \texttt{KAPPA\_SCALE=100}
+when the design matrix contains \(x_t/100\). All posterior draws, tables,
+figures, SDDR calculations, and model-comparison summaries are reported in
+physical units. The default dynamic-HSA shock covariance allows only
+\((e_t,\zeta_t)\) correlation; diagonal and historical full covariance modes
+are available only through explicit run metadata.
+
+\section{Prior Specifications}
+Baseline, weak, and tight priors are stored in \texttt{configs/}. Robustness
+tables below summarize whether conclusions for \(\delta\), \(\theta\), and
+\(\gamma\) change across these choices.
+
+\section{1. Posterior Mean Coefficients}
+This section reports posterior means and credible intervals for the main scalar
+coefficients in each estimated run.
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/coefficient_means.tex}}
+\end{center}
+
+\section{2. Kappa Comparison Across Models}
+For CES models this is \(\kappa\). For steady or full HSA models the table also
+reports \(\kappa_0\), \(\delta\), and the average path of
+\(\kappa_t=\kappa_0+\delta\bar N_t\) when available.
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/kappa_model_comparison.tex}}
+\end{center}
+\begin{center}
+\includegraphics[width=0.85\textwidth]{../figures/unemployment_gap/kappa_model_comparison.png}
+\end{center}
+
+\section{3. Time-Varying Coefficient Paths}
+The main time-varying coefficients are \(\kappa_t\) and, in the both-effects
+model, \(\theta_t=\theta_0+\gamma\bar N_t\).
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/time_varying_coefficients.tex}}
+\end{center}
+\begin{center}
+\includegraphics[width=0.85\textwidth]{../figures/unemployment_gap/kappa_t_path.png}
+\includegraphics[width=0.85\textwidth]{../figures/unemployment_gap/theta_t_path.png}
+\end{center}
+
+\section{4. Model Fit and Model Comparison}
+Model fit is summarized by posterior predictive scores, Chib marginal
+likelihoods when available, Bayes factors, and SDDR restrictions.
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../model_comparison/unemployment_gap/model_comparison.tex}}
+\end{center}
+
+\section{5. Prior vs Posterior and Savage-Dickey Density Ratios}
+The figures compare baseline priors with posterior densities. The SDDR table
+reports Bayes factors for point restrictions such as \(\delta=0\),
+\(\theta=0\), and \(\gamma=0\), when the corresponding posterior draws exist.
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/sddr.tex}}
+\end{center}
+\begin{center}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_kappa.png}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_kappa_0.png}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_delta.png}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_theta.png}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_theta_0.png}
+\includegraphics[width=0.48\textwidth]{../figures/unemployment_gap/prior_posterior_gamma.png}
+\end{center}
+
+\section{Diagnostics and Robustness}
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/mcmc_diagnostics.tex}}
+\end{center}
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/prior_robustness.tex}}
+\end{center}
+\begin{center}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/unemployment_gap/period_robustness.tex}}
+\end{center}
+
+\section{Posterior Predictive Checks and Figures}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{../figures/unemployment_gap/posterior_predictive_placeholder.png}
+\end{center}
+
+\section{Notes}
+WAIC and LOO are not used as primary criteria because the models contain
+latent states. Chib marginal likelihoods are reported only when the legacy
+ordinate calculation can be matched to the sampler units and supplied data.
+
+\end{document}

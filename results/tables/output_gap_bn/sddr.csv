@@ -1,0 +1,16 @@
+run,model,restriction,prior_mean,prior_sd,sddr_bf01
+ces_output_gap_bn_baseline_20260622_131732,ces,kappa=0,0.1,0.2,2.3727173161959167
+hsa_dynamic_output_gap_bn_baseline_20260622_131735,hsa_dynamic,kappa=0,0.1,0.2,1.0740447443322254
+hsa_dynamic_output_gap_bn_baseline_20260622_131735,hsa_dynamic,theta=0,0.1,0.2,6.439249277151561
+hsa_full_output_gap_bn_baseline_20260622_131737,hsa_full,kappa_0=0,0.1,0.2,0.5349383254578427
+hsa_full_output_gap_bn_baseline_20260622_131737,hsa_full,delta=0,0.1,0.2,126.73569786334475
+hsa_full_output_gap_bn_baseline_20260622_131737,hsa_full,theta_0=0,0.1,0.2,1.1347844159526659
+hsa_full_output_gap_bn_baseline_20260622_131737,hsa_full,gamma=0,0.1,0.2,243.60099725938215
+hsa_steady_output_gap_bn_baseline_20260622_131733,hsa_steady,kappa_0=0,0.1,0.2,0.6104141743725129
+hsa_steady_output_gap_bn_baseline_20260622_131733,hsa_steady,delta=0,0.1,0.2,165.3272477232953
+hsa_steady_output_gap_bn_baseline_20260622_132042,hsa_steady,kappa_0=0,0.1,0.2,0.6104141743725129
+hsa_steady_output_gap_bn_baseline_20260622_132042,hsa_steady,delta=0,0.1,0.2,165.3272477232953
+hsa_steady_output_gap_bn_tight_20260622_132047,hsa_steady,kappa_0=0,0.1,0.2,0.6488695986940178
+hsa_steady_output_gap_bn_tight_20260622_132047,hsa_steady,delta=0,0.1,0.2,231.3718879169593
+hsa_steady_output_gap_bn_weak_20260622_132044,hsa_steady,kappa_0=0,0.1,0.2,0.34105679756971097
+hsa_steady_output_gap_bn_weak_20260622_132044,hsa_steady,delta=0,0.1,0.2,68.85002804212668

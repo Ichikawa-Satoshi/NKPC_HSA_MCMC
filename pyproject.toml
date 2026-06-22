@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nkpc-hsa-mcmc"
+version = "0.1.0"
+description = "Bayesian state-space MCMC workflows for CES and HSA NKPC models."
+requires-python = ">=3.10"
+dependencies = [
+    "arviz",
+    "matplotlib",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "pyyaml",
+    "scipy",
+    "xarray",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

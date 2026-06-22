@@ -1,0 +1,16 @@
+run,model,restriction,prior_mean,prior_sd,sddr_bf01
+ces_inv_markup_baseline_20260622_131545,ces,kappa=0,0.1,0.2,2.0791091531355796
+hsa_dynamic_inv_markup_baseline_20260622_131549,hsa_dynamic,kappa=0,0.1,0.2,1.378310516170204
+hsa_dynamic_inv_markup_baseline_20260622_131549,hsa_dynamic,theta=0,0.1,0.2,4.547112107728995
+hsa_full_inv_markup_baseline_20260622_131551,hsa_full,kappa_0=0,0.1,0.2,0.890531310136439
+hsa_full_inv_markup_baseline_20260622_131551,hsa_full,delta=0,0.1,0.2,158.54918424577573
+hsa_full_inv_markup_baseline_20260622_131551,hsa_full,theta_0=0,0.1,0.2,0.8676504650538165
+hsa_full_inv_markup_baseline_20260622_131551,hsa_full,gamma=0,0.1,0.2,180.6376441011213
+hsa_steady_inv_markup_baseline_20260622_131547,hsa_steady,kappa_0=0,0.1,0.2,1.145008609384168
+hsa_steady_inv_markup_baseline_20260622_131547,hsa_steady,delta=0,0.1,0.2,144.31154896029622
+hsa_steady_inv_markup_baseline_20260622_132032,hsa_steady,kappa_0=0,0.1,0.2,1.145008609384168
+hsa_steady_inv_markup_baseline_20260622_132032,hsa_steady,delta=0,0.1,0.2,144.31154896029622
+hsa_steady_inv_markup_tight_20260622_132037,hsa_steady,kappa_0=0,0.1,0.2,1.029775661495683
+hsa_steady_inv_markup_tight_20260622_132037,hsa_steady,delta=0,0.1,0.2,178.8126104459914
+hsa_steady_inv_markup_weak_20260622_132035,hsa_steady,kappa_0=0,0.1,0.2,0.36721811664178944
+hsa_steady_inv_markup_weak_20260622_132035,hsa_steady,delta=0,0.1,0.2,67.15584640779404

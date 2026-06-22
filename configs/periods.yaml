@@ -1,0 +1,22 @@
+min_obs: 40
+periods:
+  full:
+    start:
+    end:
+  pre_2008:
+    start:
+    end: "2007-12-31"
+  post_2008:
+    start: "2009-01-01"
+    end:
+  exclude_covid:
+    start:
+    end:
+    exclude:
+      - ["2020-01-01", "2021-12-31"]
+  start_1988:
+    start: "1988-01-01"
+    end:
+  end_2019:
+    start:
+    end: "2019-12-31"

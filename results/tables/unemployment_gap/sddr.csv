@@ -1,0 +1,16 @@
+run,model,restriction,prior_mean,prior_sd,sddr_bf01
+ces_unemployment_gap_baseline_20260622_131739,ces,kappa=0,0.1,0.2,2.0389427536556988
+hsa_dynamic_unemployment_gap_baseline_20260622_131740,hsa_dynamic,kappa=0,0.1,0.2,0.1520273741240412
+hsa_dynamic_unemployment_gap_baseline_20260622_131740,hsa_dynamic,theta=0,0.1,0.2,0.5418272968953233
+hsa_full_unemployment_gap_baseline_20260622_131742,hsa_full,kappa_0=0,0.1,0.2,1.0682771761452876
+hsa_full_unemployment_gap_baseline_20260622_131742,hsa_full,delta=0,0.1,0.2,187.38432258752815
+hsa_full_unemployment_gap_baseline_20260622_131742,hsa_full,theta_0=0,0.1,0.2,0.9029018349439699
+hsa_full_unemployment_gap_baseline_20260622_131742,hsa_full,gamma=0,0.1,0.2,204.98165277570877
+hsa_steady_unemployment_gap_baseline_20260622_131739,hsa_steady,kappa_0=0,0.1,0.2,0.9013211230426992
+hsa_steady_unemployment_gap_baseline_20260622_131739,hsa_steady,delta=0,0.1,0.2,201.9448540971459
+hsa_steady_unemployment_gap_baseline_20260622_132052,hsa_steady,kappa_0=0,0.1,0.2,0.9013211230426992
+hsa_steady_unemployment_gap_baseline_20260622_132052,hsa_steady,delta=0,0.1,0.2,201.9448540971459
+hsa_steady_unemployment_gap_tight_20260622_132056,hsa_steady,kappa_0=0,0.1,0.2,1.9887754832896927
+hsa_steady_unemployment_gap_tight_20260622_132056,hsa_steady,delta=0,0.1,0.2,421.1821927534513
+hsa_steady_unemployment_gap_weak_20260622_132053,hsa_steady,kappa_0=0,0.1,0.2,0.09284783818851428
+hsa_steady_unemployment_gap_weak_20260622_132053,hsa_steady,delta=0,0.1,0.2,8.44996449721363

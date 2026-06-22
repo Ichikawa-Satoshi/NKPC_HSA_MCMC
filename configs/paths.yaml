@@ -1,0 +1,11 @@
+raw_data_dir: data/raw
+processed_data: data/processed/model_ready.csv
+runs_dir: results/runs
+tables_dir: results/tables
+figures_dir: results/figures
+diagnostics_dir: results/diagnostics
+prior_robustness_dir: results/prior_robustness
+period_robustness_dir: results/period_robustness
+model_comparison_dir: results/model_comparison
+report_tex: reports/main.tex
+report_pdf: results/report/main.pdf
