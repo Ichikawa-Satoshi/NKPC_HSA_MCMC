@@ -12,7 +12,7 @@ import pandas as pd
 import yaml
 
 from nkpc_hsa.data.load import load_processed_dataset
-from nkpc_hsa.data.transforms import transform_competition_series
+from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM, competition_transform_note, transform_competition_series
 from nkpc_hsa.models.common import (
     KAPPA_SCALE,
     KAPPA_UNIT_NOTE,
@@ -34,6 +34,7 @@ class RunMetadata:
     chains: int
     seed: int
     n_transform: str
+    period: str = "full"
     covariance_structure: str = "e_zeta_only"
     constraint_spec: str = "unrestricted"
     coefficient_constraints: Mapping[str, Any] | None = None
@@ -209,6 +210,8 @@ def _run_sampler(
     n_transform: str,
     covariance_structure: str,
     coefficient_constraints: Mapping[str, Any] | None,
+    enforce_stationary: bool = True,
+    ar2_max_tries: int = 2000,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     from nkpc_hsa.models.ces import func_nkpc_ces
     from nkpc_hsa.models.hsa_dynamic import func_nkpc_hsa_decomp
@@ -247,6 +250,8 @@ def _run_sampler(
                 "store_every": thin,
                 "verbose": False,
                 "coefficient_constraints": constraints_internal,
+                "enforce_stationary": enforce_stationary,
+                "ar2_max_tries": ar2_max_tries,
             },
         }
         if model == "hsa_dynamic":
@@ -278,9 +283,12 @@ def run_model(
     chains: int = 2,
     seed: int = 12345,
     orth: bool = False,
-    n_transform: str = "log100",
+    n_transform: str = DEFAULT_N_TRANSFORM,
+    period_name: str = "full",
     covariance_structure: str = "e_zeta_only",
     coefficient_constraints: Mapping[str, Any] | None = None,
+    enforce_stationary: bool = True,
+    ar2_max_tries: int = 2000,
     run_id: str | None = None,
     run_dir: str | Path | None = None,
     save: bool = True,
@@ -317,6 +325,7 @@ def run_model(
         chains=chains,
         seed=seed,
         n_transform=n_transform,
+        period=period_name,
         covariance_structure=covariance_structure,
         constraint_spec=constraint_spec,
         coefficient_constraints=dict(coefficient_constraints or {}),
@@ -334,6 +343,8 @@ def run_model(
         n_transform=n_transform,
         covariance_structure=covariance_structure,
         coefficient_constraints=coefficient_constraints,
+        enforce_stationary=enforce_stationary,
+        ar2_max_tries=ar2_max_tries,
     )
     meta = {
         **metadata.__dict__,
@@ -342,7 +353,10 @@ def run_model(
         "sample_start": sample_start,
         "sample_end": sample_end,
         "kappa_unit_note": KAPPA_UNIT_NOTE,
+        "n_transform_note": competition_transform_note(n_transform),
         "coefficient_constraints": dict(coefficient_constraints or {}),
+        "enforce_stationary": enforce_stationary,
+        "ar2_max_tries": ar2_max_tries,
         "extra": extra_meta,
     }
     idata = _to_idata(posterior, meta)

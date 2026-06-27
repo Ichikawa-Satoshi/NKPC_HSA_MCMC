@@ -8,6 +8,7 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
+from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.diagnostics import save_diagnostics
 from nkpc_hsa.report.tables import write_latex_fragment
 
@@ -26,13 +27,17 @@ def main() -> None:
     parser.add_argument("--all-runs", action="store_true", help="Diagnose every run in runs-dir, including robustness period runs.")
     args = parser.parse_args()
     selected_specs = None
+    config = load_model_config(args.config)
+    n_transform = str(config.get("defaults", {}).get("n_transform", DEFAULT_N_TRANSFORM))
     if not args.all_runs:
-        selected_specs = set(configured_data_specs(load_model_config(args.config), args.data_specs))
+        selected_specs = set(configured_data_specs(config, args.data_specs))
     rows = []
     for posterior in sorted(Path(args.runs_dir).glob("*/posterior.nc")):
         idata = az.from_netcdf(posterior)
         data_spec = str(getattr(idata, "attrs", {}).get("data_spec", ""))
         if selected_specs is not None and data_spec not in selected_specs:
+            continue
+        if not args.all_runs and str(getattr(idata, "attrs", {}).get("n_transform", "")) != n_transform:
             continue
         run_name = posterior.parent.name
         summary = save_diagnostics(idata, Path(args.out_dir) / run_name)
@@ -42,8 +47,10 @@ def main() -> None:
             summary.insert(2, "data_spec", data_spec)
             summary.insert(3, "prior_spec", getattr(idata, "attrs", {}).get("prior_spec", ""))
             summary.insert(4, "constraint_spec", getattr(idata, "attrs", {}).get("constraint_spec", "unrestricted"))
+            summary.insert(5, "n_transform", getattr(idata, "attrs", {}).get("n_transform", ""))
             rows.append(summary)
     table = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+    (ROOT / "results" / "tables").mkdir(parents=True, exist_ok=True)
     table.to_csv(ROOT / "results" / "tables" / "mcmc_diagnostics.csv", index=False)
     write_latex_fragment(table if not table.empty else pd.DataFrame({"note": ["No diagnostics available."]}), ROOT / "results" / "tables" / "mcmc_diagnostics.tex")
 

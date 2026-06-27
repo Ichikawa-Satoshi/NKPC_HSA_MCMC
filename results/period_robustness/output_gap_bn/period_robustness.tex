@@ -1,24 +1,84 @@
-\begin{tabular}{lllllrlllrrr}
+\begin{tabular}{lllllrllllrrr}
 \toprule
-data\_spec & model & period & start & end & n\_obs & status & warning & parameter & mean & ci\_2.5 & ci\_97.5 \\
+data\_spec & model & period & start & end & n\_obs & status & warning & n\_transform & parameter & mean & ci\_2.5 & ci\_97.5 \\
 \midrule
-output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & alpha & 0.6552 & 0.5340 & 0.7545 \\
-output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & kappa\_0 & 0.1364 & -0.2435 & 0.4295 \\
-output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & delta & -0.0004 & -0.0017 & 0.0016 \\
-output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & alpha & 0.7245 & 0.6135 & 0.8498 \\
-output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & kappa\_0 & 0.1203 & -0.1578 & 0.4917 \\
-output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & delta & -0.0003 & -0.0023 & 0.0013 \\
-output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & alpha & 0.5262 & 0.3525 & 0.7181 \\
-output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & kappa\_0 & 0.1355 & -0.2710 & 0.6127 \\
-output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & delta & 0.0005 & -0.0024 & 0.0027 \\
-output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & alpha & 0.6724 & 0.5628 & 0.7488 \\
-output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & kappa\_0 & 0.1573 & -0.1098 & 0.4860 \\
-output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & delta & -0.0005 & -0.0020 & 0.0009 \\
-output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & alpha & 0.6422 & 0.5231 & 0.7773 \\
-output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & kappa\_0 & 0.0971 & -0.2810 & 0.4612 \\
-output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & delta & -0.0001 & -0.0021 & 0.0017 \\
-output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & alpha & 0.6813 & 0.5703 & 0.7659 \\
-output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & kappa\_0 & 0.1099 & -0.1449 & 0.4737 \\
-output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & delta & -0.0003 & -0.0022 & 0.0012 \\
+output\_gap\_bn & ces & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6722 & 0.5564 & 0.7846 \\
+output\_gap\_bn & ces & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa & 0.0586 & -0.0250 & 0.1440 \\
+output\_gap\_bn & ces & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.7082 & 0.5706 & 0.8422 \\
+output\_gap\_bn & ces & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa & 0.0503 & -0.0416 & 0.1419 \\
+output\_gap\_bn & ces & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5343 & 0.2877 & 0.7757 \\
+output\_gap\_bn & ces & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa & 0.1707 & -0.0498 & 0.3839 \\
+output\_gap\_bn & ces & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6709 & 0.5519 & 0.7871 \\
+output\_gap\_bn & ces & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa & 0.0600 & -0.0247 & 0.1435 \\
+output\_gap\_bn & ces & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6412 & 0.5150 & 0.7745 \\
+output\_gap\_bn & ces & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa & 0.0834 & -0.0161 & 0.1860 \\
+output\_gap\_bn & ces & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6724 & 0.5545 & 0.7852 \\
+output\_gap\_bn & ces & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa & 0.0591 & -0.0237 & 0.1418 \\
+output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6573 & 0.5412 & 0.7708 \\
+output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa\_0 & 0.0461 & -0.0428 & 0.1326 \\
+output\_gap\_bn & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & delta & -0.0229 & -0.0559 & 0.0105 \\
+output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.7057 & 0.5728 & 0.8384 \\
+output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa\_0 & 0.0449 & -0.0538 & 0.1419 \\
+output\_gap\_bn & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & delta & -0.0188 & -0.0570 & 0.0206 \\
+output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5378 & 0.2990 & 0.7758 \\
+output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa\_0 & 0.1669 & -0.0538 & 0.3776 \\
+output\_gap\_bn & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & delta & 0.0008 & -0.0398 & 0.0399 \\
+output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6588 & 0.5418 & 0.7785 \\
+output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa\_0 & 0.0472 & -0.0454 & 0.1380 \\
+output\_gap\_bn & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & delta & -0.0230 & -0.0561 & 0.0110 \\
+output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6306 & 0.5031 & 0.7557 \\
+output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa\_0 & 0.0679 & -0.0382 & 0.1721 \\
+output\_gap\_bn & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & delta & -0.0184 & -0.0510 & 0.0157 \\
+output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6604 & 0.5449 & 0.7740 \\
+output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa\_0 & 0.0476 & -0.0445 & 0.1388 \\
+output\_gap\_bn & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & delta & -0.0228 & -0.0561 & 0.0102 \\
+output\_gap\_bn & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6362 & 0.5108 & 0.7583 \\
+output\_gap\_bn & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa & 0.0838 & -0.0094 & 0.1807 \\
+output\_gap\_bn & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & theta & 0.1174 & -0.3556 & 0.6462 \\
+output\_gap\_bn & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6245 & 0.4886 & 0.7657 \\
+output\_gap\_bn & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa & 0.0686 & -0.0215 & 0.1617 \\
+output\_gap\_bn & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & theta & 0.3838 & -0.2853 & 0.7256 \\
+output\_gap\_bn & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5501 & 0.3266 & 0.7676 \\
+output\_gap\_bn & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa & 0.1553 & -0.0464 & 0.3561 \\
+output\_gap\_bn & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & theta & 0.1200 & -0.3065 & 0.5508 \\
+output\_gap\_bn & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6294 & 0.5076 & 0.7499 \\
+output\_gap\_bn & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa & 0.0906 & -0.0021 & 0.1849 \\
+output\_gap\_bn & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & theta & 0.2118 & -0.3027 & 0.6683 \\
+output\_gap\_bn & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6016 & 0.4661 & 0.7340 \\
+output\_gap\_bn & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa & 0.1310 & 0.0102 & 0.2587 \\
+output\_gap\_bn & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & theta & 0.2762 & -0.1591 & 0.6295 \\
+output\_gap\_bn & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6290 & 0.5079 & 0.7472 \\
+output\_gap\_bn & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa & 0.0906 & -0.0002 & 0.1856 \\
+output\_gap\_bn & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & theta & 0.1933 & -0.3264 & 0.6561 \\
+output\_gap\_bn & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6043 & 0.4843 & 0.7254 \\
+output\_gap\_bn & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa\_0 & 0.0877 & -0.0088 & 0.1791 \\
+output\_gap\_bn & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & delta & -0.0219 & -0.0513 & 0.0148 \\
+output\_gap\_bn & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & theta\_0 & 0.0755 & -0.2828 & 0.5375 \\
+output\_gap\_bn & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & gamma & 0.0008 & -0.0361 & 0.0331 \\
+output\_gap\_bn & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6261 & 0.4768 & 0.7778 \\
+output\_gap\_bn & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa\_0 & 0.0588 & -0.0454 & 0.1632 \\
+output\_gap\_bn & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & delta & -0.0089 & -0.0439 & 0.0254 \\
+output\_gap\_bn & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & theta\_0 & 0.3229 & 0.0862 & 0.5826 \\
+output\_gap\_bn & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & gamma & -0.0055 & -0.0432 & 0.0339 \\
+output\_gap\_bn & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5356 & 0.2868 & 0.7671 \\
+output\_gap\_bn & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa\_0 & 0.1695 & -0.0413 & 0.3902 \\
+output\_gap\_bn & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & delta & 0.0009 & -0.0380 & 0.0414 \\
+output\_gap\_bn & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & theta\_0 & 0.0912 & -0.2895 & 0.4820 \\
+output\_gap\_bn & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & gamma & 0.0004 & -0.0386 & 0.0388 \\
+output\_gap\_bn & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6144 & 0.4963 & 0.7297 \\
+output\_gap\_bn & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa\_0 & 0.0960 & 0.0000 & 0.1911 \\
+output\_gap\_bn & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & delta & -0.0073 & -0.0463 & 0.0315 \\
+output\_gap\_bn & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & theta\_0 & 0.2333 & 0.0659 & 0.5118 \\
+output\_gap\_bn & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & gamma & -0.0100 & -0.0459 & 0.0296 \\
+output\_gap\_bn & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.5699 & 0.4324 & 0.7097 \\
+output\_gap\_bn & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa\_0 & 0.1404 & 0.0182 & 0.2742 \\
+output\_gap\_bn & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & delta & -0.0190 & -0.0539 & 0.0159 \\
+output\_gap\_bn & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & theta\_0 & 0.2839 & 0.0512 & 0.5312 \\
+output\_gap\_bn & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & gamma & -0.0053 & -0.0443 & 0.0330 \\
+output\_gap\_bn & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6179 & 0.4905 & 0.7380 \\
+output\_gap\_bn & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa\_0 & 0.0831 & -0.0128 & 0.1849 \\
+output\_gap\_bn & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & delta & -0.0201 & -0.0522 & 0.0143 \\
+output\_gap\_bn & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & theta\_0 & 0.0932 & -0.3328 & 0.5851 \\
+output\_gap\_bn & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & gamma & -0.0025 & -0.0432 & 0.0349 \\
 \bottomrule
 \end{tabular}

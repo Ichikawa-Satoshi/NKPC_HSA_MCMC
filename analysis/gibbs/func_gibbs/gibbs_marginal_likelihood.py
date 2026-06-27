@@ -7,7 +7,7 @@ from typing import Literal
 import numpy as np
 
 
-Family = Literal["ces", "dynamic", "steady"]
+Family = Literal["ces", "dynamic", "steady", "full"]
 
 
 @dataclass(frozen=True)
@@ -29,6 +29,19 @@ def _draws(ds, var: str) -> np.ndarray:
     if var not in ds:
         raise KeyError(f"Missing posterior variable: {var}")
     return np.asarray(ds[var], dtype=float).reshape(-1)
+
+
+def _lambda_ez_draws(ds) -> np.ndarray:
+    """Return lambda_ez draws, reconstructing them from stored correlations if needed."""
+    if "lambda_ez" in ds:
+        return _draws(ds, "lambda_ez")
+    sigma_e = _draws(ds, "sigma_e")
+    sigma_zeta = np.maximum(_draws(ds, "sigma_zeta"), 1e-12)
+    if "corr_e_zeta" in ds:
+        return _draws(ds, "corr_e_zeta") * sigma_e / sigma_zeta
+    if "rho" in ds:
+        return _draws(ds, "rho") * sigma_e / sigma_zeta
+    return np.zeros_like(sigma_e)
 
 
 def _state_draws(ds, var: str) -> np.ndarray:
@@ -114,7 +127,10 @@ def _kalman_loglik_n_only(star, data) -> float:
 def _sample_star(ds, vars_: list[str]) -> dict[str, float]:
     out: dict[str, float] = {}
     for var in vars_:
-        out[var] = float(np.nanmean(_draws(ds, var)))
+        if var == "lambda_ez":
+            out[var] = float(np.nanmean(_lambda_ez_draws(ds)))
+        else:
+            out[var] = float(np.nanmean(_draws(ds, var)))
     if "sigma_e" in out and "lambda_ez" in out and "sigma_zeta" in out:
         sigma_eta2_draws = _sigma_eta2_draws(ds)
         out["sigma_eta2"] = float(np.nanmean(sigma_eta2_draws))
@@ -130,7 +146,7 @@ def _sample_star(ds, vars_: list[str]) -> dict[str, float]:
 def _sigma_eta2_draws(ds) -> np.ndarray:
     sigma_e = _draws(ds, "sigma_e")
     sigma_zeta = _draws(ds, "sigma_zeta")
-    lambda_ez = _draws(ds, "lambda_ez")
+    lambda_ez = _lambda_ez_draws(ds)
     out = sigma_e**2 - (lambda_ez**2) * (sigma_zeta**2)
     return np.maximum(out, 1e-10)
 
@@ -150,6 +166,28 @@ def _steady_star(ds) -> dict[str, float]:
     return _sample_star(
         ds,
         ["alpha", "kappa_0", "delta", "phi_1", "lambda_ez", "rho_1", "rho_2", "n", "sigma_e", "sigma_zeta", "sigma_u", "sigma_eps"],
+    )
+
+
+def _full_star(ds) -> dict[str, float]:
+    return _sample_star(
+        ds,
+        [
+            "alpha",
+            "kappa_0",
+            "delta",
+            "theta_0",
+            "gamma",
+            "phi_1",
+            "lambda_ez",
+            "rho_1",
+            "rho_2",
+            "n",
+            "sigma_e",
+            "sigma_zeta",
+            "sigma_u",
+            "sigma_eps",
+        ],
     )
 
 
@@ -275,6 +313,13 @@ def _kalman_loglik_hsa_steady(star, data, *, obs_var_n: float = 1e-6) -> float:
     return float(loglik)
 
 
+def _full_conditional_state_star(ds) -> dict[str, np.ndarray]:
+    return {
+        "Nhat": np.nanmean(_state_draws(ds, "Nhat"), axis=0),
+        "Nbar": np.nanmean(_state_draws(ds, "Nbar"), axis=0),
+    }
+
+
 def _ces_log_likelihood(star, data) -> float:
     y = data["pi"] - data["pi_expect"]
     a_t = data["pi_prev"] - data["pi_expect"]
@@ -313,6 +358,20 @@ def _steady_conditional_star(ds) -> dict[str, float]:
     return out
 
 
+def _full_conditional_star(ds) -> dict[str, float | np.ndarray]:
+    out: dict[str, float | np.ndarray] = {
+        "alpha": float(np.nanmean(_draws(ds, "alpha"))),
+        "kappa_0": float(np.nanmean(_draws(ds, "kappa_0"))),
+        "delta": float(np.nanmean(_draws(ds, "delta"))),
+        "theta_0": float(np.nanmean(_draws(ds, "theta_0"))),
+        "gamma": float(np.nanmean(_draws(ds, "gamma"))),
+        "sigma_e2": float(np.nanmean(_draws(ds, "sigma_e") ** 2)),
+    }
+    out.update(_full_star(ds))
+    out.update(_full_conditional_state_star(ds))
+    return out
+
+
 def _ces_conditional_log_likelihood(star, data) -> float:
     resid = (
         data["pi"]
@@ -336,6 +395,23 @@ def _steady_conditional_log_likelihood(star, data) -> float:
         data["x"] - star["phi_1"] * data["x_prev"],
         star["sigma_zeta2"],
     )
+
+
+def _full_conditional_log_likelihood(star, data) -> float:
+    # The full HSA observation equation is nonlinear in the two latent
+    # competition states through gamma * Nbar_t * Nhat_t. For this fallback
+    # Chib calculation we condition on posterior mean state paths and evaluate
+    # the inflation equation likelihood.
+    Nhat = np.asarray(star["Nhat"], dtype=float)
+    Nbar = np.asarray(star["Nbar"], dtype=float)
+    n = min(data["pi"].size, Nhat.size, Nbar.size)
+    y = data["pi"][:n] - data["pi_expect"][:n]
+    a_t = data["pi_prev"][:n] - data["pi_expect"][:n]
+    x = data["x"][:n]
+    kappa_t = star["kappa_0"] + star["delta"] * Nbar[:n]
+    theta_t = star["theta_0"] + star["gamma"] * Nbar[:n]
+    resid = y - star["alpha"] * a_t - kappa_t * x + theta_t * Nhat[:n]
+    return _log_gaussian_likelihood(resid, star["sigma_e2"])
 
 
 def _conditional_beta_logpdf(beta_star: np.ndarray, y: np.ndarray, X: np.ndarray, sigma2: float, prior_mean: np.ndarray) -> float:
@@ -391,6 +467,38 @@ def _steady_conditional_log_ordinate(star, ds, data) -> float:
     return float(_logmeanexp(np.array(beta_terms)) + _logmeanexp(np.array(sigma_terms)))
 
 
+def _full_conditional_log_ordinate(star, ds, data) -> float:
+    sigma_draws = _draws(ds, "sigma_e") ** 2
+    Nhat_draws = _state_draws(ds, "Nhat")
+    Nbar_draws = _state_draws(ds, "Nbar")
+    y = data["pi"] - data["pi_expect"]
+    a_t = data["pi_prev"] - data["pi_expect"]
+    beta_star = np.array(
+        [star["alpha"], star["kappa_0"], star["delta"], star["theta_0"], star["gamma"]],
+        dtype=float,
+    )
+    beta_terms = []
+    sigma_terms = []
+    prior_mean = np.array([0.5, 0.1, 0.0, 0.1, 0.0], dtype=float)
+    for sigma2, Nhat, Nbar in zip(sigma_draws, Nhat_draws, Nbar_draws):
+        n = min(y.size, Nhat.size, Nbar.size)
+        X = np.column_stack(
+            [
+                a_t[:n],
+                data["x"][:n],
+                data["x"][:n] * Nbar[:n],
+                -Nhat[:n],
+                -(Nhat[:n] * Nbar[:n]),
+            ]
+        )
+        beta_terms.append(_conditional_beta_logpdf(beta_star, y[:n], X, sigma2, prior_mean))
+        kappa_t = star["kappa_0"] + star["delta"] * Nbar[:n]
+        theta_t = star["theta_0"] + star["gamma"] * Nbar[:n]
+        resid = y[:n] - star["alpha"] * a_t[:n] - kappa_t * data["x"][:n] + theta_t * Nhat[:n]
+        sigma_terms.append(_log_ig_pdf_var(star["sigma_e2"], 2.0 + 0.5 * resid.size, 2.0 + 0.5 * float(np.sum(resid**2))))
+    return float(_logmeanexp(np.array(beta_terms)) + _logmeanexp(np.array(sigma_terms)))
+
+
 def _ces_conditional_log_prior(star) -> float:
     return float(
         _log_norm_pdf(star["alpha"], 0.5, 0.2)
@@ -413,6 +521,17 @@ def _steady_conditional_log_prior(star) -> float:
         _log_norm_pdf(star["alpha"], 0.5, 0.2)
         + _log_norm_pdf(star["kappa_0"], 0.1, 0.2)
         + _log_norm_pdf(star["delta"], 0.1, 0.2)
+        + _log_ig_pdf_var(star["sigma_e2"], 2.0, 2.0)
+    )
+
+
+def _full_conditional_log_prior(star) -> float:
+    return float(
+        _log_norm_pdf(star["alpha"], 0.5, 0.2)
+        + _log_norm_pdf(star["kappa_0"], 0.1, 0.2)
+        + _log_norm_pdf(star["delta"], 0.0, 0.2)
+        + _log_norm_pdf(star["theta_0"], 0.1, 0.2)
+        + _log_norm_pdf(star["gamma"], 0.0, 0.2)
         + _log_ig_pdf_var(star["sigma_e2"], 2.0, 2.0)
     )
 
@@ -452,8 +571,17 @@ def _steady_log_prior(star, *, orth: bool) -> float:
     return float(out)
 
 
+def _full_log_prior(star, *, orth: bool) -> float:
+    out = _log_prior_common(star, orth=orth, hsa=True)
+    out += float(_log_norm_pdf(star["kappa_0"], 0.1, 0.2))
+    out += float(_log_norm_pdf(star["delta"], 0.0, 0.2))
+    out += float(_log_norm_pdf(star["theta_0"], 0.1, 0.2))
+    out += float(_log_norm_pdf(star["gamma"], 0.0, 0.2))
+    return float(out)
+
+
 def _ces_log_ordinate(star, ds, data, *, orth: bool) -> float:
-    lambda_draws = _draws(ds, "lambda_ez")
+    lambda_draws = _lambda_ez_draws(ds)
     phi_draws = _draws(ds, "phi_1")
     sigma_zeta2_draws = _draws(ds, "sigma_zeta") ** 2
     sigma_eta2_draws = _sigma_eta2_draws(ds)
@@ -492,7 +620,7 @@ def _dynamic_log_ordinate(star, ds, data, *, orth: bool) -> float:
     a_t = data["pi_prev"] - data["pi_expect"]
     Nhat_draws = _state_draws(ds, "Nhat")
     Nbar_draws = _state_draws(ds, "Nbar")
-    lambda_draws = _draws(ds, "lambda_ez")
+    lambda_draws = _lambda_ez_draws(ds)
     phi_draws = _draws(ds, "phi_1")
     sigma_eta2_draws = _sigma_eta2_draws(ds)
     sigma_zeta2_draws = _draws(ds, "sigma_zeta") ** 2
@@ -558,7 +686,7 @@ def _steady_log_ordinate(star, ds, data, *, orth: bool) -> float:
     a_t = data["pi_prev"] - data["pi_expect"]
     Nhat_draws = _state_draws(ds, "Nhat")
     Nbar_draws = _state_draws(ds, "Nbar")
-    lambda_draws = _draws(ds, "lambda_ez")
+    lambda_draws = _lambda_ez_draws(ds)
     phi_draws = _draws(ds, "phi_1")
     sigma_eta2_draws = _sigma_eta2_draws(ds)
     sigma_zeta2_draws = _draws(ds, "sigma_zeta") ** 2
@@ -637,6 +765,11 @@ def chib_marginal_likelihood(ds, data: dict[str, np.ndarray], *, family: Family,
         log_lik = _kalman_loglik_hsa_steady(star, data)
         log_prior = _steady_log_prior(star, orth=orth)
         log_ord = _steady_log_ordinate(star, ds, data, orth=orth)
+    elif family == "full":
+        raise ValueError(
+            "Full HSA has a nonlinear latent-state observation equation. "
+            "Use chib_conditional_marginal_likelihood(..., family='full') instead."
+        )
     else:
         raise ValueError(f"Unknown family: {family}")
     return MarginalLikelihoodResult(
@@ -666,6 +799,11 @@ def chib_conditional_marginal_likelihood(ds, data: dict[str, np.ndarray], *, fam
         log_lik = _steady_conditional_log_likelihood(star, data)
         log_prior = _steady_conditional_log_prior(star)
         log_ord = _steady_conditional_log_ordinate(star, ds, data)
+    elif family == "full":
+        star = _full_conditional_star(ds)
+        log_lik = _full_conditional_log_likelihood(star, data)
+        log_prior = _full_conditional_log_prior(star)
+        log_ord = _full_conditional_log_ordinate(star, ds, data)
     else:
         raise ValueError(f"Unknown family: {family}")
     return MarginalLikelihoodResult(
@@ -674,7 +812,11 @@ def chib_conditional_marginal_likelihood(ds, data: dict[str, np.ndarray], *, fam
         log_prior=float(log_prior),
         log_posterior_ordinate=float(log_ord),
         n_draws=int(_draws(ds, "alpha").size),
-        method="Conditional Chib 1995 for NKPC inflation equation",
+        method=(
+            "Conditional Chib 1995 for HSA full inflation equation, conditioned on posterior mean latent states"
+            if family == "full"
+            else "Conditional Chib 1995 for NKPC inflation equation"
+        ),
     )
 
 

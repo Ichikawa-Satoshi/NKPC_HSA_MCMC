@@ -32,6 +32,9 @@ def test_wrapper_saves_metadata(tmp_path) -> None:
     assert (run_dir / "posterior.nc").exists()
     assert (run_dir / "metadata.json").exists()
     assert idata.attrs["kappa_units"] == "physical"
+    metadata = json.loads((run_dir / "metadata.json").read_text(encoding="utf-8"))
+    assert metadata["n_transform"] == "log100_centered10"
+    assert "ten log-point" in metadata["n_transform_note"]
 
 
 def test_wrapper_applies_positive_coefficient_constraint(tmp_path) -> None:
@@ -75,4 +78,7 @@ def test_diagnostics_on_fake_posterior() -> None:
     )
     table = compute_diagnostics(idata)
     assert "parameter" in table.columns
+    alpha = table.loc[table["parameter"] == "alpha"].iloc[0]
+    assert np.isfinite(alpha["r_hat"])
+    assert np.isfinite(alpha["ess_bulk"])
     assert ar2_nonstationary_share(idata) == 0.0

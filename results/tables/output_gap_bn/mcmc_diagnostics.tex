@@ -1,67 +1,307 @@
-\begin{tabular}{lllllrrrrrrrrr}
+\begin{tabular}{llrrrrr}
 \toprule
-run & model & data\_spec & prior\_spec & parameter & mean & sd & hdi\_2.5\% & hdi\_97.5\% & mcse\_mean & ess\_bulk & ess\_tail & r\_hat & warning \\
+model & parameter & mean & r\_hat & ess\_bulk & ess\_tail & warning \\
 \midrule
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & alpha & 0.6692 & 0.0692 & 0.5437 & 0.7835 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & kappa & 0.0623 & 0.0493 & -0.0059 & 0.1764 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & phi\_1 & 0.9192 & 0.0369 & 0.8378 & 0.9703 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & lambda\_ez & -0.0085 & 0.1099 & -0.2047 & 0.2214 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & rho & -0.0101 & 0.0968 & -0.1644 & 0.1836 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & sigma\_e & 0.6579 & 0.0435 & 0.5851 & 0.7073 & NaN & NaN & NaN & NaN & NaN \\
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & ces & output\_gap\_bn & baseline & sigma\_zeta & 0.5831 & 0.0355 & 0.5256 & 0.6426 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & alpha & 0.6417 & 0.0572 & 0.5407 & 0.7302 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & kappa & 0.0812 & 0.0406 & -0.0037 & 0.1503 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & theta & 0.0089 & 0.0035 & 0.0011 & 0.0144 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & phi\_1 & 0.9069 & 0.0263 & 0.8613 & 0.9529 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & rho\_1 & 1.8622 & 0.0360 & 1.7937 & 1.9130 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & rho\_2 & -0.8657 & 0.0358 & -0.9167 & -0.7966 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & n & -0.0263 & 0.0733 & -0.1502 & 0.1060 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & sigma\_e & 0.6290 & 0.0351 & 0.5666 & 0.6908 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & sigma\_zeta & 0.5524 & 0.0337 & 0.4909 & 0.6128 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & sigma\_u & 0.4136 & 0.0376 & 0.3597 & 0.4857 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & sigma\_eps & 0.2394 & 0.0262 & 0.1906 & 0.2892 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & hsa\_dynamic & output\_gap\_bn & baseline & sigma\_N & 0.2806 & 0.0300 & 0.2338 & 0.3480 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & alpha & 0.6624 & 0.0547 & 0.5625 & 0.7575 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & kappa\_0 & 0.2476 & 0.1843 & -0.0392 & 0.5474 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & delta & -0.0010 & 0.0010 & -0.0023 & 0.0005 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & theta\_0 & 0.1009 & 0.1795 & -0.1749 & 0.4086 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & gamma & -0.0003 & 0.0009 & -0.0017 & 0.0012 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & kappa\_t\_mean & 0.0493 & 0.0481 & -0.0296 & 0.1374 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & kappa\_t\_start & 0.0531 & 0.0467 & -0.0205 & 0.1427 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & kappa\_t\_mid & 0.0324 & 0.0561 & -0.0547 & 0.1230 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & kappa\_t\_end & 0.0745 & 0.0455 & -0.0040 & 0.1733 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & theta\_t\_mean & 0.0483 & 0.0246 & 0.0089 & 0.0934 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & theta\_t\_start & 0.0493 & 0.0252 & 0.0052 & 0.0959 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & theta\_t\_mid & 0.0436 & 0.0281 & -0.0046 & 0.0974 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & theta\_t\_end & 0.0551 & 0.0343 & -0.0074 & 0.1172 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & phi\_1 & 0.9163 & 0.0287 & 0.8724 & 0.9763 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & rho\_1 & 1.1912 & 0.1128 & 1.0032 & 1.3882 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & rho\_2 & -0.2689 & 0.1196 & -0.4702 & -0.0667 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & n & -0.0899 & 0.0590 & -0.1806 & 0.0369 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & lambda\_ez & -0.0133 & 0.1240 & -0.1946 & 0.2723 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & rho & -0.0103 & 0.1064 & -0.1553 & 0.2447 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & sigma\_e & 0.6709 & 0.0488 & 0.5815 & 0.7386 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & sigma\_zeta & 0.5738 & 0.0376 & 0.5141 & 0.6553 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & sigma\_u & 0.6961 & 0.0598 & 0.6001 & 0.8421 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & hsa\_full & output\_gap\_bn & baseline & sigma\_eps & 1.0609 & 0.0795 & 0.9293 & 1.1809 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & alpha & 0.6552 & 0.0662 & 0.5340 & 0.7545 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & kappa\_0 & 0.1364 & 0.1960 & -0.2435 & 0.4295 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & delta & -0.0004 & 0.0010 & -0.0017 & 0.0016 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & kappa\_t\_mean & 0.0542 & 0.0423 & -0.0126 & 0.1324 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & kappa\_t\_start & 0.0522 & 0.0424 & -0.0233 & 0.1296 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & kappa\_t\_mid & 0.0542 & 0.0422 & -0.0152 & 0.1324 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & kappa\_t\_end & 0.0567 & 0.0438 & -0.0093 & 0.1328 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & phi\_1 & 0.9184 & 0.0313 & 0.8669 & 0.9740 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & rho\_1 & 1.8025 & 0.0502 & 1.7002 & 1.8931 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & rho\_2 & -0.8061 & 0.0505 & -0.8996 & -0.7028 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & n & -0.0567 & 0.0737 & -0.1998 & 0.0588 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & lambda\_ez & 0.0007 & 0.0960 & -0.1614 & 0.1608 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & rho & 0.0035 & 0.0841 & -0.1299 & 0.1487 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_eta & 0.6659 & 0.0385 & 0.6072 & 0.7428 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_e & 0.6683 & 0.0392 & 0.6126 & 0.7439 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_zeta & 0.5837 & 0.0356 & 0.5209 & 0.6448 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_u & 0.5135 & 0.0601 & 0.4415 & 0.6337 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_eps & 0.3848 & 0.0475 & 0.3123 & 0.4833 & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & hsa\_steady & output\_gap\_bn & baseline & sigma\_N & 0.2996 & 0.0238 & 0.2596 & 0.3365 & NaN & NaN & NaN & NaN & NaN \\
+ces & alpha & 0.6722 & NaN & NaN & NaN & NaN \\
+ces & kappa & 0.0586 & NaN & NaN & NaN & NaN \\
+ces & phi\_1 & 0.9147 & NaN & NaN & NaN & NaN \\
+ces & lambda\_ez & 0.0096 & NaN & NaN & NaN & NaN \\
+ces & rho & 0.0082 & NaN & NaN & NaN & NaN \\
+ces & sigma\_e & 0.6675 & NaN & NaN & NaN & NaN \\
+ces & sigma\_zeta & 0.5795 & NaN & NaN & NaN & NaN \\
+ces & alpha & 0.6722 & NaN & NaN & NaN & NaN \\
+ces & kappa & 0.0586 & NaN & NaN & NaN & NaN \\
+ces & phi\_1 & 0.9147 & NaN & NaN & NaN & NaN \\
+ces & lambda\_ez & 0.0096 & NaN & NaN & NaN & NaN \\
+ces & rho & 0.0082 & NaN & NaN & NaN & NaN \\
+ces & sigma\_e & 0.6675 & NaN & NaN & NaN & NaN \\
+ces & sigma\_zeta & 0.5795 & NaN & NaN & NaN & NaN \\
+ces & alpha & 0.6740 & NaN & NaN & NaN & NaN \\
+ces & kappa & 0.0675 & NaN & NaN & NaN & NaN \\
+ces & phi\_1 & 0.9164 & NaN & NaN & NaN & NaN \\
+ces & lambda\_ez & 0.0042 & NaN & NaN & NaN & NaN \\
+ces & rho & 0.0038 & NaN & NaN & NaN & NaN \\
+ces & sigma\_e & 0.6679 & NaN & NaN & NaN & NaN \\
+ces & sigma\_zeta & 0.5794 & NaN & NaN & NaN & NaN \\
+ces & alpha & 0.6740 & NaN & NaN & NaN & NaN \\
+ces & kappa & 0.0675 & NaN & NaN & NaN & NaN \\
+ces & phi\_1 & 0.9164 & NaN & NaN & NaN & NaN \\
+ces & lambda\_ez & 0.0042 & NaN & NaN & NaN & NaN \\
+ces & rho & 0.0038 & NaN & NaN & NaN & NaN \\
+ces & sigma\_e & 0.6679 & NaN & NaN & NaN & NaN \\
+ces & sigma\_zeta & 0.5794 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & alpha & 0.6362 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & kappa & 0.0838 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & theta & 0.1174 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & phi\_1 & 0.9163 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_1 & 0.9121 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_2 & 0.0173 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & n & -0.0250 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_e & 0.6024 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_zeta & 0.5571 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_u & 0.1953 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_eps & 0.2083 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_N & 0.2512 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & alpha & 0.6362 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & kappa & 0.0838 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & theta & 0.1174 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & phi\_1 & 0.9163 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_1 & 0.9121 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_2 & 0.0173 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & n & -0.0250 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_e & 0.6024 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_zeta & 0.5571 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_u & 0.1953 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_eps & 0.2083 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_N & 0.2512 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & alpha & 0.6331 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & kappa & 0.0914 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & theta & 0.1758 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & phi\_1 & 0.9149 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_1 & 0.9160 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_2 & 0.0155 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & n & -0.0220 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_e & 0.6000 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_zeta & 0.5569 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_u & 0.1955 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_eps & 0.2092 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_N & 0.2517 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & alpha & 0.6331 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & kappa & 0.0914 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & theta & 0.1758 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & phi\_1 & 0.9149 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_1 & 0.9160 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & rho\_2 & 0.0155 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & n & -0.0220 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_e & 0.6000 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_zeta & 0.5569 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_u & 0.1955 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_eps & 0.2092 & NaN & NaN & NaN & NaN \\
+hsa\_dynamic & sigma\_N & 0.2517 & NaN & NaN & NaN & NaN \\
+hsa\_full & alpha & 0.6043 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_0 & 0.0877 & NaN & NaN & NaN & NaN \\
+hsa\_full & delta & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_0 & 0.0755 & NaN & NaN & NaN & NaN \\
+hsa\_full & gamma & 0.0008 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mean & 0.0858 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_start & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mid & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_end & 0.1627 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mean & 0.0762 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_start & 0.0861 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mid & 0.0789 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_end & 0.0690 & NaN & NaN & NaN & NaN \\
+hsa\_full & phi\_1 & 0.9143 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_1 & 0.9880 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_2 & -0.0421 & NaN & NaN & NaN & NaN \\
+hsa\_full & n & -0.0303 & NaN & NaN & NaN & NaN \\
+hsa\_full & lambda\_ez & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_e & 0.6097 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_u & 0.2776 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_eps & 0.2858 & NaN & NaN & NaN & NaN \\
+hsa\_full & alpha & 0.6043 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_0 & 0.0877 & NaN & NaN & NaN & NaN \\
+hsa\_full & delta & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_0 & 0.0755 & NaN & NaN & NaN & NaN \\
+hsa\_full & gamma & 0.0008 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mean & 0.0858 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_start & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mid & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_end & 0.1627 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mean & 0.0762 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_start & 0.0861 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mid & 0.0789 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_end & 0.0690 & NaN & NaN & NaN & NaN \\
+hsa\_full & phi\_1 & 0.9143 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_1 & 0.9880 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_2 & -0.0421 & NaN & NaN & NaN & NaN \\
+hsa\_full & n & -0.0303 & NaN & NaN & NaN & NaN \\
+hsa\_full & lambda\_ez & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_e & 0.6097 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_u & 0.2776 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_eps & 0.2858 & NaN & NaN & NaN & NaN \\
+hsa\_full & alpha & 0.6043 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_0 & 0.0877 & NaN & NaN & NaN & NaN \\
+hsa\_full & delta & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_0 & 0.0755 & NaN & NaN & NaN & NaN \\
+hsa\_full & gamma & 0.0008 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mean & 0.0858 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_start & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mid & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_end & 0.1627 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mean & 0.0762 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_start & 0.0861 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mid & 0.0789 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_end & 0.0690 & NaN & NaN & NaN & NaN \\
+hsa\_full & phi\_1 & 0.9143 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_1 & 0.9880 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_2 & -0.0421 & NaN & NaN & NaN & NaN \\
+hsa\_full & n & -0.0303 & NaN & NaN & NaN & NaN \\
+hsa\_full & lambda\_ez & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_e & 0.6097 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_u & 0.2776 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_eps & 0.2858 & NaN & NaN & NaN & NaN \\
+hsa\_full & alpha & 0.6043 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_0 & 0.0877 & NaN & NaN & NaN & NaN \\
+hsa\_full & delta & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_0 & 0.0755 & NaN & NaN & NaN & NaN \\
+hsa\_full & gamma & 0.0008 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mean & 0.0858 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_start & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_mid & 0.0509 & NaN & NaN & NaN & NaN \\
+hsa\_full & kappa\_t\_end & 0.1627 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mean & 0.0762 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_start & 0.0861 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_mid & 0.0789 & NaN & NaN & NaN & NaN \\
+hsa\_full & theta\_t\_end & 0.0690 & NaN & NaN & NaN & NaN \\
+hsa\_full & phi\_1 & 0.9143 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_1 & 0.9880 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho\_2 & -0.0421 & NaN & NaN & NaN & NaN \\
+hsa\_full & n & -0.0303 & NaN & NaN & NaN & NaN \\
+hsa\_full & lambda\_ez & -0.0219 & NaN & NaN & NaN & NaN \\
+hsa\_full & rho & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_e & 0.6097 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_u & 0.2776 & NaN & NaN & NaN & NaN \\
+hsa\_full & sigma\_eps & 0.2858 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6715 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0481 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0207 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0471 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0464 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0143 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1042 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9051 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.7223 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.0093 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0243 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & 0.0249 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & 0.0204 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6521 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6566 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5886 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.3206 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.3287 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2948 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6573 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0461 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0229 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0459 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0464 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0115 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1071 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9148 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.7362 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.0278 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6560 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6593 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.3208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.3352 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2949 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6573 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0461 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0229 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0459 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0464 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0115 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1071 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9148 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.7362 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.0278 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6560 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6593 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.3208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.3352 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2949 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6573 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0461 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0229 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0459 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0464 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0115 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1071 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9148 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.7362 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.0278 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6560 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6593 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.3208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.3352 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2949 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6573 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0461 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0229 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0459 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0464 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0115 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1071 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9148 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.7362 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.0278 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0026 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6560 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6593 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5782 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.3208 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.3352 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2949 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6433 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0518 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0066 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0520 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0523 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & 0.0413 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.0699 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.8993 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.5570 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & -0.3232 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0015 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0254 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0226 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6638 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6669 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5665 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.4184 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.4405 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.4089 & NaN & NaN & NaN & NaN \\
+hsa\_steady & alpha & 0.6324 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_0 & 0.0018 & NaN & NaN & NaN & NaN \\
+hsa\_steady & delta & -0.0721 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mean & 0.0089 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_start & 0.0224 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_mid & -0.0844 & NaN & NaN & NaN & NaN \\
+hsa\_steady & kappa\_t\_end & 0.1778 & NaN & NaN & NaN & NaN \\
+hsa\_steady & phi\_1 & 0.9209 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_1 & 0.6942 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho\_2 & 0.1969 & NaN & NaN & NaN & NaN \\
+hsa\_steady & n & -0.0298 & NaN & NaN & NaN & NaN \\
+hsa\_steady & lambda\_ez & -0.0105 & NaN & NaN & NaN & NaN \\
+hsa\_steady & rho & -0.0084 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eta & 0.6349 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_e & 0.6375 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_zeta & 0.5773 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_u & 0.2359 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_eps & 0.2496 & NaN & NaN & NaN & NaN \\
+hsa\_steady & sigma\_N & 0.2114 & NaN & NaN & NaN & NaN \\
 \bottomrule
 \end{tabular}

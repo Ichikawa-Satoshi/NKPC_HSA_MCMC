@@ -100,6 +100,18 @@ def compute_diagnostics(idata, *, var_names: Iterable[str] | None = None) -> pd.
         summary = _manual_summary(idata_for_summary, names)
     if "parameter" not in summary.columns:
         summary = summary.reset_index().rename(columns={"index": "parameter"})
+    manual = _basic_chain_diagnostics(idata_for_summary, names)
+    if not manual.empty:
+        summary = summary.merge(manual, on="parameter", how="left", suffixes=("", "_manual"))
+        for column in ["r_hat", "ess_bulk", "ess_tail", "mcse_mean"]:
+            manual_col = f"{column}_manual"
+            if manual_col not in summary:
+                continue
+            if column not in summary:
+                summary[column] = summary[manual_col]
+            else:
+                summary[column] = summary[column].where(np.isfinite(pd.to_numeric(summary[column], errors="coerce")), summary[manual_col])
+            summary = summary.drop(columns=[manual_col])
     warnings = []
     for _, row in summary.iterrows():
         notes: list[str] = []
@@ -115,6 +127,88 @@ def compute_diagnostics(idata, *, var_names: Iterable[str] | None = None) -> pd.
         warnings.append("; ".join(notes))
     summary["warning"] = warnings
     return summary
+
+
+def _autocorr_ess(values: np.ndarray) -> float:
+    draws = np.asarray(values, dtype=float)
+    if draws.ndim != 2:
+        return float("nan")
+    chains, n_draws = draws.shape
+    if chains < 1 or n_draws < 3:
+        return float("nan")
+    centered = draws - np.nanmean(draws, axis=1, keepdims=True)
+    var0 = np.nanmean(centered**2)
+    if not np.isfinite(var0) or var0 <= 0.0:
+        return float(chains * n_draws)
+
+    rhos: list[float] = []
+    max_lag = min(n_draws - 1, 1000)
+    for lag in range(1, max_lag + 1):
+        acov = np.nanmean(centered[:, :-lag] * centered[:, lag:])
+        rho = float(acov / var0)
+        if not np.isfinite(rho):
+            break
+        rhos.append(rho)
+        if lag % 2 == 0 and len(rhos) >= 2 and (rhos[-1] + rhos[-2]) < 0.0:
+            rhos = rhos[:-2]
+            break
+    tau = 1.0 + 2.0 * float(np.sum(rhos))
+    if not np.isfinite(tau) or tau <= 0.0:
+        return float(chains * n_draws)
+    return float(min(chains * n_draws, max(1.0, chains * n_draws / tau)))
+
+
+def _tail_ess(values: np.ndarray) -> float:
+    flat = np.asarray(values, dtype=float).reshape(-1)
+    flat = flat[np.isfinite(flat)]
+    if flat.size < 4:
+        return float("nan")
+    lo, hi = np.nanquantile(flat, [0.05, 0.95])
+    draws = np.asarray(values, dtype=float)
+    ess_lo = _autocorr_ess((draws <= lo).astype(float))
+    ess_hi = _autocorr_ess((draws >= hi).astype(float))
+    return float(np.nanmin([ess_lo, ess_hi]))
+
+
+def _basic_chain_diagnostics(idata, names: list[str]) -> pd.DataFrame:
+    posterior = getattr(idata, "posterior", None)
+    rows: list[dict[str, float | str]] = []
+    if posterior is None:
+        return pd.DataFrame()
+    for name in names:
+        if name not in posterior:
+            continue
+        values = np.asarray(posterior[name], dtype=float)
+        if values.ndim != 2:
+            continue
+        values = values[np.all(np.isfinite(values), axis=1)]
+        if values.ndim != 2 or values.shape[0] < 1 or values.shape[1] < 2:
+            continue
+        chains, draws = values.shape
+        chain_vars = np.var(values, axis=1, ddof=1)
+        W = float(np.mean(chain_vars))
+        if chains > 1 and W > 0.0:
+            B = draws * float(np.var(np.mean(values, axis=1), ddof=1))
+            var_hat = ((draws - 1.0) / draws) * W + B / draws
+            rhat = float(np.sqrt(max(var_hat / W, 0.0)))
+        elif W == 0.0:
+            rhat = 1.0
+        else:
+            rhat = float("nan")
+        ess_bulk = _autocorr_ess(values)
+        ess_tail = _tail_ess(values)
+        sd = float(np.std(values.reshape(-1), ddof=1)) if values.size > 1 else 0.0
+        mcse = float(sd / np.sqrt(ess_bulk)) if np.isfinite(ess_bulk) and ess_bulk > 0.0 else float("nan")
+        rows.append(
+            {
+                "parameter": name,
+                "r_hat": rhat,
+                "ess_bulk": ess_bulk,
+                "ess_tail": ess_tail,
+                "mcse_mean": mcse,
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def _manual_summary(idata, names: list[str]) -> pd.DataFrame:

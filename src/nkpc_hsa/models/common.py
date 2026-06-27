@@ -6,9 +6,10 @@ from typing import Any, Mapping
 import numpy as np
 
 KAPPA_SCALE = 100.0
-KAPPA_LIKE_PARAMETERS = {"kappa", "kappa_0", "delta"}
+KAPPA_LIKE_PARAMETERS = {"kappa", "kappa_0", "kappa_t", "delta"}
 CONSTRAINT_ALIASES = {
     "kappa0": "kappa_0",
+    "kappat": "kappa_t",
     "theta0": "theta_0",
     "rho1": "rho_1",
     "rho2": "rho_2",
@@ -117,6 +118,7 @@ def coefficient_constraints_to_internal(spec: Mapping[str, Any] | None) -> dict[
 
     Kappa-like bounds are specified in physical units and converted to the
     internal KAPPA_SCALE-multiplied units used by the Gibbs regression blocks.
+    ``kappa_t`` is a path constraint for HSA steady/full models.
     Other coefficients are left unchanged.
     """
     raw = dict(spec or {})

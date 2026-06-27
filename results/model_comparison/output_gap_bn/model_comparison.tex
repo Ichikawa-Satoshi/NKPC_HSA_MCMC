@@ -1,13 +1,14 @@
-\begin{tabular}{lllrrrrrrrrlrrrrl}
+\begin{tabular}{lllrrrrrlrrr}
 \toprule
-model & data\_spec & prior\_spec & log\_marginal\_likelihood & bayes\_factor\_vs\_baseline & sddr\_delta\_bf01 & sddr\_theta\_bf01 & sddr\_theta0\_bf01 & sddr\_gamma\_bf01 & predictive\_score & posterior\_predictive\_rmse & notes & log\_likelihood & log\_prior & log\_posterior\_ordinate & n\_draws & method \\
+model & data\_spec & prior\_spec & predictive\_score & posterior\_predictive\_rmse & log\_likelihood & log\_marginal\_likelihood & bayes\_factor\_vs\_baseline & method & sddr\_delta\_bf01 & sddr\_theta\_bf01 & sddr\_gamma\_bf01 \\
 \midrule
-ces\_output\_gap\_bn\_baseline\_20260622\_131732 & output\_gap\_bn & baseline & -245.410 & 1.000 & NaN & NaN & NaN & NaN & -120.648 & 0.640 & Chib uses physical-unit posterior draws and physical-unit priors. Chib uses baseline hard-coded prior ordinates in the legacy implementation. & -227.461 & -5.702 & 12.246 & 40.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate \\
-hsa\_dynamic\_output\_gap\_bn\_baseline\_20260622\_131735 & output\_gap\_bn & baseline & NaN & NaN & NaN & 6.439 & NaN & NaN & -117.647 & 0.625 & Chib uses physical-unit posterior draws and physical-unit priors. Chib unavailable: 'Missing posterior variable: lambda\_ez' & NaN & NaN & NaN & NaN & NaN \\
-hsa\_full\_output\_gap\_bn\_baseline\_20260622\_131737 & output\_gap\_bn & baseline & NaN & NaN & 126.736 & NaN & 1.135 & 243.601 & -118.270 & 0.625 & Chib uses physical-unit posterior draws and physical-unit priors. Chib unavailable for HSA full in the current legacy implementation. & NaN & NaN & NaN & NaN & NaN \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_131733 & output\_gap\_bn & baseline & -410.150 & 0.000 & 165.327 & NaN & NaN & NaN & -120.793 & 0.640 & Chib uses physical-unit posterior draws and physical-unit priors. Chib uses baseline hard-coded prior ordinates in the legacy implementation. & -323.627 & -55.551 & 30.972 & 40.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate \\
-hsa\_steady\_output\_gap\_bn\_baseline\_20260622\_132042 & output\_gap\_bn & baseline & -410.150 & 0.000 & 165.327 & NaN & NaN & NaN & -120.793 & 0.640 & Chib uses physical-unit posterior draws and physical-unit priors. Chib uses baseline hard-coded prior ordinates in the legacy implementation. & -323.627 & -55.551 & 30.972 & 40.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate \\
-hsa\_steady\_output\_gap\_bn\_tight\_20260622\_132047 & output\_gap\_bn & tight & -463.512 & 0.000 & 231.372 & NaN & NaN & NaN & -120.671 & 0.639 & Chib uses physical-unit posterior draws and physical-unit priors. Chib uses baseline hard-coded prior ordinates in the legacy implementation. & -431.123 & -10.630 & 21.759 & 40.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate \\
-hsa\_steady\_output\_gap\_bn\_weak\_20260622\_132044 & output\_gap\_bn & weak & -406.291 & 0.000 & 68.850 & NaN & NaN & NaN & -120.244 & 0.638 & Chib uses physical-unit posterior draws and physical-unit priors. Chib uses baseline hard-coded prior ordinates in the legacy implementation. & -300.406 & -75.764 & 30.121 & 40.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate \\
+ces & output\_gap\_bn & baseline & -120.753 & 0.640 & -227.537 & -245.355 & 1.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate & NaN & NaN & NaN \\
+ces & output\_gap\_bn & baseline & -120.773 & 0.640 & -227.550 & -245.358 & 0.997 & Chib 1995, Rao-Blackwellized Gibbs ordinate & NaN & NaN & NaN \\
+hsa\_dynamic & output\_gap\_bn & baseline & -121.981 & 0.644 & -200.296 & -300.185 & 0.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate & NaN & 0.235 & NaN \\
+hsa\_dynamic & output\_gap\_bn & baseline & -120.136 & 0.635 & -199.152 & -299.808 & 0.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate & NaN & 0.193 & NaN \\
+hsa\_full & output\_gap\_bn & baseline & -123.141 & 0.650 & -123.141 & -126.063 & 6425664644118423172552929310103214069638860153815040.000 & Conditional Chib 1995 for HSA full inflation equation, conditioned on posterior mean latent states & 0.439 & NaN & 1.242 \\
+hsa\_full & output\_gap\_bn & baseline & -123.141 & 0.650 & -123.141 & -126.063 & 6425664644118423172552929310103214069638860153815040.000 & Conditional Chib 1995 for HSA full inflation equation, conditioned on posterior mean latent states & 0.439 & NaN & 1.242 \\
+hsa\_steady & output\_gap\_bn & baseline & -118.900 & 0.630 & -256.668 & -306.712 & 0.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate & 0.469 & NaN & NaN \\
+hsa\_steady & output\_gap\_bn & baseline & -118.900 & 0.630 & -256.668 & -306.712 & 0.000 & Chib 1995, Rao-Blackwellized Gibbs ordinate & 0.469 & NaN & NaN \\
 \bottomrule
 \end{tabular}

@@ -4,8 +4,10 @@ defaults:
   thin: 5
   chains: 2
   seed: 12345
-  n_transform: log100
+  n_transform: log100_centered10
   covariance_structure: e_zeta_only
+  enforce_stationary: true
+  ar2_max_tries: 2000
   coefficient_constraints:
     enabled: false
     max_tries: 1000
@@ -14,6 +16,8 @@ defaults:
 run_data_specs:
   - inv_markup
   - output_gap_bn
+  - output_gap_hp
+  - labor_share_gap_hp
   - unemployment_gap
 data_specs:
   inv_markup:
@@ -31,6 +35,22 @@ data_specs:
     pi_expect_col: Epi
     x_col: output_gap_BN
     x_prev_col: output_gap_BN_prev
+    n_col: N_Gustavo
+  output_gap_hp:
+    label: Output gap, HP filter
+    pi_col: pi_cpi
+    pi_prev_col: pi_cpi_prev
+    pi_expect_col: Epi
+    x_col: output_gap_HP
+    x_prev_col: output_gap_HP_prev
+    n_col: N_Gustavo
+  labor_share_gap_hp:
+    label: Labor share gap, HP filter
+    pi_col: pi_cpi
+    pi_prev_col: pi_cpi_prev
+    pi_expect_col: Epi
+    x_col: labor_share_gap_HP
+    x_prev_col: labor_share_gap_HP_prev
     n_col: N_Gustavo
   unemployment_gap:
     label: Unemployment gap

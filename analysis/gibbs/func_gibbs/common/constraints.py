@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 import numpy as np
@@ -15,6 +15,7 @@ def draw_with_constraints(
     names: list[str] | tuple[str, ...],
     constraints: Mapping[str, Any] | None,
     *,
+    validators: Iterable[Callable[[np.ndarray], bool]] | None = None,
     stats: dict[str, int] | None = None,
 ) -> np.ndarray:
     """Draw from ``draw_fn`` and reject draws violating hard bounds.
@@ -22,6 +23,7 @@ def draw_with_constraints(
     ``constraints`` must use sampler-internal units. The public wrapper converts
     kappa-like physical-unit bounds before reaching this helper.
     """
+    validators = list(validators or [])
     if not constraint_enabled(constraints):
         draw = np.asarray(draw_fn(), dtype=float)
         if stats is not None:
@@ -38,7 +40,7 @@ def draw_with_constraints(
         for name in names
         if name in bounds
     }
-    if not relevant:
+    if not relevant and not validators:
         draw = np.asarray(draw_fn(), dtype=float)
         if stats is not None:
             stats["attempts"] = stats.get("attempts", 0) + 1
@@ -57,6 +59,11 @@ def draw_with_constraints(
             if upper is not None and value > float(upper):
                 ok = False
                 break
+        if ok:
+            for validator in validators:
+                if not bool(validator(draw)):
+                    ok = False
+                    break
         if ok:
             if stats is not None:
                 stats["attempts"] = stats.get("attempts", 0) + attempt

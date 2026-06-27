@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import arviz as az
@@ -8,7 +9,7 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import transform_competition_series
+from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
 from nkpc_hsa.inference.model_comparison import model_comparison_table, save_model_comparison
 
 
@@ -32,8 +33,31 @@ def _comparison_data(data_path: Path, config: dict, spec: dict) -> dict[str, obj
         "pi_expect": sample[spec.get("pi_expect_col", "pi_expect")].to_numpy(dtype=float),
         "x": sample[spec.get("x_col", "x")].to_numpy(dtype=float),
         "x_prev": sample[spec.get("x_prev_col", "x_prev")].to_numpy(dtype=float),
-        "N": transform_competition_series(n_raw, transform=str(defaults.get("n_transform", "log100"))),
+        "N": transform_competition_series(n_raw, transform=str(defaults.get("n_transform", DEFAULT_N_TRANSFORM))),
     }
+
+
+def _latest_key(idata) -> str:
+    return str(getattr(idata, "attrs", {}).get("run_id") or "")
+
+
+def _latest_by_fields(results: dict[str, object], fields: tuple[str, ...]) -> dict[str, object]:
+    selected: dict[tuple[str, ...], tuple[str, object]] = {}
+    for run, idata in results.items():
+        attrs = getattr(idata, "attrs", {})
+        key = tuple(str(attrs.get(field, "")) for field in fields)
+        current = selected.get(key)
+        if current is None or (_latest_key(idata), run) >= (_latest_key(current[1]), current[0]):
+            selected[key] = (run, idata)
+    return {run: idata for run, idata in sorted(selected.values())}
+
+
+def _load_idata(path: Path):
+    idata = az.from_netcdf(path)
+    priors_path = path.parent / "priors.json"
+    if priors_path.exists():
+        idata.attrs["run_priors"] = json.loads(priors_path.read_text(encoding="utf-8"))
+    return idata
 
 
 def main() -> None:
@@ -47,11 +71,25 @@ def main() -> None:
         dest="data_specs",
         help="Data spec name to compare. Repeat for multiple. Defaults to config run_data_specs.",
     )
+    parser.add_argument("--all-priors", action="store_true", help="Include non-baseline prior runs in model-comparison tables.")
     args = parser.parse_args()
 
     config = load_model_config(args.config)
+    defaults = config.get("defaults", {})
+    n_transform = str(defaults.get("n_transform", DEFAULT_N_TRANSFORM))
     data_specs = configured_data_specs(config, args.data_specs)
-    results = {path.parent.name: az.from_netcdf(path) for path in sorted(Path(args.runs_dir).glob("*/posterior.nc"))}
+    loaded = {path.parent.name: _load_idata(path) for path in sorted(Path(args.runs_dir).glob("*/posterior.nc"))}
+    current = {
+        run: idata
+        for run, idata in loaded.items()
+        if str(getattr(idata, "attrs", {}).get("n_transform", "")) == n_transform
+        and str(getattr(idata, "attrs", {}).get("data_spec", "")) in data_specs
+        and (args.all_priors or str(getattr(idata, "attrs", {}).get("prior_spec", "")) == "baseline")
+    }
+    results = _latest_by_fields(
+        current,
+        ("model", "data_spec", "prior_spec", "constraint_spec", "n_transform", "sample_start", "sample_end"),
+    )
     data_by_spec = {
         name: _comparison_data(Path(args.data), config, spec)
         for name, spec in data_specs.items()

@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: nkpc-hsa-mcmc
+Version: 0.1.0
+Summary: Bayesian state-space MCMC workflows for CES and HSA NKPC models.
+Requires-Python: >=3.10
+Requires-Dist: arviz
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: openpyxl
+Requires-Dist: pandas
+Requires-Dist: pyyaml
+Requires-Dist: scipy
+Requires-Dist: xarray

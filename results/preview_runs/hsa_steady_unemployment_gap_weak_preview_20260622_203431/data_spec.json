@@ -1,0 +1,10 @@
+{
+  "label": "Unemployment gap",
+  "n_col": "N_Gustavo",
+  "name": "unemployment_gap",
+  "pi_col": "pi_cpi",
+  "pi_expect_col": "Epi",
+  "pi_prev_col": "pi_cpi_prev",
+  "x_col": "unemp_gap",
+  "x_prev_col": "unemp_gap_prev"
+}

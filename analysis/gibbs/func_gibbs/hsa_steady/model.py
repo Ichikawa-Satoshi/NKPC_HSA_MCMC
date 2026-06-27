@@ -117,6 +117,8 @@ def _sample_ar2_coeffs(
     enforce_stationary: bool,
     rng: np.random.Generator,
     max_tries: int = 2000,
+    current: tuple[float, float] | None = None,
+    stats: dict[str, int] | None = None,
 ) -> tuple[float, float]:
     Nhat = _as_1d(Nhat)
 
@@ -138,16 +140,64 @@ def _sample_ar2_coeffs(
         draw = _mvnrnd(post_mean, post_cov, rng)
         return float(draw[0]), float(draw[1])
 
-    for _ in range(max_tries):
+    if stats is not None:
+        stats["draw_calls"] = stats.get("draw_calls", 0) + 1
+
+    for attempt in range(1, max_tries + 1):
         draw = _mvnrnd(post_mean, post_cov, rng)
         r1, r2 = float(draw[0]), float(draw[1])
         if _is_stationary_ar2(r1, r2):
+            if stats is not None:
+                stats["proposals"] = stats.get("proposals", 0) + attempt
+                stats["rejections"] = stats.get("rejections", 0) + attempt - 1
             return r1, r2
 
-    raise RuntimeError(
-        "Failed to draw stationary AR(2) coefficients. "
-        "Try weaker priors, different initial values, or enforce_stationary=False."
-    )
+    if stats is not None:
+        stats["proposals"] = stats.get("proposals", 0) + max_tries
+        stats["rejections"] = stats.get("rejections", 0) + max_tries
+        stats["fallbacks"] = stats.get("fallbacks", 0) + 1
+
+    if current is not None and _is_stationary_ar2(float(current[0]), float(current[1])):
+        return float(current[0]), float(current[1])
+    if _is_stationary_ar2(float(post_mean[0]), float(post_mean[1])):
+        return float(post_mean[0]), float(post_mean[1])
+    if _is_stationary_ar2(mu_rho1, mu_rho2):
+        return float(mu_rho1), float(mu_rho2)
+    return 0.0, 0.0
+
+
+def _kappa_t_constraint_validators(
+    Nbar: np.ndarray,
+    coefficient_constraints: dict[str, Any] | None,
+) -> list:
+    bounds = dict((coefficient_constraints or {}).get("bounds", {}) or {})
+    pair = bounds.get("kappa_t", bounds.get("kappa"))
+    if pair is None:
+        return []
+    lower, upper = pair
+    Nbar_arr = _as_1d(Nbar)
+
+    def _valid(beta: np.ndarray) -> bool:
+        kappa_t = float(beta[1]) + float(beta[2]) * Nbar_arr
+        if lower is not None and np.any(kappa_t < float(lower)):
+            return False
+        if upper is not None and np.any(kappa_t > float(upper)):
+            return False
+        return True
+
+    return [_valid]
+
+
+def _ar2_stats_summary(stats: dict[str, int]) -> dict[str, float | int]:
+    proposals = int(stats.get("proposals", 0))
+    rejections = int(stats.get("rejections", 0))
+    return {
+        "draw_calls": int(stats.get("draw_calls", 0)),
+        "proposals": proposals,
+        "rejections": rejections,
+        "fallbacks": int(stats.get("fallbacks", 0)),
+        "proposal_rejection_rate": float(rejections / proposals) if proposals else 0.0,
+    }
 
 
 def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
@@ -504,10 +554,12 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     )
 
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
+    ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
+    ar2_stats: dict[str, int] = {}
 
     n_store = int(n_keep // store_every)
 
@@ -611,6 +663,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             ),
             ("alpha", "kappa_0", "delta"),
             coefficient_constraints,
+            validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
             stats=constraint_stats,
         )
 
@@ -697,6 +750,9 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             sigma_rho2=pri["sigma_rho2"],
             enforce_stationary=enforce_stationary,
             rng=rng,
+            max_tries=ar2_max_tries,
+            current=(rho1, rho2),
+            stats=ar2_stats,
         )
 
         resid_u = (
@@ -864,6 +920,11 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             "stored_units": "physical",
             "coefficient_constraints": coefficient_constraints,
             "coefficient_constraint_stats": constraint_stats_summary(constraint_stats),
+            "ar2_stationarity": {
+                "enforce_stationary": enforce_stationary,
+                "max_tries": ar2_max_tries,
+                **_ar2_stats_summary(ar2_stats),
+            },
         },
     }
 

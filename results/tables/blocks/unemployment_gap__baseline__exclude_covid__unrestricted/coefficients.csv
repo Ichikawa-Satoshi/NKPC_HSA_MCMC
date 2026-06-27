@@ -1,0 +1,14 @@
+data_spec,model,period,start,end,n_obs,status,warning,n_transform,parameter,posterior_mean,ci_2.5,ci_97.5
+unemployment_gap,ces,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.6452025936253162,0.5384575978588247,0.7490664262875308
+unemployment_gap,ces,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa,0.0567155923761506,-0.0079994495867118,0.1195682693523159
+unemployment_gap,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.6419937108895869,0.5393777317472813,0.7375876466407546
+unemployment_gap,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa_0,0.0913055640810586,0.0107459034136179,0.1786177134406022
+unemployment_gap,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,delta,0.0286874932318854,-3.492084715902889e-05,0.0564440381276305
+unemployment_gap,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.5936581149430205,0.4759067827432164,0.7107808080377603
+unemployment_gap,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa,0.0809190778298785,-0.0136207089603747,0.1897285354914938
+unemployment_gap,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,theta,0.2199592089704377,-0.2847281236591341,0.627207184650478
+unemployment_gap,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.5939059459509589,0.4652042347688241,0.7152429153345635
+unemployment_gap,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa_0,0.0919338654264476,-0.0065944363440647,0.1890984980390479
+unemployment_gap,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,delta,0.0114566897076502,-0.0342498416616907,0.0518699215449076
+unemployment_gap,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,theta_0,0.2128310225821091,-0.1005479540025054,0.5311927538845431
+unemployment_gap,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,gamma,-0.0035636282419922,-0.0425212630678053,0.0348584073090565

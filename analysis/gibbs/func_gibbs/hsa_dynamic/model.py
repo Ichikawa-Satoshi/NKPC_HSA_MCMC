@@ -589,6 +589,8 @@ def _sample_ar2_coeffs_full(
     enforce_stationary: bool,
     rng: np.random.Generator,
     max_tries: int = 2000,
+    current: tuple[float, float] | None = None,
+    stats: dict[str, int] | None = None,
 ) -> tuple[float, float]:
     """
     AR(2) equation:
@@ -631,16 +633,42 @@ def _sample_ar2_coeffs_full(
         draw = _mvnrnd(post_mean, post_cov, rng)
         return float(draw[0]), float(draw[1])
 
-    for _ in range(max_tries):
+    if stats is not None:
+        stats["draw_calls"] = stats.get("draw_calls", 0) + 1
+
+    for attempt in range(1, max_tries + 1):
         draw = _mvnrnd(post_mean, post_cov, rng)
         r1, r2 = float(draw[0]), float(draw[1])
         if _is_stationary_ar2(r1, r2):
+            if stats is not None:
+                stats["proposals"] = stats.get("proposals", 0) + attempt
+                stats["rejections"] = stats.get("rejections", 0) + attempt - 1
             return r1, r2
 
-    raise RuntimeError(
-        "Failed to draw stationary AR(2) coefficients after max_tries. "
-        "Try weaker priors or enforce_stationary=False."
-    )
+    if stats is not None:
+        stats["proposals"] = stats.get("proposals", 0) + max_tries
+        stats["rejections"] = stats.get("rejections", 0) + max_tries
+        stats["fallbacks"] = stats.get("fallbacks", 0) + 1
+
+    if current is not None and _is_stationary_ar2(float(current[0]), float(current[1])):
+        return float(current[0]), float(current[1])
+    if _is_stationary_ar2(float(post_mean[0]), float(post_mean[1])):
+        return float(post_mean[0]), float(post_mean[1])
+    if _is_stationary_ar2(mu_rho1, mu_rho2):
+        return float(mu_rho1), float(mu_rho2)
+    return 0.0, 0.0
+
+
+def _ar2_stats_summary(stats: dict[str, int]) -> dict[str, float | int]:
+    proposals = int(stats.get("proposals", 0))
+    rejections = int(stats.get("rejections", 0))
+    return {
+        "draw_calls": int(stats.get("draw_calls", 0)),
+        "proposals": proposals,
+        "rejections": rejections,
+        "fallbacks": int(stats.get("fallbacks", 0)),
+        "proposal_rejection_rate": float(rejections / proposals) if proposals else 0.0,
+    }
 
 
 def _sample_n_full(
@@ -1001,10 +1029,12 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         raise ValueError("Sigma0 must be 4x4.")
 
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
+    ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
+    ar2_stats: dict[str, int] = {}
 
     n_store = int(n_keep // store_every)
     if n_store <= 0:
@@ -1121,6 +1151,9 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
             sigma_rho2=pri["sigma_rho2"],
             enforce_stationary=enforce_stationary,
             rng=rng,
+            max_tries=ar2_max_tries,
+            current=(rho1, rho2),
+            stats=ar2_stats,
         )
 
         u, eps = _compute_state_residuals(states, rho1, rho2, n_drift)
@@ -1276,6 +1309,11 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
             "stored_units": "physical",
             "coefficient_constraints": coefficient_constraints,
             "coefficient_constraint_stats": constraint_stats_summary(constraint_stats),
+            "ar2_stationarity": {
+                "enforce_stationary": enforce_stationary,
+                "max_tries": ar2_max_tries,
+                **_ar2_stats_summary(ar2_stats),
+            },
         },
     }
 

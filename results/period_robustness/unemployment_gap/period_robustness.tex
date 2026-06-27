@@ -1,24 +1,84 @@
-\begin{tabular}{lllllrlllrrr}
+\begin{tabular}{lllllrllllrrr}
 \toprule
-data\_spec & model & period & start & end & n\_obs & status & warning & parameter & mean & ci\_2.5 & ci\_97.5 \\
+data\_spec & model & period & start & end & n\_obs & status & warning & n\_transform & parameter & mean & ci\_2.5 & ci\_97.5 \\
 \midrule
-unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & alpha & 0.6577 & 0.5494 & 0.7578 \\
-unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & kappa\_0 & 0.0757 & -0.3673 & 0.3665 \\
-unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & delta & -0.0001 & -0.0017 & 0.0021 \\
-unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & alpha & 0.6704 & 0.5908 & 0.7652 \\
-unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & kappa\_0 & 0.0984 & -0.1924 & 0.4616 \\
-unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & delta & 0.0003 & -0.0016 & 0.0021 \\
-unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & alpha & 0.6102 & 0.4095 & 0.7892 \\
-unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & kappa\_0 & 0.0674 & -0.4251 & 0.4638 \\
-unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & delta & -0.0005 & -0.0030 & 0.0021 \\
-unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & alpha & 0.6389 & 0.5336 & 0.7119 \\
-unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & kappa\_0 & -0.0200 & -0.4271 & 0.2862 \\
-unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & delta & 0.0004 & -0.0012 & 0.0026 \\
-unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & alpha & 0.6112 & 0.5120 & 0.6951 \\
-unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & kappa\_0 & 0.0526 & -0.4687 & 0.4666 \\
-unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & delta & -0.0003 & -0.0026 & 0.0023 \\
-unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & alpha & 0.6530 & 0.5534 & 0.7574 \\
-unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & kappa\_0 & 0.0042 & -0.4906 & 0.3742 \\
-unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & delta & 0.0003 & -0.0016 & 0.0026 \\
+unemployment\_gap & ces & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6470 & 0.5434 & 0.7494 \\
+unemployment\_gap & ces & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa & 0.0556 & -0.0075 & 0.1200 \\
+unemployment\_gap & ces & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6804 & 0.5720 & 0.7828 \\
+unemployment\_gap & ces & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa & 0.1649 & 0.0865 & 0.2433 \\
+unemployment\_gap & ces & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5728 & 0.3258 & 0.8074 \\
+unemployment\_gap & ces & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa & -0.0185 & -0.1491 & 0.1077 \\
+unemployment\_gap & ces & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6452 & 0.5385 & 0.7491 \\
+unemployment\_gap & ces & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa & 0.0567 & -0.0080 & 0.1196 \\
+unemployment\_gap & ces & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6262 & 0.5024 & 0.7461 \\
+unemployment\_gap & ces & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa & -0.0067 & -0.0808 & 0.0699 \\
+unemployment\_gap & ces & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6469 & 0.5417 & 0.7490 \\
+unemployment\_gap & ces & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa & 0.0560 & -0.0074 & 0.1193 \\
+unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6411 & 0.5429 & 0.7417 \\
+unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa\_0 & 0.0913 & 0.0126 & 0.1757 \\
+unemployment\_gap & hsa\_steady & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & delta & 0.0287 & 0.0006 & 0.0556 \\
+unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6817 & 0.5760 & 0.7871 \\
+unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa\_0 & 0.1619 & 0.0751 & 0.2481 \\
+unemployment\_gap & hsa\_steady & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & delta & 0.0039 & -0.0345 & 0.0428 \\
+unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5752 & 0.3284 & 0.8102 \\
+unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa\_0 & -0.0187 & -0.1414 & 0.1105 \\
+unemployment\_gap & hsa\_steady & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & delta & 0.0011 & -0.0397 & 0.0423 \\
+unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.6420 & 0.5394 & 0.7376 \\
+unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa\_0 & 0.0913 & 0.0107 & 0.1786 \\
+unemployment\_gap & hsa\_steady & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & delta & 0.0287 & -0.0000 & 0.0564 \\
+unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6266 & 0.5062 & 0.7457 \\
+unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa\_0 & 0.0079 & -0.0827 & 0.1017 \\
+unemployment\_gap & hsa\_steady & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & delta & 0.0075 & -0.0241 & 0.0405 \\
+unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6401 & 0.5393 & 0.7400 \\
+unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa\_0 & 0.0897 & 0.0108 & 0.1759 \\
+unemployment\_gap & hsa\_steady & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & delta & 0.0291 & 0.0013 & 0.0562 \\
+unemployment\_gap & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.5936 & 0.4743 & 0.7085 \\
+unemployment\_gap & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa & 0.0849 & -0.0113 & 0.1913 \\
+unemployment\_gap & hsa\_dynamic & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & theta & 0.2369 & -0.2658 & 0.6191 \\
+unemployment\_gap & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6327 & 0.5034 & 0.7530 \\
+unemployment\_gap & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa & 0.1803 & 0.0745 & 0.2904 \\
+unemployment\_gap & hsa\_dynamic & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & theta & 0.2923 & -0.1692 & 0.6800 \\
+unemployment\_gap & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5878 & 0.3651 & 0.8122 \\
+unemployment\_gap & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa & -0.0222 & -0.1334 & 0.0860 \\
+unemployment\_gap & hsa\_dynamic & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & theta & 0.1581 & -0.3597 & 0.6228 \\
+unemployment\_gap & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.5937 & 0.4759 & 0.7108 \\
+unemployment\_gap & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa & 0.0809 & -0.0136 & 0.1897 \\
+unemployment\_gap & hsa\_dynamic & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & theta & 0.2200 & -0.2847 & 0.6272 \\
+unemployment\_gap & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6157 & 0.4921 & 0.7356 \\
+unemployment\_gap & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa & 0.0002 & -0.0742 & 0.0839 \\
+unemployment\_gap & hsa\_dynamic & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & theta & 0.1560 & -0.2522 & 0.5550 \\
+unemployment\_gap & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.6006 & 0.4836 & 0.7129 \\
+unemployment\_gap & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa & 0.0759 & -0.0224 & 0.1870 \\
+unemployment\_gap & hsa\_dynamic & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & theta & 0.1743 & -0.3031 & 0.6026 \\
+unemployment\_gap & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & alpha & 0.6126 & 0.4845 & 0.7309 \\
+unemployment\_gap & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & kappa\_0 & 0.0766 & -0.0114 & 0.1738 \\
+unemployment\_gap & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & delta & 0.0183 & -0.0263 & 0.0520 \\
+unemployment\_gap & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & theta\_0 & 0.1198 & -0.2058 & 0.4939 \\
+unemployment\_gap & hsa\_full & full & 1913-03-31 & 2025-09-30 & 451 & estimated &  & log100\_centered10 & gamma & -0.0059 & -0.0443 & 0.0346 \\
+unemployment\_gap & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & alpha & 0.6140 & 0.4869 & 0.7424 \\
+unemployment\_gap & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & kappa\_0 & 0.1778 & 0.0523 & 0.3115 \\
+unemployment\_gap & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & delta & 0.0015 & -0.0345 & 0.0367 \\
+unemployment\_gap & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & theta\_0 & 0.2595 & 0.0187 & 0.5258 \\
+unemployment\_gap & hsa\_full & pre\_2008 & 1913-03-31 & 2007-09-30 & 379 & estimated &  & log100\_centered10 & gamma & -0.0000 & -0.0397 & 0.0379 \\
+unemployment\_gap & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & alpha & 0.5744 & 0.3238 & 0.8026 \\
+unemployment\_gap & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & kappa\_0 & -0.0218 & -0.1473 & 0.1087 \\
+unemployment\_gap & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & delta & 0.0011 & -0.0387 & 0.0412 \\
+unemployment\_gap & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & theta\_0 & 0.1039 & -0.3071 & 0.5091 \\
+unemployment\_gap & hsa\_full & post\_2008 & 2009-03-31 & 2025-09-30 & 67 & estimated &  & log100\_centered10 & gamma & -0.0005 & -0.0398 & 0.0383 \\
+unemployment\_gap & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & alpha & 0.5939 & 0.4652 & 0.7152 \\
+unemployment\_gap & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & kappa\_0 & 0.0919 & -0.0066 & 0.1891 \\
+unemployment\_gap & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & delta & 0.0115 & -0.0342 & 0.0519 \\
+unemployment\_gap & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & theta\_0 & 0.2128 & -0.1005 & 0.5312 \\
+unemployment\_gap & hsa\_full & exclude\_covid & 1913-03-31 & 2025-09-30 & 444 & estimated &  & log100\_centered10 & gamma & -0.0036 & -0.0425 & 0.0349 \\
+unemployment\_gap & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & alpha & 0.6081 & 0.4762 & 0.7312 \\
+unemployment\_gap & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & kappa\_0 & 0.0145 & -0.0814 & 0.1126 \\
+unemployment\_gap & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & delta & 0.0053 & -0.0300 & 0.0372 \\
+unemployment\_gap & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & theta\_0 & 0.1520 & -0.2110 & 0.5322 \\
+unemployment\_gap & hsa\_full & start\_1988 & 1988-03-31 & 2025-09-30 & 151 & estimated &  & log100\_centered10 & gamma & -0.0007 & -0.0395 & 0.0384 \\
+unemployment\_gap & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & alpha & 0.5858 & 0.4683 & 0.6983 \\
+unemployment\_gap & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & kappa\_0 & 0.0971 & 0.0078 & 0.1905 \\
+unemployment\_gap & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & delta & 0.0078 & -0.0324 & 0.0476 \\
+unemployment\_gap & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & theta\_0 & 0.2787 & -0.0676 & 0.5703 \\
+unemployment\_gap & hsa\_full & end\_2019 & 1913-03-31 & 2019-09-30 & 427 & estimated &  & log100\_centered10 & gamma & -0.0025 & -0.0420 & 0.0380 \\
 \bottomrule
 \end{tabular}

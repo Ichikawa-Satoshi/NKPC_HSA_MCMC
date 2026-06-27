@@ -1,0 +1,3 @@
+run,model,data_spec,prior_spec,constraint_spec,restriction,unit,prior_mean,prior_sd,sddr_bf01
+hsa_steady_unemployment_gap_pre_2008_baseline_20260622_205854,hsa_steady,unemployment_gap_pre_2008,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.00865612379682243
+hsa_steady_unemployment_gap_pre_2008_baseline_20260622_205854,hsa_steady,unemployment_gap_pre_2008,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.820956322703043

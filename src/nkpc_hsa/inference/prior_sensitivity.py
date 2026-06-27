@@ -5,6 +5,7 @@ from typing import Mapping
 
 import pandas as pd
 
+from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
 from nkpc_hsa.paths import project_path
 
@@ -20,9 +21,11 @@ def run_prior_sensitivity(
     thin: int = 5,
     chains: int = 2,
     seed: int = 12345,
-    n_transform: str = "log100",
+    n_transform: str = DEFAULT_N_TRANSFORM,
     covariance_structure: str = "e_zeta_only",
     coefficient_constraints: Mapping | None = None,
+    enforce_stationary: bool = True,
+    ar2_max_tries: int = 2000,
 ):
     prior_files = prior_files or [
         project_path("configs", "priors_baseline.yaml"),
@@ -46,6 +49,8 @@ def run_prior_sensitivity(
             n_transform=n_transform,
             covariance_structure=covariance_structure,
             coefficient_constraints=coefficient_constraints,
+            enforce_stationary=enforce_stationary,
+            ar2_max_tries=ar2_max_tries,
         )
         outputs[name] = idata
     return outputs
@@ -75,6 +80,7 @@ def prior_sensitivity_table(idata_map: Mapping[str, object], var_names=DEFAULT_P
         posterior = getattr(idata, "posterior", None)
         if posterior is None:
             continue
+        attrs = getattr(idata, "attrs", {})
         for var in var_names:
             if var not in posterior:
                 continue
@@ -85,6 +91,9 @@ def prior_sensitivity_table(idata_map: Mapping[str, object], var_names=DEFAULT_P
             rows.append(
                 {
                     "prior": prior_name,
+                    "model": attrs.get("model", ""),
+                    "data_spec": attrs.get("data_spec", ""),
+                    "n_transform": attrs.get("n_transform", ""),
                     "parameter": var,
                     "mean": float(pd.Series(values).mean()),
                     "median": float(pd.Series(values).median()),

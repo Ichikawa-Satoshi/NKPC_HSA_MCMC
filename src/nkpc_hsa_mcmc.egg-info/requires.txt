@@ -1,0 +1,8 @@
+arviz
+matplotlib
+numpy
+openpyxl
+pandas
+pyyaml
+scipy
+xarray

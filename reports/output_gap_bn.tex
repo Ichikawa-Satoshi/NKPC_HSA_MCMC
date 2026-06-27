@@ -14,8 +14,13 @@
 \section{Data and Transformations}
 Raw data are read from \texttt{data/raw/}. Processed model-ready data are written to
 \texttt{data/processed/}. The HSA competition aggregator convention is
-$N_t = 100\log(N^{level}_t)$ unless a run metadata file explicitly states
-that the series was already transformed.
+\[
+N^{model}_t=\frac{100\log(N^{level}_t)-\overline{100\log(N^{level})}}{10}.
+\]
+Thus \(N^{model}_t\), \(\hat N_t\), and \(\bar N_t\) are centered and measured
+in ten-log-point units. If a run metadata file records another
+\texttt{n\_transform}, interpret the corresponding coefficients using that
+metadata.
 
 \section{Model Specifications}
 The CES benchmark is
@@ -50,87 +55,30 @@ figures, SDDR calculations, and model-comparison summaries are reported in
 physical units. The default dynamic-HSA shock covariance allows only
 \((e_t,\zeta_t)\) correlation; diagonal and historical full covariance modes
 are available only through explicit run metadata.
+Because the default \(N\) transform is centered and divided by 10, the reported
+\(\delta\), \(\theta\), \(\theta_0\), and \(\gamma\) coefficients are already
+effects for a ten-log-point movement in the corresponding \(N\) component.
+\(\kappa_0\) and \(\theta_0\) are intercepts at average \(\bar N_t\).
 
-\section{Prior Specifications}
-Baseline, weak, and tight priors are stored in \texttt{configs/}. Robustness
-tables below summarize whether conclusions for \(\delta\), \(\theta\), and
-\(\gamma\) change across these choices.
+\section{Coefficient Summary}
+Table~\ref{tab:pivot} reports posterior means and 95\% credible intervals for
+key parameters across all four models (baseline prior, full sample).
+Cells show \textit{mean} [\textit{ci\_2.5}, \textit{ci\_97.5}].
 
-\section{1. Posterior Mean Coefficients}
-This section reports posterior means and credible intervals for the main scalar
-coefficients in each estimated run.
-\begin{center}
+\begin{table}[H]
+\centering
+\caption{Posterior means and 95\% credible intervals by model}
+\label{tab:pivot}
 \scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/coefficient_means.tex}}
-\end{center}
+\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/coefficient_means_pivot.tex}}
+\end{table}
 
-\section{2. Kappa Comparison Across Models}
-For CES models this is \(\kappa\). For steady or full HSA models the table also
-reports \(\kappa_0\), \(\delta\), and the average path of
-\(\kappa_t=\kappa_0+\delta\bar N_t\) when available.
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/kappa_model_comparison.tex}}
-\end{center}
-\begin{center}
-\includegraphics[width=0.85\textwidth]{../figures/output_gap_bn/kappa_model_comparison.png}
-\end{center}
-
-\section{3. Time-Varying Coefficient Paths}
-The main time-varying coefficients are \(\kappa_t\) and, in the both-effects
-model, \(\theta_t=\theta_0+\gamma\bar N_t\).
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/time_varying_coefficients.tex}}
-\end{center}
-\begin{center}
-\includegraphics[width=0.85\textwidth]{../figures/output_gap_bn/kappa_t_path.png}
-\includegraphics[width=0.85\textwidth]{../figures/output_gap_bn/theta_t_path.png}
-\end{center}
-
-\section{4. Model Fit and Model Comparison}
-Model fit is summarized by posterior predictive scores, Chib marginal
-likelihoods when available, Bayes factors, and SDDR restrictions.
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../model_comparison/output_gap_bn/model_comparison.tex}}
-\end{center}
-
-\section{5. Prior vs Posterior and Savage-Dickey Density Ratios}
-The figures compare baseline priors with posterior densities. The SDDR table
-reports Bayes factors for point restrictions such as \(\delta=0\),
-\(\theta=0\), and \(\gamma=0\), when the corresponding posterior draws exist.
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/sddr.tex}}
-\end{center}
-\begin{center}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_kappa.png}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_kappa_0.png}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_delta.png}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_theta.png}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_theta_0.png}
-\includegraphics[width=0.48\textwidth]{../figures/output_gap_bn/prior_posterior_gamma.png}
-\end{center}
-
-\section{Diagnostics and Robustness}
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/mcmc_diagnostics.tex}}
-\end{center}
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/prior_robustness.tex}}
-\end{center}
-\begin{center}
-\scriptsize
-\resizebox{\textwidth}{!}{\input{../tables/output_gap_bn/period_robustness.tex}}
-\end{center}
-
-\section{Posterior Predictive Checks and Figures}
-\begin{center}
-\includegraphics[width=0.9\textwidth]{../figures/output_gap_bn/posterior_predictive_placeholder.png}
-\end{center}
+\section{Result Blocks}
+Results are organized by condition. Each section fixes a data specification,
+prior specification, and sample period, then reports the coefficient table,
+prior/posterior overlay by model, Savage-Dickey density ratios, time-varying
+\(\kappa_t\) path, and model-comparison output for that condition.
+\input{../tables/output_gap_bn/result_blocks.tex}
 
 \section{Notes}
 WAIC and LOO are not used as primary criteria because the models contain

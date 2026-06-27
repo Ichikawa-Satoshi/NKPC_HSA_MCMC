@@ -6,6 +6,7 @@ from typing import Any, Mapping
 import pandas as pd
 import yaml
 
+from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.diagnostics import compute_diagnostics
 from nkpc_hsa.inference.wrappers import run_model
 from nkpc_hsa.paths import project_path
@@ -54,9 +55,11 @@ def run_period_robustness(
     chains: int = 2,
     seed: int = 12345,
     min_obs: int = 40,
-    n_transform: str = "log100",
+    n_transform: str = DEFAULT_N_TRANSFORM,
     covariance_structure: str = "e_zeta_only",
     coefficient_constraints: Mapping[str, Any] | None = None,
+    enforce_stationary: bool = True,
+    ar2_max_tries: int = 2000,
 ) -> tuple[dict[str, object], pd.DataFrame]:
     periods = dict(periods or load_periods())
     outputs: dict[str, object] = {}
@@ -72,6 +75,7 @@ def run_period_robustness(
             "n_obs": n_obs,
             "status": "skipped" if n_obs < min_obs else "estimated",
             "warning": "" if n_obs >= min_obs else f"Too few observations: {n_obs} < {min_obs}",
+            "n_transform": n_transform,
         }
         if n_obs >= min_obs:
             base_spec = dict(data_spec or {})
@@ -89,8 +93,11 @@ def run_period_robustness(
                 chains=chains,
                 seed=seed + i,
                 n_transform=n_transform,
+                period_name=period_name,
                 covariance_structure=covariance_structure,
                 coefficient_constraints=coefficient_constraints,
+                enforce_stationary=enforce_stationary,
+                ar2_max_tries=ar2_max_tries,
             )
             outputs[period_name] = idata
             diag = compute_diagnostics(idata)

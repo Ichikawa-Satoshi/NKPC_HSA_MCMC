@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import asdict
 from pathlib import Path
-from typing import Mapping
 
 import numpy as np
 import pandas as pd
@@ -38,6 +38,16 @@ def _mean_state(posterior, name: str) -> np.ndarray | None:
     if arr.ndim < 3:
         return None
     return np.nanmean(arr.reshape(-1, arr.shape[-1]), axis=0)
+
+
+def _prior_mean_sd(priors: Mapping[str, object] | None, name: str, default: tuple[float, float]) -> tuple[float, float]:
+    if priors and name in priors:
+        prior = priors[name]
+        if isinstance(prior, Mapping):
+            return float(prior["mean"]), float(prior["sd"])
+        if isinstance(prior, (list, tuple)) and len(prior) >= 2:
+            return float(prior[0]), float(prior[1])
+    return default
 
 
 def posterior_predictive_score(idata, data: Mapping[str, np.ndarray], model_name: str) -> tuple[float, float] | tuple[None, None]:
@@ -107,10 +117,12 @@ def model_comparison_table(results: Mapping[str, object], *, data_by_model: Mapp
     data_by_model = data_by_model or {}
     for name, idata in results.items():
         row = {
-            "model": name,
+            "run": name,
+            "model": getattr(idata, "attrs", {}).get("model", name),
             "data_spec": getattr(idata, "attrs", {}).get("data_spec", ""),
             "prior_spec": getattr(idata, "attrs", {}).get("prior_spec", ""),
             "constraint_spec": getattr(idata, "attrs", {}).get("constraint_spec", "unrestricted"),
+            "n_transform": getattr(idata, "attrs", {}).get("n_transform", ""),
             "log_marginal_likelihood": np.nan,
             "bayes_factor_vs_baseline": np.nan,
             "sddr_delta_bf01": np.nan,
@@ -119,36 +131,59 @@ def model_comparison_table(results: Mapping[str, object], *, data_by_model: Mapp
             "sddr_gamma_bf01": np.nan,
             "predictive_score": np.nan,
             "posterior_predictive_rmse": np.nan,
-            "notes": "Chib uses physical-unit posterior draws and physical-unit priors.",
+            "notes": "SDDR uses run-specific saved priors and physical-unit posterior draws.",
         }
         posterior = getattr(idata, "posterior", None)
-        if posterior is not None and "delta" in posterior:
-            bf01 = sddr_bf01_normal(posterior["delta"].values, point=0.0, prior_mean=0.1, prior_sd=0.2)
-            row["sddr_delta_bf01"] = np.nan if bf01 is None else bf01
-        if posterior is not None and "theta" in posterior:
-            bf01 = sddr_bf01_normal(posterior["theta"].values, point=0.0, prior_mean=0.1, prior_sd=0.2)
-            row["sddr_theta_bf01"] = np.nan if bf01 is None else bf01
-        if posterior is not None and "theta_0" in posterior:
-            bf01 = sddr_bf01_normal(posterior["theta_0"].values, point=0.0, prior_mean=0.1, prior_sd=0.2)
-            row["sddr_theta0_bf01"] = np.nan if bf01 is None else bf01
-        if posterior is not None and "gamma" in posterior:
-            bf01 = sddr_bf01_normal(posterior["gamma"].values, point=0.0, prior_mean=0.1, prior_sd=0.2)
-            row["sddr_gamma_bf01"] = np.nan if bf01 is None else bf01
+        attrs = getattr(idata, "attrs", {})
+        run_priors = attrs.get("run_priors") if isinstance(attrs.get("run_priors"), Mapping) else {}
+        sddr_specs = {
+            "delta": ("sddr_delta_bf01", (0.0, 0.02)),
+            "theta": ("sddr_theta_bf01", (0.1, 0.2)),
+            "theta_0": ("sddr_theta0_bf01", (0.1, 0.2)),
+            "gamma": ("sddr_gamma_bf01", (0.0, 0.02)),
+        }
+        if posterior is not None:
+            for var, (column, default_prior) in sddr_specs.items():
+                if var not in posterior:
+                    continue
+                mu, sd = _prior_mean_sd(run_priors, var, default_prior)
+                bf01 = sddr_bf01_normal(posterior[var].values, point=0.0, prior_mean=mu, prior_sd=sd)
+                row[column] = np.nan if bf01 is None else bf01
         data = data_by_model.get(name, data_by_model.get("__default__"))
         if data is not None:
             score, rmse = posterior_predictive_score(idata, data, name)
             row["predictive_score"] = np.nan if score is None else score
             row["posterior_predictive_rmse"] = np.nan if rmse is None else rmse
         try:
-            family = "ces" if "ces" in name else "steady" if "steady" in name else "dynamic" if "dynamic" in name else None
+            family = (
+                "ces"
+                if "ces" in name
+                else "steady"
+                if "steady" in name
+                else "dynamic"
+                if "dynamic" in name
+                else "full"
+                if "full" in name
+                else None
+            )
             if family is None:
-                row["notes"] += " Chib unavailable for HSA full in the current legacy implementation."
+                row["notes"] += " Chib not computed for unknown model family."
             elif data is not None:
-                from analysis.gibbs.func_gibbs.gibbs_marginal_likelihood import chib_marginal_likelihood
+                from analysis.gibbs.func_gibbs.gibbs_marginal_likelihood import (
+                    chib_conditional_marginal_likelihood,
+                    chib_marginal_likelihood,
+                )
 
-                result = chib_marginal_likelihood(idata.posterior, data, family=family, orth=False)
+                if family == "full":
+                    result = chib_conditional_marginal_likelihood(idata.posterior, data, family=family)
+                    row["notes"] += (
+                        " HSA full Chib is conditional on posterior mean latent states because the full observation equation "
+                        "is nonlinear in Nhat and Nbar."
+                    )
+                else:
+                    result = chib_marginal_likelihood(idata.posterior, data, family=family, orth=False)
                 row.update(asdict(result))
-                row["notes"] += " Chib uses baseline hard-coded prior ordinates in the legacy implementation."
+                row["notes"] += " Chib uses legacy prior ordinates and should be checked before publication."
             else:
                 row["notes"] += " Chib not computed because comparison data were not supplied."
         except Exception as exc:
@@ -167,4 +202,21 @@ def save_model_comparison(table: pd.DataFrame, out_dir: str | Path) -> None:
     if table.empty:
         table = pd.DataFrame({"note": ["No model-comparison runs available."]})
     table.to_csv(out / "model_comparison.csv", index=False)
-    table.to_latex(out / "model_comparison.tex", index=False, float_format="%.3f", escape=True)
+    display_columns = [
+        "model",
+        "data_spec",
+        "prior_spec",
+        "predictive_score",
+        "posterior_predictive_rmse",
+        "log_likelihood",
+        "log_marginal_likelihood",
+        "bayes_factor_vs_baseline",
+        "method",
+        "sddr_delta_bf01",
+        "sddr_theta_bf01",
+        "sddr_gamma_bf01",
+    ]
+    display = table[[col for col in display_columns if col in table.columns]]
+    if display.empty:
+        display = table
+    display.to_latex(out / "model_comparison.tex", index=False, float_format="%.3f", escape=True)

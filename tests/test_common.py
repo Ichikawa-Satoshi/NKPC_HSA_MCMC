@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from analysis.gibbs.func_gibbs.common.constraints import draw_with_constraints
 from nkpc_hsa.models.common import (
     KAPPA_SCALE,
     coefficient_constraints_to_internal,
@@ -35,12 +36,32 @@ def test_coefficient_constraints_convert_kappa_like_bounds() -> None:
     out = coefficient_constraints_to_internal(
         {
             "enabled": True,
-            "positive": ["kappa", "theta"],
+            "positive": ["kappa", "kappa_t", "theta"],
             "bounds": {"alpha": [0.0, 1.0], "delta": [-0.1, 0.2]},
         }
     )
     assert out["enabled"] is True
     assert out["bounds"]["kappa"] == [0.0, None]
+    assert out["bounds"]["kappa_t"] == [0.0, None]
     assert out["bounds"]["theta"] == [0.0, None]
     assert out["bounds"]["alpha"] == [0.0, 1.0]
     assert out["bounds"]["delta"] == [-0.1 * KAPPA_SCALE, 0.2 * KAPPA_SCALE]
+
+
+def test_draw_with_constraints_applies_path_validator() -> None:
+    draws = iter(
+        [
+            np.array([0.5, -1.0, 0.0]),
+            np.array([0.5, 1.0, 0.0]),
+        ]
+    )
+    stats: dict[str, int] = {}
+    out = draw_with_constraints(
+        lambda: next(draws),
+        ("alpha", "kappa_0", "delta"),
+        {"enabled": True, "max_tries": 5, "bounds": {"kappa_t": [0.0, None]}},
+        validators=[lambda beta: np.all(beta[1] + beta[2] * np.array([-1.0, 0.0, 1.0]) >= 0.0)],
+        stats=stats,
+    )
+    assert out[1] == 1.0
+    assert stats["rejections"] == 1

@@ -1,0 +1,129 @@
+{
+  "burn": 20,
+  "chains": 2,
+  "coefficient_constraints": {},
+  "constraint_spec": "unrestricted",
+  "covariance_structure": "e_zeta_only",
+  "data_spec": "output_gap_bn",
+  "extra": {
+    "chains": [
+      {
+        "chain": 0,
+        "model_metadata": {
+          "coefficient_constraint_stats": {
+            "attempts": 40,
+            "rejection_rate": 0.0,
+            "rejections": 0
+          },
+          "coefficient_constraints": {
+            "bounds": {},
+            "enabled": false,
+            "max_tries": 1000
+          },
+          "kappa_internal": "stored kappa * KAPPA_SCALE",
+          "kappa_scale": 100,
+          "stored_units": "physical"
+        },
+        "seed": 1963490442
+      },
+      {
+        "chain": 1,
+        "model_metadata": {
+          "coefficient_constraint_stats": {
+            "attempts": 40,
+            "rejection_rate": 0.0,
+            "rejections": 0
+          },
+          "coefficient_constraints": {
+            "bounds": {},
+            "enabled": false,
+            "max_tries": 1000
+          },
+          "kappa_internal": "stored kappa * KAPPA_SCALE",
+          "kappa_scale": 100,
+          "stored_units": "physical"
+        },
+        "seed": 3855584999
+      }
+    ],
+    "coefficient_constraints_internal": {
+      "bounds": {},
+      "enabled": false,
+      "max_tries": 1000
+    },
+    "priors_internal": {
+      "S_Sigma": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "a_N": 2.0,
+      "a_e": 2.0,
+      "a_eps": 2.0,
+      "a_u": 2.0,
+      "a_z": 0.001,
+      "b_N": 2.0,
+      "b_e": 2.0,
+      "b_eps": 2.0,
+      "b_u": 2.0,
+      "b_z": 0.001,
+      "mu_alpha": 0.5,
+      "mu_delta": 0.0,
+      "mu_gamma": 0.0,
+      "mu_kappa": 10.0,
+      "mu_kappa_0": 10.0,
+      "mu_n": 0.0,
+      "mu_phi_1": 0.7,
+      "mu_rho1": 0.5,
+      "mu_rho2": -0.5,
+      "mu_theta": 0.1,
+      "nu_Sigma": 8.0,
+      "sigma_alpha": 0.2,
+      "sigma_delta": 2.0,
+      "sigma_gamma": 0.02,
+      "sigma_kappa": 20.0,
+      "sigma_kappa_0": 20.0,
+      "sigma_n": 0.1,
+      "sigma_phi_1": 0.2,
+      "sigma_rho1": 0.2,
+      "sigma_rho2": 0.2,
+      "sigma_theta": 0.2
+    }
+  },
+  "kappa_scale": 100.0,
+  "kappa_unit_note": "Priors are specified in physical units. Samplers may use internal kappa parameters scaled by KAPPA_SCALE when the regressor is divided by KAPPA_SCALE. Stored posterior draws and report outputs are in physical units.",
+  "kappa_units": "physical",
+  "model": "ces",
+  "n_iter": 40,
+  "n_obs": 124,
+  "n_transform": "log100_centered10",
+  "n_transform_note": "N is transformed as (100*log(N_level) - sample mean)/10. One transformed unit is a ten log-point movement around the sample mean.",
+  "orth": false,
+  "prior_spec": "baseline",
+  "run_id": "preview_20260622_203431",
+  "sample_end": "2012-12-31",
+  "sample_start": "1982-03-31",
+  "seed": 900,
+  "thin": 2
+}
