@@ -1,0 +1,6 @@
+severity,parameter,warning
+warning,rho_1,R-hat 1.014 > 1.01
+warning,rho_2,R-hat 1.012 > 1.01
+warning,n,R-hat 1.048 > 1.01
+warning,n,bulk ESS 57.7 < 400
+warning,n,tail ESS 63.6 < 400

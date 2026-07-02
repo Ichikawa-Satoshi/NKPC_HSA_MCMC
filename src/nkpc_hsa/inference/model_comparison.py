@@ -175,15 +175,23 @@ def model_comparison_table(results: Mapping[str, object], *, data_by_model: Mapp
                 )
 
                 if family == "full":
-                    result = chib_conditional_marginal_likelihood(idata.posterior, data, family=family)
+                    result = chib_conditional_marginal_likelihood(
+                        idata.posterior, data, family=family, priors=run_priors or None
+                    )
                     row["notes"] += (
                         " HSA full Chib is conditional on posterior mean latent states because the full observation equation "
                         "is nonlinear in Nhat and Nbar."
                     )
                 else:
-                    result = chib_marginal_likelihood(idata.posterior, data, family=family, orth=False)
+                    result = chib_marginal_likelihood(
+                        idata.posterior, data, family=family, orth=False, priors=run_priors or None
+                    )
                 row.update(asdict(result))
-                row["notes"] += " Chib uses legacy prior ordinates and should be checked before publication."
+                row["notes"] += (
+                    " Chib prior and ordinate terms use the run's saved priors (physical units); "
+                    "the AR(2) stationarity truncation and any hard coefficient constraints are not "
+                    "reflected in the prior normalization."
+                )
             else:
                 row["notes"] += " Chib not computed because comparison data were not supplied."
         except Exception as exc:

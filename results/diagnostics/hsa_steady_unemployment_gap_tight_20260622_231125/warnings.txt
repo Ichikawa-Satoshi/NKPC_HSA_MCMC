@@ -1,0 +1,43 @@
+R-hat 1.154 > 1.01
+bulk ESS 20.9 < 400
+tail ESS 20.4 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 24.2 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+R-hat 1.029 > 1.01
+bulk ESS 29.8 < 400
+tail ESS 40.0 < 400
+bulk ESS 24.2 < 400
+tail ESS 24.2 < 400
+R-hat 1.012 > 1.01
+bulk ESS 20.3 < 400
+tail ESS 23.3 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+R-hat 1.021 > 1.01
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+R-hat 1.017 > 1.01
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 40.0 < 400
+tail ESS 40.0 < 400
+bulk ESS 29.2 < 400
+tail ESS 40.0 < 400
+bulk ESS 15.0 < 400
+tail ESS 20.4 < 400
+bulk ESS 23.4 < 400
+tail ESS 40.0 < 400

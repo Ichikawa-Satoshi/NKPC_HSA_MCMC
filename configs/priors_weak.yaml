@@ -11,17 +11,20 @@ rho_2: [-0.5, 0.5]
 n: [0.0, 0.25]
 a_e: 1.0
 b_e: 1.0
+# See priors_baseline.yaml: N-state variances are in squared ten-log-point
+# units, so the IG scales must be near the 0.01 decade. IG(1, b) is heavier
+# tailed than the baseline IG(2, b).
 a_u: 1.0
-b_u: 1.0
+b_u: 0.02
 a_eps: 1.0
-b_eps: 1.0
+b_eps: 0.01
 a_N: 1.0
-b_N: 1.0
+b_N: 0.01
 a_z: 0.001
 b_z: 0.001
 nu_Sigma: 6.0
 S_Sigma:
   - [4.0, 0.0, 0.0, 0.0]
   - [0.0, 4.0, 0.0, 0.0]
-  - [0.0, 0.0, 4.0, 0.0]
-  - [0.0, 0.0, 0.0, 4.0]
+  - [0.0, 0.0, 0.08, 0.0]
+  - [0.0, 0.0, 0.0, 0.04]

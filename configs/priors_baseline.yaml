@@ -11,17 +11,25 @@ rho_2: [-0.5, 0.2]
 n: [0.0, 0.1]
 a_e: 2.0
 b_e: 2.0
+# State-shock and N-measurement variances are in squared ten-log-point units.
+# The observed quarterly variance of the transformed N series is about 0.01,
+# so the inverse-gamma scales must sit in that decade. IG(2, b) has prior mean
+# b; the old IG(2, 2) setting forced these variances two orders of magnitude
+# too large and made the Nbar/Nhat decomposition spuriously noisy.
 a_u: 2.0
-b_u: 2.0
+b_u: 0.02
 a_eps: 2.0
-b_eps: 2.0
+b_eps: 0.01
 a_N: 2.0
-b_N: 2.0
+b_N: 0.01
 a_z: 0.001
 b_z: 0.001
+# S_Sigma rows follow the shock order [e, zeta, u, eps]. With nu_Sigma = 8 the
+# implied prior mean of Sigma is S_Sigma / 3, matching the data scales of the
+# inflation and x residuals (about 1) and the N state shocks (about 0.01-0.02).
 nu_Sigma: 8.0
 S_Sigma:
-  - [1.0, 0.0, 0.0, 0.0]
-  - [0.0, 1.0, 0.0, 0.0]
-  - [0.0, 0.0, 1.0, 0.0]
-  - [0.0, 0.0, 0.0, 1.0]
+  - [3.0, 0.0, 0.0, 0.0]
+  - [0.0, 3.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.06, 0.0]
+  - [0.0, 0.0, 0.0, 0.03]

@@ -1,0 +1,4 @@
+bulk ESS 295.3 < 400
+bulk ESS 266.4 < 400
+bulk ESS 65.8 < 400
+bulk ESS 116.2 < 400

@@ -1,0 +1,12 @@
+severity,parameter,warning
+warning,rho_1,R-hat 2.522 > 1.01
+warning,rho_1,bulk ESS 21.5 < 400
+warning,rho_2,R-hat 1.120 > 1.01
+warning,n,R-hat 1.977 > 1.01
+warning,n,bulk ESS 48.2 < 400
+warning,sigma_u,R-hat 1.760 > 1.01
+warning,sigma_u,bulk ESS 65.3 < 400
+warning,sigma_eps,R-hat 2.593 > 1.01
+warning,sigma_eps,bulk ESS 21.4 < 400
+warning,sigma_N,R-hat 1.349 > 1.01
+warning,sigma_N,bulk ESS 156.7 < 400

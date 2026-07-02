@@ -1,0 +1,7 @@
+severity,parameter,warning
+warning,theta,R-hat 1.018 > 1.01
+warning,theta,bulk ESS 115.6 < 400
+warning,theta,tail ESS 97.5 < 400
+warning,n,R-hat 1.027 > 1.01
+warning,n,bulk ESS 73.7 < 400
+warning,n,tail ESS 59.7 < 400

@@ -1,1 +1,4 @@
 severity,parameter,warning
+warning,alpha,bulk ESS 264.5 < 400
+warning,theta,bulk ESS 73.6 < 400
+warning,n,bulk ESS 127.1 < 400

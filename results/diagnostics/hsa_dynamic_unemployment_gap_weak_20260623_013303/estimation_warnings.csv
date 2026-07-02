@@ -1,0 +1,6 @@
+severity,parameter,warning
+warning,kappa,bulk ESS 363.5 < 400
+warning,theta,R-hat 1.043 > 1.01
+warning,theta,bulk ESS 60.4 < 400
+warning,theta,tail ESS 162.7 < 400
+warning,n,bulk ESS 360.8 < 400

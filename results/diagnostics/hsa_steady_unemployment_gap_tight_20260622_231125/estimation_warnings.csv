@@ -1,1 +1,44 @@
 severity,parameter,warning
+warning,alpha,R-hat 1.154 > 1.01
+warning,alpha,bulk ESS 20.9 < 400
+warning,alpha,tail ESS 20.4 < 400
+warning,kappa_0,bulk ESS 40.0 < 400
+warning,kappa_0,tail ESS 40.0 < 400
+warning,delta,bulk ESS 40.0 < 400
+warning,delta,tail ESS 24.2 < 400
+warning,kappa_t_mean,bulk ESS 40.0 < 400
+warning,kappa_t_mean,tail ESS 40.0 < 400
+warning,kappa_t_start,bulk ESS 40.0 < 400
+warning,kappa_t_start,tail ESS 40.0 < 400
+warning,kappa_t_mid,bulk ESS 40.0 < 400
+warning,kappa_t_mid,tail ESS 40.0 < 400
+warning,kappa_t_end,bulk ESS 40.0 < 400
+warning,kappa_t_end,tail ESS 40.0 < 400
+warning,phi_1,R-hat 1.029 > 1.01
+warning,phi_1,bulk ESS 29.8 < 400
+warning,phi_1,tail ESS 40.0 < 400
+warning,rho_1,bulk ESS 24.2 < 400
+warning,rho_1,tail ESS 24.2 < 400
+warning,rho_2,R-hat 1.012 > 1.01
+warning,rho_2,bulk ESS 20.3 < 400
+warning,rho_2,tail ESS 23.3 < 400
+warning,n,bulk ESS 40.0 < 400
+warning,n,tail ESS 40.0 < 400
+warning,lambda_ez,bulk ESS 40.0 < 400
+warning,lambda_ez,tail ESS 40.0 < 400
+warning,rho,bulk ESS 40.0 < 400
+warning,rho,tail ESS 40.0 < 400
+warning,sigma_eta,R-hat 1.021 > 1.01
+warning,sigma_eta,bulk ESS 40.0 < 400
+warning,sigma_eta,tail ESS 40.0 < 400
+warning,sigma_e,R-hat 1.017 > 1.01
+warning,sigma_e,bulk ESS 40.0 < 400
+warning,sigma_e,tail ESS 40.0 < 400
+warning,sigma_zeta,bulk ESS 40.0 < 400
+warning,sigma_zeta,tail ESS 40.0 < 400
+warning,sigma_u,bulk ESS 29.2 < 400
+warning,sigma_u,tail ESS 40.0 < 400
+warning,sigma_eps,bulk ESS 15.0 < 400
+warning,sigma_eps,tail ESS 20.4 < 400
+warning,sigma_N,bulk ESS 23.4 < 400
+warning,sigma_N,tail ESS 40.0 < 400

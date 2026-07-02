@@ -11,17 +11,19 @@ rho_2: [-0.5, 0.1]
 n: [0.0, 0.05]
 a_e: 4.0
 b_e: 4.0
+# See priors_baseline.yaml: N-state variances are in squared ten-log-point
+# units. IG(4, b) has prior mean b/3, concentrated near the data decade.
 a_u: 4.0
-b_u: 4.0
+b_u: 0.06
 a_eps: 4.0
-b_eps: 4.0
+b_eps: 0.03
 a_N: 4.0
-b_N: 4.0
+b_N: 0.03
 a_z: 0.01
 b_z: 0.01
 nu_Sigma: 12.0
 S_Sigma:
-  - [0.5, 0.0, 0.0, 0.0]
-  - [0.0, 0.5, 0.0, 0.0]
-  - [0.0, 0.0, 0.5, 0.0]
-  - [0.0, 0.0, 0.0, 0.5]
+  - [7.0, 0.0, 0.0, 0.0]
+  - [0.0, 7.0, 0.0, 0.0]
+  - [0.0, 0.0, 0.14, 0.0]
+  - [0.0, 0.0, 0.0, 0.07]

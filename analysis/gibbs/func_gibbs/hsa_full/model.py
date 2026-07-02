@@ -94,7 +94,7 @@ def _sample_ar2_states_ffbs(
     x_t: np.ndarray,
     theta: float,
     sigma_obs2: float,
-    target_scale: float,
+    sigma_target2: float,
     rng: np.random.Generator,
     *,
     kappa: float | None = None,
@@ -141,7 +141,7 @@ def _sample_ar2_states_ffbs(
             ],
             dtype=float,
         )
-        R = np.diag([max(sigma_state2 * target_scale, 1e-10), max(sigma_obs2, 1e-10)])
+        R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
 
         S = H @ P_pred[:, :, t] @ H.T + R
         K = P_pred[:, :, t] @ H.T @ inv(S)
@@ -173,7 +173,7 @@ def _sample_ar2_states_ffbs_tv_theta(
     pi_expect: np.ndarray,
     x_t: np.ndarray,
     sigma_obs2: float,
-    target_scale: float,
+    sigma_target2: float,
     rng: np.random.Generator,
     *,
     kappa: float | None = None,
@@ -230,7 +230,7 @@ def _sample_ar2_states_ffbs_tv_theta(
             ],
             dtype=float,
         )
-        R = np.diag([max(sigma_state2 * target_scale, 1e-10), max(sigma_obs2, 1e-10)])
+        R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
 
         S = H @ P_pred[:, :, t] @ H.T + R
         K = P_pred[:, :, t] @ H.T @ inv(S)
@@ -255,7 +255,7 @@ def _sample_rw_states_ffbs(
     y_target: np.ndarray,
     n_drift: float,
     sigma_state2: float,
-    target_scale: float,
+    sigma_target2: float,
     rng: np.random.Generator,
 ) -> np.ndarray:
     y_target = _as_1d(y_target)
@@ -275,7 +275,7 @@ def _sample_rw_states_ffbs(
     for t in range(1, T):
         m_pred[t] = n_drift + m[t - 1]
         P_pred[t] = P[t - 1] + sigma_state2
-        R = max(sigma_state2 * target_scale, 1e-10)
+        R = max(sigma_target2, 1e-10)
         K = P_pred[t] / (P_pred[t] + R)
         m[t] = m_pred[t] + K * (y_target[t] - m_pred[t])
         P[t] = (1.0 - K) * P_pred[t]
@@ -297,7 +297,7 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
     y_target: np.ndarray,
     n_drift: float,
     sigma_state2: float,
-    target_scale: float,
+    sigma_target2: float,
     pi_t: np.ndarray,
     alpha: float,
     pi_tm1: np.ndarray,
@@ -341,7 +341,7 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
 
         y1 = y_target[t]
         h1 = 1.0
-        r1 = max(sigma_state2 * target_scale, 1e-10)
+        r1 = max(sigma_target2, 1e-10)
 
         y2 = (
             pi_t[t]
@@ -517,6 +517,10 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         "b_eps": _getd(priors, "b_eps", 2.0),
         "a_z": _getd(priors, "a_z", 0.001),
         "b_z": _getd(priors, "b_z", 0.001),
+        # measurement error variance in:
+        #   N_obs_t = Nhat_t + Nbar_t + nu_t
+        "a_N": _getd(priors, "a_N", _getd(priors, "a_m", 2.0)),
+        "b_N": _getd(priors, "b_N", _getd(priors, "b_m", 2.0)),
     }
 
 
@@ -590,6 +594,8 @@ def func_nkpc_hsa_full(
             pri["b_eps"],
             pri["a_z"],
             pri["b_z"],
+            pri["a_N"],
+            pri["b_N"],
         ],
         "Full HSA prior scales must be positive.",
     )
@@ -609,8 +615,7 @@ def func_nkpc_hsa_full(
     sigma_zeta2 = float(_getd(opts, "sigma_zeta20", 1.0))
     sigma_u2 = float(_getd(opts, "sigma_u20", _getd(opts, "sigma_eps20", 0.5)))
     sigma_eps2 = float(_getd(opts, "sigma_eps20", _getd(opts, "sigma_eta20", 0.1)))
-    target_scale = float(_getd(opts, "target_scale", _getd(opts, "r_target_scale", 0.1)))
-    rw_scale = float(_getd(opts, "rw_scale", _getd(opts, "r_rw_scale", 0.1)))
+    sigma_N2 = float(_getd(opts, "sigma_N20", _getd(opts, "sigma_m20", 1.0)))
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
@@ -639,6 +644,7 @@ def func_nkpc_hsa_full(
     sigma_zeta_draws = np.zeros(n_store)
     sigma_u_draws = np.zeros(n_store)
     sigma_eps_draws = np.zeros(n_store)
+    sigma_N_draws = np.zeros(n_store)
     rho_ez_draws = np.zeros(n_store)
     Nbar_draws = np.zeros((n_store, T))
     Nhat_draws = np.zeros((n_store, T))
@@ -759,6 +765,13 @@ def func_nkpc_hsa_full(
             resid_eps = Nbar[1:] - n_drift - Nbar[:-1]
             sigma_eps2 = _sample_invgamma(pri["a_eps"] + 0.5 * resid_eps.size, pri["b_eps"] + 0.5 * float(np.sum(resid_eps**2)), rng)
 
+        resid_N = N_obs - Nhat - Nbar
+        sigma_N2 = _sample_invgamma(
+            pri["a_N"] + 0.5 * T,
+            pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
+            rng,
+        )
+
         obs_offset = lambda_ez * zeta
         Nhat_states = _sample_ar2_states_ffbs_tv_theta(
             y_target=N_obs - Nbar,
@@ -771,7 +784,7 @@ def func_nkpc_hsa_full(
             pi_expect=pi_expect,
             x_t=x_t,
             sigma_obs2=sigma_eta2,
-            target_scale=target_scale,
+            sigma_target2=sigma_N2,
             rng=rng,
             kappa_t=kappa_t_eff,
             theta_t=theta_t,
@@ -782,7 +795,7 @@ def func_nkpc_hsa_full(
             y_target=N_obs - Nhat,
             n_drift=n_drift,
             sigma_state2=sigma_eps2,
-            target_scale=rw_scale,
+            sigma_target2=sigma_N2,
             pi_t=pi_t,
             alpha=alpha,
             pi_tm1=pi_tm1,
@@ -819,6 +832,7 @@ def func_nkpc_hsa_full(
             sigma_zeta_draws[store_idx] = np.sqrt(sigma_zeta2)
             sigma_u_draws[store_idx] = np.sqrt(sigma_u2)
             sigma_eps_draws[store_idx] = np.sqrt(sigma_eps2)
+            sigma_N_draws[store_idx] = np.sqrt(sigma_N2)
             rho_ez_draws[store_idx] = rho_ez
             Nbar_draws[store_idx] = Nbar
             Nhat_draws[store_idx] = Nhat
@@ -847,6 +861,7 @@ def func_nkpc_hsa_full(
         "sigma_zeta": _summary(sigma_zeta_draws),
         "sigma_u": _summary(sigma_u_draws),
         "sigma_eps": _summary(sigma_eps_draws),
+        "sigma_N": _summary(sigma_N_draws),
         "state_draws": {
             "Nbar": Nbar_draws,
             "Nhat": Nhat_draws,
@@ -856,6 +871,13 @@ def func_nkpc_hsa_full(
         "priors": priors or {},
         "opts": opts,
         "model": {
+            "N_measurement_error": True,
+            "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + nu_t, nu_t ~ N(0, sigma_N^2)",
+            "state_blocks": (
+                "Nhat | Nbar and Nbar | Nhat are exact conditional FFBS blocks using sigma_N^2 "
+                "as the N measurement variance; earlier versions used pseudo variances "
+                "sigma_u^2*target_scale and sigma_eps^2*rw_scale."
+            ),
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",
             "stored_units": "physical",
