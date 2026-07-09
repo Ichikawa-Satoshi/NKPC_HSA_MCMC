@@ -19,9 +19,11 @@ defaults:
 run_data_specs:
   - inv_markup
   - output_gap_bn
+  - output_gap_bn_core
   - output_gap_hp
   - labor_share_gap_hp
   - unemployment_gap
+  - unemployment_gap_core
 data_specs:
   inv_markup:
     label: Inverse markup gap

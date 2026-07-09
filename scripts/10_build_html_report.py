@@ -8,7 +8,9 @@ FIGREL = "figures"   # relative to results/report.html
 
 SPECS = [
     ("unemployment_gap", "Unemployment gap"),
+    ("unemployment_gap_core", "Unemployment gap · core CPI"),
     ("output_gap_bn", "Output gap · BN filter"),
+    ("output_gap_bn_core", "Output gap BN · core CPI"),
     ("output_gap_hp", "Output gap · HP filter"),
     ("inv_markup", "Inverse-markup gap"),
     ("labor_share_gap_hp", "Labor-share gap · HP"),
