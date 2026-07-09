@@ -64,11 +64,16 @@ td.model{font-weight:600;color:var(--c)}
 .pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--soft);color:var(--faint)}
 .pill.sig{background:var(--goodbg);color:var(--good);font-weight:600}
 .note{color:var(--faint);font-size:11.5px;margin:6px 2px 0;max-width:76ch}
-/* figures */
-.figs{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;margin-top:6px}
-figure{margin:0;border:1px solid var(--hair);border-radius:10px;overflow:hidden;background:var(--panel);cursor:zoom-in}
-figure img{width:100%;display:block;background:#fff}
-figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);padding:7px 10px;border-top:1px solid var(--hair)}
+/* figures: tab selector + one visible figure */
+.ftabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+.ftab{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel);
+  border:1px solid var(--hair);border-radius:999px;padding:4px 11px;cursor:pointer}
+.ftab:hover{border-color:var(--accent);color:var(--ink)}
+.ftab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.fv figure{margin:0;border:1px solid var(--hair);border-radius:10px;overflow:hidden;background:var(--panel);
+  cursor:zoom-in;max-width:660px}
+.fv figure img{width:100%;display:block;background:#fff}
+.fv figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);padding:7px 10px;border-top:1px solid var(--hair)}
 /* math block */
 .eqbox{background:var(--panel);border:1px solid var(--hair);border-radius:11px;padding:16px 18px;margin:6px 0 10px;
   font-family:var(--math);font-size:16px;line-height:2.3;overflow-x:auto}
@@ -148,10 +153,27 @@ function mcTable(mc){
   }
   return h+"</tbody></table></div>";
 }
-function figGrid(fg){
+const FIGREG={};
+function shortCap(cap){
+  return cap.replace("Prior vs posterior · ","p/p ").replace("Time-varying ","").replace(" path"," path");
+}
+function figViewer(fg,uid){
   if(!fg||!fg.length) return "";
-  return '<div class="figs">'+fg.map(([cap,src])=>
-    `<figure data-src="${src}" data-cap="${cap}"><img loading="lazy" src="${src}" alt="${cap}"><figcaption>${cap}</figcaption></figure>`).join("")+"</div>";
+  FIGREG[uid]=fg;
+  const tabs=fg.map(([cap,_],i)=>
+    `<button class="ftab${i===0?" on":""}" data-uid="${uid}" data-i="${i}">${shortCap(cap)}</button>`).join("");
+  const [cap0,src0]=fg[0];
+  return `<div class="fv" id="fv-${uid}"><div class="ftabs">${tabs}</div>
+    <figure data-src="${src0}" data-cap="${cap0}"><img loading="lazy" src="${src0}" alt="${cap0}"><figcaption>${cap0}</figcaption></figure></div>`;
+}
+function switchFig(btn){
+  const uid=btn.dataset.uid, i=parseInt(btn.dataset.i,10);
+  const fg=FIGREG[uid]; if(!fg||!fg[i]) return;
+  const [cap,src]=fg[i];
+  const fv=document.getElementById("fv-"+uid); if(!fv) return;
+  fv.querySelectorAll(".ftab").forEach(b=>b.classList.toggle("on",b===btn));
+  const f=fv.querySelector("figure"), img=f.querySelector("img"), fc=f.querySelector("figcaption");
+  f.dataset.src=src; f.dataset.cap=cap; img.src=src; img.alt=cap; fc.textContent=cap;
 }
 
 function renderOverview(){
@@ -204,7 +226,7 @@ function renderSpec(spec){
     }
     if(b.sd) body+=`<div class="sub">Savage–Dickey density ratios (BF₁₀ = evidence for effect)</div>${sddrTable(b.sd)}`;
     if(b.mc) body+=`<div class="sub">Model comparison</div>${mcTable(b.mc)}`;
-    if(b.fg&&b.fg.length) body+=`<div class="sub">Figures</div>${figGrid(b.fg)}`;
+    if(b.fg&&b.fg.length) body+=`<div class="sub">Figures — select one to display</div>${figViewer(b.fg, spec+"-"+i)}`;
     body+="</section>";
   });
   return `<h2 class="spec">${label}</h2><p class="lead">${blocks.length} conditions — baseline, mixed-frequency, restricted, prior and sub-sample robustness. Click any figure to enlarge.</p>
@@ -228,6 +250,7 @@ function route(){
   const main=document.getElementById("main");
   main.innerHTML = (r==="overview"||!DATA.labels[r]) ? renderOverview() : renderSpec(r);
   main.querySelectorAll("figure").forEach(f=>f.onclick=()=>lightbox(f.dataset.src,f.dataset.cap));
+  main.querySelectorAll(".ftab").forEach(b=>b.onclick=()=>switchFig(b));
   window.scrollTo(0,0);
   const anchor=(location.hash||"").split("::")[1];
   if(anchor!=null) setTimeout(()=>jump(r,parseInt(anchor)),40);

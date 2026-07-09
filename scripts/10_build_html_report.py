@@ -25,12 +25,13 @@ FREQ_LBL = {"quarterly_interpolated": "quarterly", "annual_q4": "annual Q4"}
 CONSTR_LBL = {"unrestricted": "unrestricted", "restricted_kappa": "κ ≥ 0", "restricted_kappa_t": "κ_t ≥ 0"}
 PRIOR_LBL = {"baseline": "baseline prior", "weak": "weak prior", "tight": "tight prior"}
 FIG_CAP = {
+    "kappa_t_path.png": "Time-varying κ_t path",
+    "theta_t_path.png": "Time-varying θ_t path",
     "prior_posterior_ces.png": "Prior vs posterior · CES",
     "prior_posterior_hsa_steady.png": "Prior vs posterior · HSA steady",
     "prior_posterior_hsa_dynamic.png": "Prior vs posterior · HSA dynamic",
+    "prior_posterior_hsa_const_theta.png": "Prior vs posterior · HSA const-θ",
     "prior_posterior_hsa_full.png": "Prior vs posterior · HSA full",
-    "kappa_t_path.png": "Time-varying κ_t path",
-    "theta_t_path.png": "Time-varying θ_t path",
 }
 FIG_ORDER = list(FIG_CAP)
 KEY = ["alpha", "kappa", "kappa_0", "delta", "theta", "theta_0", "gamma"]
