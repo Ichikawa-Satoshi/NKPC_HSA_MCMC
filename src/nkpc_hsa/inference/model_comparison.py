@@ -68,7 +68,7 @@ def posterior_predictive_score(idata, data: Mapping[str, np.ndarray], model_name
     if alpha is None:
         return None, None
     pred = alpha * pi_prev + (1.0 - alpha) * pi_expect
-    if "hsa_full" in model_name or "full" in model_name:
+    if "hsa_full" in model_name or "full" in model_name or "const_theta" in model_name:
         kappa_t = _mean_state(posterior, "kappa_t")
         theta_t = _mean_state(posterior, "theta_t")
         Nhat = _mean_state(posterior, "Nhat")

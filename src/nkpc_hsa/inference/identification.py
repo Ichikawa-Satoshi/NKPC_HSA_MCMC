@@ -260,7 +260,7 @@ def identification_table(
         attrs = getattr(idata, "attrs", {})
         model = str(attrs.get("model", ""))
         data_spec = str(attrs.get("data_spec", ""))
-        if model not in {"hsa_steady", "hsa_full"} or data_spec not in data_by_spec:
+        if model not in {"hsa_steady", "hsa_full", "hsa_const_theta"} or data_spec not in data_by_spec:
             continue
 
         row: dict[str, Any] = {

@@ -262,7 +262,7 @@ def sddr_summary_table(idata_by_run: dict[str, object], priors: dict[str, object
     return pd.DataFrame(rows)
 
 
-_MODEL_ORDER = ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]
+_MODEL_ORDER = ["ces", "hsa_steady", "hsa_dynamic", "hsa_const_theta", "hsa_full"]
 _PARAM_ORDER = ["alpha", "kappa", "kappa_0", "delta", "theta", "theta_0", "gamma", "rho_1", "rho_2", "phi_1", "lambda_ez", "n"]
 
 

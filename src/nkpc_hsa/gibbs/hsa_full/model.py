@@ -635,6 +635,11 @@ def func_nkpc_hsa_full(
     sigma_N2 = float(_getd(opts, "sigma_N20", _getd(opts, "sigma_m20", 1.0)))
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
+    # static_theta=True restricts theta_t = theta_0 (gamma fixed at 0) while
+    # keeping the time-varying kappa_t = kappa_0 + delta * Nbar_t block.
+    static_theta = bool(_getd(opts, "static_theta", False))
+    if static_theta:
+        gamma = 0.0
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
@@ -679,33 +684,33 @@ def func_nkpc_hsa_full(
         y = pi_t - pi_expect
         y_adj = y - lambda_ez * zeta
 
-        X = np.column_stack([
+        columns = [
             a_t,
             x_t / KAPPA_SCALE,
             (x_t * Nbar) / KAPPA_SCALE,
             -Nhat,
-            -(Nhat * Nbar),
-        ])
-        beta_prior_mean = np.array(
-            [
-                pri["mu_alpha"],
-                pri["mu_kappa0"],
-                pri["mu_delta"],
-                pri["mu_theta"],
-                pri["mu_gamma"],
-            ],
-            dtype=float,
-        )
-        beta_prior_var = np.array(
-            [
-                pri["sigma_alpha"]**2,
-                pri["sigma_kappa0"]**2,
-                pri["sigma_delta"]**2,
-                pri["sigma_theta"]**2,
-                pri["sigma_gamma"]**2,
-            ],
-            dtype=float,
-        )
+        ]
+        prior_means = [
+            pri["mu_alpha"],
+            pri["mu_kappa0"],
+            pri["mu_delta"],
+            pri["mu_theta"],
+        ]
+        prior_vars = [
+            pri["sigma_alpha"]**2,
+            pri["sigma_kappa0"]**2,
+            pri["sigma_delta"]**2,
+            pri["sigma_theta"]**2,
+        ]
+        beta_names = ["alpha", "kappa_0", "delta", "theta" if static_theta else "theta_0"]
+        if not static_theta:
+            columns.append(-(Nhat * Nbar))
+            prior_means.append(pri["mu_gamma"])
+            prior_vars.append(pri["sigma_gamma"]**2)
+            beta_names.append("gamma")
+        X = np.column_stack(columns)
+        beta_prior_mean = np.array(prior_means, dtype=float)
+        beta_prior_var = np.array(prior_vars, dtype=float)
         beta = draw_with_constraints(
             lambda: _sample_beta_gaussian(
                 y_adj,
@@ -715,7 +720,7 @@ def func_nkpc_hsa_full(
                 prior_var=beta_prior_var,
                 rng=rng,
             ),
-            ("alpha", "kappa_0", "delta", "theta_0", "gamma"),
+            tuple(beta_names),
             coefficient_constraints,
             validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
             stats=constraint_stats,
@@ -724,7 +729,8 @@ def func_nkpc_hsa_full(
         kappa0 = float(beta[1])
         delta = float(beta[2])
         theta0 = float(beta[3])
-        gamma = float(beta[4])
+        if not static_theta:
+            gamma = float(beta[4])
         kappa_t = kappa0 + delta * Nbar
         kappa_t_eff = kappa_t / KAPPA_SCALE
         theta_t = theta0 + gamma * Nbar
@@ -862,12 +868,16 @@ def func_nkpc_hsa_full(
                 f"Iter {it}/{total_iter}: alpha={alpha:.3f}, kappa0={kappa0:.3f}, delta={delta:.3f}, theta0={theta0:.3f}, gamma={gamma:.3f}"
             )
 
+    if static_theta:
+        theta_keys = {"theta": _summary(theta0_draws)}
+    else:
+        theta_keys = {"theta_0": _summary(theta0_draws), "gamma": _summary(gamma_draws)}
+
     return {
         "alpha": _summary(alpha_draws),
         "kappa_0": _summary(kappa0_draws),
         "delta": _summary(delta_draws),
-        "theta_0": _summary(theta0_draws),
-        "gamma": _summary(gamma_draws),
+        **theta_keys,
         "phi_1": _summary(phi_draws),
         "lambda_ez": _summary(lambda_draws),
         "rho": _summary(rho_ez_draws),
@@ -898,6 +908,7 @@ def func_nkpc_hsa_full(
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",
             "stored_units": "physical",
+            "theta_specification": "static (theta_t = theta, gamma fixed at 0)" if static_theta else "time-varying (theta_t = theta_0 + gamma * Nbar_t)",
             "coefficient_constraints": coefficient_constraints,
             "coefficient_constraint_stats": constraint_stats_summary(constraint_stats),
             "ar2_stationarity": {
@@ -909,4 +920,16 @@ def func_nkpc_hsa_full(
     }
 
 
-__all__ = ["func_nkpc_hsa_full"]
+def func_nkpc_hsa_full_static_theta(*args: Any, **kwargs: Any) -> dict[str, Any]:
+    """HSA model with time-varying kappa_t but a constant theta (gamma = 0).
+
+    Identical to func_nkpc_hsa_full except theta_t = theta for all t; the
+    constant is reported as ``theta`` (hsa_dynamic convention) and no gamma
+    is sampled or stored.
+    """
+    opts = dict(kwargs.pop("opts", None) or {})
+    opts["static_theta"] = True
+    return func_nkpc_hsa_full(*args, opts=opts, **kwargs)
+
+
+__all__ = ["func_nkpc_hsa_full", "func_nkpc_hsa_full_static_theta"]

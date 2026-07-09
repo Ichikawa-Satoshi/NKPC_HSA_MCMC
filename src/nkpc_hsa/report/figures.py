@@ -348,7 +348,7 @@ def save_prior_posterior_per_model(
         if model not in by_model:
             by_model[model] = idata
 
-    model_order = ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]
+    model_order = ["ces", "hsa_steady", "hsa_dynamic", "hsa_const_theta", "hsa_full"]
     ordered = [(m, by_model[m]) for m in model_order if m in by_model]
     ordered += [(m, v) for m, v in by_model.items() if m not in model_order]
 

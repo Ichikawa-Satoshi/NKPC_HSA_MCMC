@@ -5,7 +5,7 @@
 :root{
   --bg:#ffffff;--panel:#f6f7f9;--ink:#1c2230;--muted:#5f6877;--faint:#98a0ad;--hair:#e6e9ef;--soft:#f2f4f8;
   --accent:#4a56c8;--pr:#a9b1bf;--zero:#cf5a4e;--good:#128a5c;--goodbg:#e4f4ec;--warn:#c2532c;
-  --m-ces:#8b93a4;--m-hsa_steady:#3b74e8;--m-hsa_dynamic:#0f9f7a;--m-hsa_full:#e0871a;
+  --m-ces:#8b93a4;--m-hsa_steady:#3b74e8;--m-hsa_dynamic:#0f9f7a;--m-hsa_full:#e0871a;--m-hsa_const_theta:#9b59b6;
   --ui:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --math:"Cambria","Palatino Linotype","Book Antiqua",Georgia,"Times New Roman",serif;
@@ -13,10 +13,10 @@
 @media (prefers-color-scheme:dark){:root{
   --bg:#0f131a;--panel:#141922;--ink:#e6eaf1;--muted:#98a2b2;--faint:#69707e;--hair:#242c35;--soft:#1a212b;
   --accent:#8189ee;--pr:#586475;--zero:#e0685e;--good:#35c489;--goodbg:#12271e;--warn:#e8905a;
-  --m-ces:#98a1b2;--m-hsa_steady:#5b93ff;--m-hsa_dynamic:#22c39b;--m-hsa_full:#f0a63f;
+  --m-ces:#98a1b2;--m-hsa_steady:#5b93ff;--m-hsa_dynamic:#22c39b;--m-hsa_full:#f0a63f;--m-hsa_const_theta:#b47bd8;
 }}
-:root[data-theme="light"]{--bg:#ffffff;--panel:#f6f7f9;--ink:#1c2230;--muted:#5f6877;--faint:#98a0ad;--hair:#e6e9ef;--soft:#f2f4f8;--accent:#4a56c8;--pr:#a9b1bf;--zero:#cf5a4e;--good:#128a5c;--goodbg:#e4f4ec;--warn:#c2532c;--m-ces:#8b93a4;--m-hsa_steady:#3b74e8;--m-hsa_dynamic:#0f9f7a;--m-hsa_full:#e0871a;}
-:root[data-theme="dark"]{--bg:#0f131a;--panel:#141922;--ink:#e6eaf1;--muted:#98a2b2;--faint:#69707e;--hair:#242c35;--soft:#1a212b;--accent:#8189ee;--pr:#586475;--zero:#e0685e;--good:#35c489;--goodbg:#12271e;--warn:#e8905a;--m-ces:#98a1b2;--m-hsa_steady:#5b93ff;--m-hsa_dynamic:#22c39b;--m-hsa_full:#f0a63f;}
+:root[data-theme="light"]{--bg:#ffffff;--panel:#f6f7f9;--ink:#1c2230;--muted:#5f6877;--faint:#98a0ad;--hair:#e6e9ef;--soft:#f2f4f8;--accent:#4a56c8;--pr:#a9b1bf;--zero:#cf5a4e;--good:#128a5c;--goodbg:#e4f4ec;--warn:#c2532c;--m-ces:#8b93a4;--m-hsa_steady:#3b74e8;--m-hsa_dynamic:#0f9f7a;--m-hsa_full:#e0871a;--m-hsa_const_theta:#9b59b6;}
+:root[data-theme="dark"]{--bg:#0f131a;--panel:#141922;--ink:#e6eaf1;--muted:#98a2b2;--faint:#69707e;--hair:#242c35;--soft:#1a212b;--accent:#8189ee;--pr:#586475;--zero:#e0685e;--good:#35c489;--goodbg:#12271e;--warn:#e8905a;--m-ces:#98a1b2;--m-hsa_steady:#5b93ff;--m-hsa_dynamic:#22c39b;--m-hsa_full:#f0a63f;--m-hsa_const_theta:#b47bd8;}
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -105,7 +105,7 @@ ul.conv li{margin:3px 0}
 <div id="lbroot"></div>
 <script>
 const DATA = __DATA__;
-const MLBL={ces:"CES",hsa_steady:"HSA steady",hsa_dynamic:"HSA dynamic",hsa_full:"HSA full"};
+const MLBL={ces:"CES",hsa_steady:"HSA steady",hsa_dynamic:"HSA dynamic",hsa_const_theta:"HSA const-θ",hsa_full:"HSA full"};
 const GL={alpha:"α",kappa:"κ",kappa_0:"κ<sub>0</sub>",delta:"δ",theta:"θ",theta_0:"θ<sub>0</sub>",gamma:"γ",
   rho_1:"ρ<sub>1</sub>",rho_2:"ρ<sub>2</sub>",phi_1:"φ<sub>1</sub>",n:"n",sigma_e:"σ<sub>e</sub>",sigma_N:"σ<sub>N</sub>"};
 const KEY=["alpha","kappa","kappa_0","delta","theta","theta_0","gamma"];

@@ -83,7 +83,7 @@ def main() -> None:
         positive=args.positive,
         disabled=args.no_coefficient_constraints,
     )
-    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]))
+    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full", "hsa_const_theta"]))
 
     for data_spec_name, data_spec in data_specs.items():
         for model in models:

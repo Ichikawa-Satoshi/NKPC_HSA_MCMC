@@ -56,7 +56,7 @@ def load_block(bdir, spec):
                 cell.setdefault(r["model"], {})[r["parameter"]] = [
                     round(float(r["posterior_mean"]), 4), round(float(r["ci_2.5"]), 4),
                     round(float(r["ci_97.5"]), 4), round(float(r["p_gt_0"]), 3)]
-            models = [m for m in ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"] if m in cell]
+            models = [m for m in ["ces", "hsa_steady", "hsa_dynamic", "hsa_const_theta", "hsa_full"] if m in cell]
             out["co"] = {"models": models, "cell": cell}
     spath = os.path.join(bdir, "sddr.csv")
     if os.path.exists(spath):
@@ -79,7 +79,7 @@ def load_block(bdir, spec):
         if len(m):
             m = m.assign(ts=m["run"].map(ts), has=m["predictive_score"].notna().astype(int))
             m = m.sort_values(["has", "ts"]).drop_duplicates(["model"], keep="last")
-            order = {"ces": 0, "hsa_steady": 1, "hsa_dynamic": 2, "hsa_full": 3}
+            order = {"ces": 0, "hsa_steady": 1, "hsa_dynamic": 2, "hsa_const_theta": 3, "hsa_full": 4}
             m = m.assign(o=m["model"].map(order)).sort_values("o")
             rows = []
             for _, r in m.iterrows():

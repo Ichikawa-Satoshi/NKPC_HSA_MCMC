@@ -61,7 +61,7 @@ def main() -> None:
     )
     enforce_stationary = not args.no_ar2_stationarity and bool(defaults.get("enforce_stationary", True))
     ar2_max_tries = int(args.ar2_max_tries or defaults.get("ar2_max_tries", 2000))
-    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]))
+    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full", "hsa_const_theta"]))
 
     out_dir = ROOT / "results" / "period_robustness"
     all_tables = []

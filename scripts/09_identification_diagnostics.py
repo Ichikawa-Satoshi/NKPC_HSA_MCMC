@@ -49,7 +49,7 @@ def main() -> None:
     defaults = config.get("defaults", {})
     n_transform = str(defaults.get("n_transform", DEFAULT_N_TRANSFORM))
     data_specs = configured_data_specs(config, args.data_specs)
-    models = args.models or ["hsa_steady", "hsa_full"]
+    models = args.models or ["hsa_steady", "hsa_full", "hsa_const_theta"]
     prior = None if args.prior == "all" else args.prior
     constraint = None if args.constraint == "all" else args.constraint
 

@@ -61,7 +61,7 @@ def main() -> None:
         positive=args.positive,
         disabled=args.no_coefficient_constraints,
     )
-    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]))
+    models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full", "hsa_const_theta"]))
 
     out_dir = ROOT / "results" / "prior_robustness"
     out_dir.mkdir(parents=True, exist_ok=True)
