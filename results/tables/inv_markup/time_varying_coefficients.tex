@@ -1,558 +1,702 @@
-\begin{tabular}{llrrrr}
+\begin{tabular}{lllrrrr}
 \toprule
-model & coefficient & time\_index & posterior\_mean & ci\_2.5 & ci\_97.5 \\
+competition\_measurement\_frequency & model & coefficient & time\_index & posterior\_mean & ci\_2.5 & ci\_97.5 \\
 \midrule
-hsa\_full & kappa\_t & 0 & 0.0351 & -0.2201 & 0.2875 \\
-hsa\_full & kappa\_t & 5 & 0.0355 & -0.2149 & 0.2844 \\
-hsa\_full & kappa\_t & 11 & 0.0347 & -0.2126 & 0.2799 \\
-hsa\_full & kappa\_t & 16 & 0.0331 & -0.2141 & 0.2791 \\
-hsa\_full & kappa\_t & 21 & 0.0332 & -0.2189 & 0.2804 \\
-hsa\_full & kappa\_t & 27 & 0.0334 & -0.2207 & 0.2822 \\
-hsa\_full & kappa\_t & 32 & 0.0335 & -0.2173 & 0.2816 \\
-hsa\_full & kappa\_t & 37 & 0.0335 & -0.2166 & 0.2819 \\
-hsa\_full & kappa\_t & 43 & 0.0333 & -0.2164 & 0.2826 \\
-hsa\_full & kappa\_t & 48 & 0.0330 & -0.2157 & 0.2863 \\
-hsa\_full & kappa\_t & 53 & 0.0329 & -0.2167 & 0.2850 \\
-hsa\_full & kappa\_t & 59 & 0.0332 & -0.2176 & 0.2840 \\
-hsa\_full & kappa\_t & 64 & 0.0340 & -0.2147 & 0.2811 \\
-hsa\_full & kappa\_t & 70 & 0.0353 & -0.2093 & 0.2837 \\
-hsa\_full & kappa\_t & 75 & 0.0366 & -0.2052 & 0.2840 \\
-hsa\_full & kappa\_t & 80 & 0.0374 & -0.2084 & 0.2929 \\
-hsa\_full & kappa\_t & 86 & 0.0376 & -0.2086 & 0.2898 \\
-hsa\_full & kappa\_t & 91 & 0.0381 & -0.2097 & 0.2908 \\
-hsa\_full & kappa\_t & 96 & 0.0383 & -0.2101 & 0.2938 \\
-hsa\_full & kappa\_t & 102 & 0.0392 & -0.2147 & 0.2979 \\
-hsa\_full & kappa\_t & 107 & 0.0399 & -0.2149 & 0.2993 \\
-hsa\_full & kappa\_t & 112 & 0.0400 & -0.2178 & 0.2985 \\
-hsa\_full & kappa\_t & 118 & 0.0406 & -0.2220 & 0.3028 \\
-hsa\_full & kappa\_t & 123 & 0.0408 & -0.2261 & 0.3072 \\
-hsa\_full & theta\_t & 0 & 0.0534 & -0.3812 & 0.4772 \\
-hsa\_full & theta\_t & 5 & 0.0545 & -0.3801 & 0.4780 \\
-hsa\_full & theta\_t & 11 & 0.0528 & -0.3834 & 0.4761 \\
-hsa\_full & theta\_t & 16 & 0.0498 & -0.3860 & 0.4699 \\
-hsa\_full & theta\_t & 21 & 0.0492 & -0.3831 & 0.4708 \\
-hsa\_full & theta\_t & 27 & 0.0495 & -0.3837 & 0.4698 \\
-hsa\_full & theta\_t & 32 & 0.0498 & -0.3857 & 0.4758 \\
-hsa\_full & theta\_t & 37 & 0.0504 & -0.3840 & 0.4761 \\
-hsa\_full & theta\_t & 43 & 0.0496 & -0.3847 & 0.4716 \\
-hsa\_full & theta\_t & 48 & 0.0493 & -0.3839 & 0.4764 \\
-hsa\_full & theta\_t & 53 & 0.0498 & -0.3855 & 0.4760 \\
-hsa\_full & theta\_t & 59 & 0.0509 & -0.3870 & 0.4722 \\
-hsa\_full & theta\_t & 64 & 0.0537 & -0.3820 & 0.4691 \\
-hsa\_full & theta\_t & 70 & 0.0564 & -0.3786 & 0.4712 \\
-hsa\_full & theta\_t & 75 & 0.0584 & -0.3850 & 0.4751 \\
-hsa\_full & theta\_t & 80 & 0.0604 & -0.3886 & 0.4766 \\
-hsa\_full & theta\_t & 86 & 0.0605 & -0.3902 & 0.4767 \\
-hsa\_full & theta\_t & 91 & 0.0617 & -0.3963 & 0.4755 \\
-hsa\_full & theta\_t & 96 & 0.0628 & -0.4062 & 0.4775 \\
-hsa\_full & theta\_t & 102 & 0.0661 & -0.4058 & 0.4824 \\
-hsa\_full & theta\_t & 107 & 0.0693 & -0.4064 & 0.4917 \\
-hsa\_full & theta\_t & 112 & 0.0692 & -0.4059 & 0.4839 \\
-hsa\_full & theta\_t & 118 & 0.0694 & -0.4157 & 0.4836 \\
-hsa\_full & theta\_t & 123 & 0.0706 & -0.4155 & 0.4930 \\
-hsa\_full & kappa\_t & 0 & 0.0351 & -0.2201 & 0.2875 \\
-hsa\_full & kappa\_t & 5 & 0.0355 & -0.2149 & 0.2844 \\
-hsa\_full & kappa\_t & 11 & 0.0347 & -0.2126 & 0.2799 \\
-hsa\_full & kappa\_t & 16 & 0.0331 & -0.2141 & 0.2791 \\
-hsa\_full & kappa\_t & 21 & 0.0332 & -0.2189 & 0.2804 \\
-hsa\_full & kappa\_t & 27 & 0.0334 & -0.2207 & 0.2822 \\
-hsa\_full & kappa\_t & 32 & 0.0335 & -0.2173 & 0.2816 \\
-hsa\_full & kappa\_t & 37 & 0.0335 & -0.2166 & 0.2819 \\
-hsa\_full & kappa\_t & 43 & 0.0333 & -0.2164 & 0.2826 \\
-hsa\_full & kappa\_t & 48 & 0.0330 & -0.2157 & 0.2863 \\
-hsa\_full & kappa\_t & 53 & 0.0329 & -0.2167 & 0.2850 \\
-hsa\_full & kappa\_t & 59 & 0.0332 & -0.2176 & 0.2840 \\
-hsa\_full & kappa\_t & 64 & 0.0340 & -0.2147 & 0.2811 \\
-hsa\_full & kappa\_t & 70 & 0.0353 & -0.2093 & 0.2837 \\
-hsa\_full & kappa\_t & 75 & 0.0366 & -0.2052 & 0.2840 \\
-hsa\_full & kappa\_t & 80 & 0.0374 & -0.2084 & 0.2929 \\
-hsa\_full & kappa\_t & 86 & 0.0376 & -0.2086 & 0.2898 \\
-hsa\_full & kappa\_t & 91 & 0.0381 & -0.2097 & 0.2908 \\
-hsa\_full & kappa\_t & 96 & 0.0383 & -0.2101 & 0.2938 \\
-hsa\_full & kappa\_t & 102 & 0.0392 & -0.2147 & 0.2979 \\
-hsa\_full & kappa\_t & 107 & 0.0399 & -0.2149 & 0.2993 \\
-hsa\_full & kappa\_t & 112 & 0.0400 & -0.2178 & 0.2985 \\
-hsa\_full & kappa\_t & 118 & 0.0406 & -0.2220 & 0.3028 \\
-hsa\_full & kappa\_t & 123 & 0.0408 & -0.2261 & 0.3072 \\
-hsa\_full & theta\_t & 0 & 0.0534 & -0.3812 & 0.4772 \\
-hsa\_full & theta\_t & 5 & 0.0545 & -0.3801 & 0.4780 \\
-hsa\_full & theta\_t & 11 & 0.0528 & -0.3834 & 0.4761 \\
-hsa\_full & theta\_t & 16 & 0.0498 & -0.3860 & 0.4699 \\
-hsa\_full & theta\_t & 21 & 0.0492 & -0.3831 & 0.4708 \\
-hsa\_full & theta\_t & 27 & 0.0495 & -0.3837 & 0.4698 \\
-hsa\_full & theta\_t & 32 & 0.0498 & -0.3857 & 0.4758 \\
-hsa\_full & theta\_t & 37 & 0.0504 & -0.3840 & 0.4761 \\
-hsa\_full & theta\_t & 43 & 0.0496 & -0.3847 & 0.4716 \\
-hsa\_full & theta\_t & 48 & 0.0493 & -0.3839 & 0.4764 \\
-hsa\_full & theta\_t & 53 & 0.0498 & -0.3855 & 0.4760 \\
-hsa\_full & theta\_t & 59 & 0.0509 & -0.3870 & 0.4722 \\
-hsa\_full & theta\_t & 64 & 0.0537 & -0.3820 & 0.4691 \\
-hsa\_full & theta\_t & 70 & 0.0564 & -0.3786 & 0.4712 \\
-hsa\_full & theta\_t & 75 & 0.0584 & -0.3850 & 0.4751 \\
-hsa\_full & theta\_t & 80 & 0.0604 & -0.3886 & 0.4766 \\
-hsa\_full & theta\_t & 86 & 0.0605 & -0.3902 & 0.4767 \\
-hsa\_full & theta\_t & 91 & 0.0617 & -0.3963 & 0.4755 \\
-hsa\_full & theta\_t & 96 & 0.0628 & -0.4062 & 0.4775 \\
-hsa\_full & theta\_t & 102 & 0.0661 & -0.4058 & 0.4824 \\
-hsa\_full & theta\_t & 107 & 0.0693 & -0.4064 & 0.4917 \\
-hsa\_full & theta\_t & 112 & 0.0692 & -0.4059 & 0.4839 \\
-hsa\_full & theta\_t & 118 & 0.0694 & -0.4157 & 0.4836 \\
-hsa\_full & theta\_t & 123 & 0.0706 & -0.4155 & 0.4930 \\
-hsa\_full & kappa\_t & 0 & 0.0001 & -0.2430 & 0.2380 \\
-hsa\_full & kappa\_t & 5 & 0.0013 & -0.2369 & 0.2350 \\
-hsa\_full & kappa\_t & 11 & 0.0009 & -0.2351 & 0.2359 \\
-hsa\_full & kappa\_t & 16 & -0.0001 & -0.2393 & 0.2397 \\
-hsa\_full & kappa\_t & 21 & 0.0011 & -0.2390 & 0.2377 \\
-hsa\_full & kappa\_t & 27 & 0.0024 & -0.2308 & 0.2333 \\
-hsa\_full & kappa\_t & 32 & 0.0030 & -0.2308 & 0.2306 \\
-hsa\_full & kappa\_t & 37 & 0.0030 & -0.2287 & 0.2289 \\
-hsa\_full & kappa\_t & 43 & 0.0020 & -0.2332 & 0.2309 \\
-hsa\_full & kappa\_t & 48 & 0.0019 & -0.2364 & 0.2353 \\
-hsa\_full & kappa\_t & 53 & 0.0017 & -0.2338 & 0.2358 \\
-hsa\_full & kappa\_t & 59 & 0.0021 & -0.2300 & 0.2356 \\
-hsa\_full & kappa\_t & 64 & 0.0036 & -0.2258 & 0.2301 \\
-hsa\_full & kappa\_t & 70 & 0.0065 & -0.2191 & 0.2259 \\
-hsa\_full & kappa\_t & 75 & 0.0090 & -0.2190 & 0.2315 \\
-hsa\_full & kappa\_t & 80 & 0.0111 & -0.2211 & 0.2356 \\
-hsa\_full & kappa\_t & 86 & 0.0119 & -0.2252 & 0.2402 \\
-hsa\_full & kappa\_t & 91 & 0.0122 & -0.2258 & 0.2396 \\
-hsa\_full & kappa\_t & 96 & 0.0124 & -0.2258 & 0.2424 \\
-hsa\_full & kappa\_t & 102 & 0.0134 & -0.2327 & 0.2488 \\
-hsa\_full & kappa\_t & 107 & 0.0141 & -0.2353 & 0.2522 \\
-hsa\_full & kappa\_t & 112 & 0.0145 & -0.2400 & 0.2551 \\
-hsa\_full & kappa\_t & 118 & 0.0157 & -0.2406 & 0.2639 \\
-hsa\_full & kappa\_t & 123 & 0.0159 & -0.2416 & 0.2668 \\
-hsa\_full & theta\_t & 0 & -0.1769 & -0.3850 & 0.0178 \\
-hsa\_full & theta\_t & 5 & -0.1752 & -0.3847 & 0.0156 \\
-hsa\_full & theta\_t & 11 & -0.1747 & -0.3843 & 0.0194 \\
-hsa\_full & theta\_t & 16 & -0.1761 & -0.3908 & 0.0216 \\
-hsa\_full & theta\_t & 21 & -0.1746 & -0.3870 & 0.0214 \\
-hsa\_full & theta\_t & 27 & -0.1723 & -0.3845 & 0.0214 \\
-hsa\_full & theta\_t & 32 & -0.1712 & -0.3835 & 0.0208 \\
-hsa\_full & theta\_t & 37 & -0.1711 & -0.3859 & 0.0271 \\
-hsa\_full & theta\_t & 43 & -0.1722 & -0.3874 & 0.0235 \\
-hsa\_full & theta\_t & 48 & -0.1725 & -0.3904 & 0.0268 \\
-hsa\_full & theta\_t & 53 & -0.1723 & -0.3909 & 0.0271 \\
-hsa\_full & theta\_t & 59 & -0.1712 & -0.3891 & 0.0294 \\
-hsa\_full & theta\_t & 64 & -0.1688 & -0.3824 & 0.0359 \\
-hsa\_full & theta\_t & 70 & -0.1650 & -0.3849 & 0.0383 \\
-hsa\_full & theta\_t & 75 & -0.1620 & -0.3914 & 0.0522 \\
-hsa\_full & theta\_t & 80 & -0.1594 & -0.3974 & 0.0650 \\
-hsa\_full & theta\_t & 86 & -0.1589 & -0.4032 & 0.0690 \\
-hsa\_full & theta\_t & 91 & -0.1586 & -0.4046 & 0.0709 \\
-hsa\_full & theta\_t & 96 & -0.1581 & -0.4102 & 0.0727 \\
-hsa\_full & theta\_t & 102 & -0.1568 & -0.4155 & 0.0803 \\
-hsa\_full & theta\_t & 107 & -0.1558 & -0.4167 & 0.0872 \\
-hsa\_full & theta\_t & 112 & -0.1558 & -0.4220 & 0.0855 \\
-hsa\_full & theta\_t & 118 & -0.1553 & -0.4324 & 0.0938 \\
-hsa\_full & theta\_t & 123 & -0.1544 & -0.4289 & 0.0991 \\
-hsa\_full & kappa\_t & 0 & 0.0809 & -0.1521 & 0.3330 \\
-hsa\_full & kappa\_t & 5 & 0.0806 & -0.1552 & 0.3292 \\
-hsa\_full & kappa\_t & 11 & 0.0776 & -0.1572 & 0.3206 \\
-hsa\_full & kappa\_t & 16 & 0.0739 & -0.1591 & 0.3171 \\
-hsa\_full & kappa\_t & 21 & 0.0718 & -0.1630 & 0.3222 \\
-hsa\_full & kappa\_t & 27 & 0.0712 & -0.1638 & 0.3229 \\
-hsa\_full & kappa\_t & 32 & 0.0707 & -0.1654 & 0.3238 \\
-hsa\_full & kappa\_t & 37 & 0.0709 & -0.1654 & 0.3253 \\
-hsa\_full & kappa\_t & 43 & 0.0701 & -0.1685 & 0.3278 \\
-hsa\_full & kappa\_t & 48 & 0.0700 & -0.1681 & 0.3302 \\
-hsa\_full & kappa\_t & 53 & 0.0701 & -0.1678 & 0.3287 \\
-hsa\_full & kappa\_t & 59 & 0.0704 & -0.1659 & 0.3253 \\
-hsa\_full & kappa\_t & 64 & 0.0722 & -0.1596 & 0.3178 \\
-hsa\_full & kappa\_t & 70 & 0.0746 & -0.1577 & 0.3175 \\
-hsa\_full & kappa\_t & 75 & 0.0768 & -0.1527 & 0.3212 \\
-hsa\_full & kappa\_t & 80 & 0.0786 & -0.1587 & 0.3261 \\
-hsa\_full & kappa\_t & 86 & 0.0783 & -0.1541 & 0.3210 \\
-hsa\_full & kappa\_t & 91 & 0.0780 & -0.1548 & 0.3207 \\
-hsa\_full & kappa\_t & 96 & 0.0784 & -0.1553 & 0.3225 \\
-hsa\_full & kappa\_t & 102 & 0.0802 & -0.1518 & 0.3239 \\
-hsa\_full & kappa\_t & 107 & 0.0816 & -0.1574 & 0.3280 \\
-hsa\_full & kappa\_t & 112 & 0.0818 & -0.1556 & 0.3295 \\
-hsa\_full & kappa\_t & 118 & 0.0824 & -0.1586 & 0.3296 \\
-hsa\_full & kappa\_t & 123 & 0.0833 & -0.1568 & 0.3320 \\
-hsa\_full & theta\_t & 0 & 0.3219 & 0.1058 & 0.6004 \\
-hsa\_full & theta\_t & 5 & 0.3217 & 0.1070 & 0.5985 \\
-hsa\_full & theta\_t & 11 & 0.3187 & 0.1074 & 0.5930 \\
-hsa\_full & theta\_t & 16 & 0.3152 & 0.1053 & 0.5805 \\
-hsa\_full & theta\_t & 21 & 0.3131 & 0.0977 & 0.5849 \\
-hsa\_full & theta\_t & 27 & 0.3120 & 0.0954 & 0.5888 \\
-hsa\_full & theta\_t & 32 & 0.3111 & 0.0868 & 0.5907 \\
-hsa\_full & theta\_t & 37 & 0.3109 & 0.0846 & 0.5893 \\
-hsa\_full & theta\_t & 43 & 0.3103 & 0.0796 & 0.5930 \\
-hsa\_full & theta\_t & 48 & 0.3102 & 0.0787 & 0.5947 \\
-hsa\_full & theta\_t & 53 & 0.3105 & 0.0804 & 0.5918 \\
-hsa\_full & theta\_t & 59 & 0.3113 & 0.0869 & 0.5852 \\
-hsa\_full & theta\_t & 64 & 0.3133 & 0.0951 & 0.5875 \\
-hsa\_full & theta\_t & 70 & 0.3152 & 0.0964 & 0.5885 \\
-hsa\_full & theta\_t & 75 & 0.3172 & 0.1020 & 0.5930 \\
-hsa\_full & theta\_t & 80 & 0.3187 & 0.1058 & 0.5946 \\
-hsa\_full & theta\_t & 86 & 0.3184 & 0.1046 & 0.5930 \\
-hsa\_full & theta\_t & 91 & 0.3183 & 0.1046 & 0.5966 \\
-hsa\_full & theta\_t & 96 & 0.3187 & 0.1018 & 0.6005 \\
-hsa\_full & theta\_t & 102 & 0.3204 & 0.1044 & 0.6007 \\
-hsa\_full & theta\_t & 107 & 0.3227 & 0.1032 & 0.6054 \\
-hsa\_full & theta\_t & 112 & 0.3227 & 0.1041 & 0.6055 \\
-hsa\_full & theta\_t & 118 & 0.3229 & 0.1003 & 0.6074 \\
-hsa\_full & theta\_t & 123 & 0.3239 & 0.1001 & 0.6092 \\
-hsa\_full & kappa\_t & 0 & 0.0351 & -0.2201 & 0.2875 \\
-hsa\_full & kappa\_t & 5 & 0.0355 & -0.2149 & 0.2844 \\
-hsa\_full & kappa\_t & 11 & 0.0347 & -0.2126 & 0.2799 \\
-hsa\_full & kappa\_t & 16 & 0.0331 & -0.2141 & 0.2791 \\
-hsa\_full & kappa\_t & 21 & 0.0332 & -0.2189 & 0.2804 \\
-hsa\_full & kappa\_t & 27 & 0.0334 & -0.2207 & 0.2822 \\
-hsa\_full & kappa\_t & 32 & 0.0335 & -0.2173 & 0.2816 \\
-hsa\_full & kappa\_t & 37 & 0.0335 & -0.2166 & 0.2819 \\
-hsa\_full & kappa\_t & 43 & 0.0333 & -0.2164 & 0.2826 \\
-hsa\_full & kappa\_t & 48 & 0.0330 & -0.2157 & 0.2863 \\
-hsa\_full & kappa\_t & 53 & 0.0329 & -0.2167 & 0.2850 \\
-hsa\_full & kappa\_t & 59 & 0.0332 & -0.2176 & 0.2840 \\
-hsa\_full & kappa\_t & 64 & 0.0340 & -0.2147 & 0.2811 \\
-hsa\_full & kappa\_t & 70 & 0.0353 & -0.2093 & 0.2837 \\
-hsa\_full & kappa\_t & 75 & 0.0366 & -0.2052 & 0.2840 \\
-hsa\_full & kappa\_t & 80 & 0.0374 & -0.2084 & 0.2929 \\
-hsa\_full & kappa\_t & 86 & 0.0376 & -0.2086 & 0.2898 \\
-hsa\_full & kappa\_t & 91 & 0.0381 & -0.2097 & 0.2908 \\
-hsa\_full & kappa\_t & 96 & 0.0383 & -0.2101 & 0.2938 \\
-hsa\_full & kappa\_t & 102 & 0.0392 & -0.2147 & 0.2979 \\
-hsa\_full & kappa\_t & 107 & 0.0399 & -0.2149 & 0.2993 \\
-hsa\_full & kappa\_t & 112 & 0.0400 & -0.2178 & 0.2985 \\
-hsa\_full & kappa\_t & 118 & 0.0406 & -0.2220 & 0.3028 \\
-hsa\_full & kappa\_t & 123 & 0.0408 & -0.2261 & 0.3072 \\
-hsa\_full & theta\_t & 0 & 0.0534 & -0.3812 & 0.4772 \\
-hsa\_full & theta\_t & 5 & 0.0545 & -0.3801 & 0.4780 \\
-hsa\_full & theta\_t & 11 & 0.0528 & -0.3834 & 0.4761 \\
-hsa\_full & theta\_t & 16 & 0.0498 & -0.3860 & 0.4699 \\
-hsa\_full & theta\_t & 21 & 0.0492 & -0.3831 & 0.4708 \\
-hsa\_full & theta\_t & 27 & 0.0495 & -0.3837 & 0.4698 \\
-hsa\_full & theta\_t & 32 & 0.0498 & -0.3857 & 0.4758 \\
-hsa\_full & theta\_t & 37 & 0.0504 & -0.3840 & 0.4761 \\
-hsa\_full & theta\_t & 43 & 0.0496 & -0.3847 & 0.4716 \\
-hsa\_full & theta\_t & 48 & 0.0493 & -0.3839 & 0.4764 \\
-hsa\_full & theta\_t & 53 & 0.0498 & -0.3855 & 0.4760 \\
-hsa\_full & theta\_t & 59 & 0.0509 & -0.3870 & 0.4722 \\
-hsa\_full & theta\_t & 64 & 0.0537 & -0.3820 & 0.4691 \\
-hsa\_full & theta\_t & 70 & 0.0564 & -0.3786 & 0.4712 \\
-hsa\_full & theta\_t & 75 & 0.0584 & -0.3850 & 0.4751 \\
-hsa\_full & theta\_t & 80 & 0.0604 & -0.3886 & 0.4766 \\
-hsa\_full & theta\_t & 86 & 0.0605 & -0.3902 & 0.4767 \\
-hsa\_full & theta\_t & 91 & 0.0617 & -0.3963 & 0.4755 \\
-hsa\_full & theta\_t & 96 & 0.0628 & -0.4062 & 0.4775 \\
-hsa\_full & theta\_t & 102 & 0.0661 & -0.4058 & 0.4824 \\
-hsa\_full & theta\_t & 107 & 0.0693 & -0.4064 & 0.4917 \\
-hsa\_full & theta\_t & 112 & 0.0692 & -0.4059 & 0.4839 \\
-hsa\_full & theta\_t & 118 & 0.0694 & -0.4157 & 0.4836 \\
-hsa\_full & theta\_t & 123 & 0.0706 & -0.4155 & 0.4930 \\
-hsa\_full & kappa\_t & 0 & 0.1250 & -0.2187 & 0.4807 \\
-hsa\_full & kappa\_t & 1 & 0.1246 & -0.2206 & 0.4807 \\
-hsa\_full & kappa\_t & 2 & 0.1244 & -0.2164 & 0.4826 \\
-hsa\_full & kappa\_t & 3 & 0.1241 & -0.2146 & 0.4811 \\
-hsa\_full & kappa\_t & 4 & 0.1238 & -0.2124 & 0.4822 \\
-hsa\_full & kappa\_t & 5 & 0.1238 & -0.2155 & 0.4804 \\
-hsa\_full & kappa\_t & 6 & 0.1240 & -0.2136 & 0.4836 \\
-hsa\_full & kappa\_t & 7 & 0.1244 & -0.2164 & 0.4859 \\
-hsa\_full & kappa\_t & 8 & 0.1243 & -0.2168 & 0.4823 \\
-hsa\_full & kappa\_t & 9 & 0.1244 & -0.2144 & 0.4826 \\
-hsa\_full & kappa\_t & 10 & 0.1243 & -0.2148 & 0.4793 \\
-hsa\_full & kappa\_t & 11 & 0.1242 & -0.2162 & 0.4777 \\
-hsa\_full & kappa\_t & 12 & 0.1242 & -0.2179 & 0.4774 \\
-hsa\_full & kappa\_t & 13 & 0.1241 & -0.2173 & 0.4789 \\
-hsa\_full & kappa\_t & 14 & 0.1243 & -0.2199 & 0.4829 \\
-hsa\_full & kappa\_t & 15 & 0.1241 & -0.2159 & 0.4758 \\
-hsa\_full & theta\_t & 0 & 0.1001 & -0.3152 & 0.5064 \\
-hsa\_full & theta\_t & 1 & 0.1003 & -0.3213 & 0.5050 \\
-hsa\_full & theta\_t & 2 & 0.1002 & -0.3179 & 0.5058 \\
-hsa\_full & theta\_t & 3 & 0.1000 & -0.3165 & 0.5042 \\
-hsa\_full & theta\_t & 4 & 0.0999 & -0.3163 & 0.5045 \\
-hsa\_full & theta\_t & 5 & 0.1000 & -0.3172 & 0.5056 \\
-hsa\_full & theta\_t & 6 & 0.1000 & -0.3124 & 0.5079 \\
-hsa\_full & theta\_t & 7 & 0.1001 & -0.3132 & 0.5099 \\
-hsa\_full & theta\_t & 8 & 0.1001 & -0.3140 & 0.5054 \\
-hsa\_full & theta\_t & 9 & 0.0998 & -0.3101 & 0.5031 \\
-hsa\_full & theta\_t & 10 & 0.0999 & -0.3141 & 0.5060 \\
-hsa\_full & theta\_t & 11 & 0.1002 & -0.3143 & 0.5047 \\
-hsa\_full & theta\_t & 12 & 0.1001 & -0.3130 & 0.5066 \\
-hsa\_full & theta\_t & 13 & 0.1002 & -0.3120 & 0.5041 \\
-hsa\_full & theta\_t & 14 & 0.1002 & -0.3108 & 0.5036 \\
-hsa\_full & theta\_t & 15 & 0.0998 & -0.3144 & 0.5024 \\
-hsa\_full & kappa\_t & 0 & 0.0803 & -0.1457 & 0.3156 \\
-hsa\_full & kappa\_t & 4 & 0.0797 & -0.1455 & 0.3133 \\
-hsa\_full & kappa\_t & 9 & 0.0766 & -0.1392 & 0.2952 \\
-hsa\_full & kappa\_t & 13 & 0.0729 & -0.1365 & 0.2868 \\
-hsa\_full & kappa\_t & 18 & 0.0696 & -0.1464 & 0.2808 \\
-hsa\_full & kappa\_t & 22 & 0.0672 & -0.1558 & 0.2837 \\
-hsa\_full & kappa\_t & 27 & 0.0667 & -0.1555 & 0.2841 \\
-hsa\_full & kappa\_t & 31 & 0.0660 & -0.1596 & 0.2838 \\
-hsa\_full & kappa\_t & 35 & 0.0661 & -0.1570 & 0.2843 \\
-hsa\_full & kappa\_t & 40 & 0.0674 & -0.1521 & 0.2834 \\
-hsa\_full & kappa\_t & 44 & 0.0667 & -0.1565 & 0.2842 \\
-hsa\_full & kappa\_t & 49 & 0.0666 & -0.1549 & 0.2842 \\
-hsa\_full & kappa\_t & 53 & 0.0665 & -0.1542 & 0.2822 \\
-hsa\_full & kappa\_t & 58 & 0.0669 & -0.1573 & 0.2830 \\
-hsa\_full & kappa\_t & 62 & 0.0692 & -0.1475 & 0.2803 \\
-hsa\_full & kappa\_t & 67 & 0.0715 & -0.1431 & 0.2834 \\
-hsa\_full & kappa\_t & 71 & 0.0733 & -0.1400 & 0.2933 \\
-hsa\_full & kappa\_t & 75 & 0.0754 & -0.1356 & 0.2960 \\
-hsa\_full & kappa\_t & 80 & 0.0773 & -0.1380 & 0.3021 \\
-hsa\_full & kappa\_t & 84 & 0.0755 & -0.1387 & 0.2963 \\
-hsa\_full & kappa\_t & 89 & 0.0750 & -0.1372 & 0.2959 \\
-hsa\_full & kappa\_t & 93 & 0.0749 & -0.1373 & 0.2952 \\
-hsa\_full & kappa\_t & 98 & 0.0772 & -0.1394 & 0.3028 \\
-hsa\_full & kappa\_t & 102 & 0.0791 & -0.1394 & 0.3108 \\
-hsa\_full & theta\_t & 0 & 0.3622 & 0.1602 & 0.6152 \\
-hsa\_full & theta\_t & 4 & 0.3625 & 0.1687 & 0.6127 \\
-hsa\_full & theta\_t & 9 & 0.3606 & 0.1668 & 0.6083 \\
-hsa\_full & theta\_t & 13 & 0.3584 & 0.1605 & 0.6049 \\
-hsa\_full & theta\_t & 18 & 0.3565 & 0.1492 & 0.6016 \\
-hsa\_full & theta\_t & 22 & 0.3544 & 0.1417 & 0.6018 \\
-hsa\_full & theta\_t & 27 & 0.3535 & 0.1381 & 0.6017 \\
-hsa\_full & theta\_t & 31 & 0.3530 & 0.1376 & 0.6028 \\
-hsa\_full & theta\_t & 35 & 0.3530 & 0.1359 & 0.6006 \\
-hsa\_full & theta\_t & 40 & 0.3538 & 0.1354 & 0.6027 \\
-hsa\_full & theta\_t & 44 & 0.3534 & 0.1382 & 0.6015 \\
-hsa\_full & theta\_t & 49 & 0.3534 & 0.1373 & 0.6024 \\
-hsa\_full & theta\_t & 53 & 0.3535 & 0.1389 & 0.6028 \\
-hsa\_full & theta\_t & 58 & 0.3538 & 0.1386 & 0.6012 \\
-hsa\_full & theta\_t & 62 & 0.3555 & 0.1459 & 0.6004 \\
-hsa\_full & theta\_t & 67 & 0.3570 & 0.1501 & 0.6031 \\
-hsa\_full & theta\_t & 71 & 0.3577 & 0.1504 & 0.6050 \\
-hsa\_full & theta\_t & 75 & 0.3595 & 0.1582 & 0.6098 \\
-hsa\_full & theta\_t & 80 & 0.3621 & 0.1629 & 0.6158 \\
-hsa\_full & theta\_t & 84 & 0.3610 & 0.1597 & 0.6103 \\
-hsa\_full & theta\_t & 89 & 0.3605 & 0.1613 & 0.6130 \\
-hsa\_full & theta\_t & 93 & 0.3607 & 0.1606 & 0.6110 \\
-hsa\_full & theta\_t & 98 & 0.3622 & 0.1614 & 0.6136 \\
-hsa\_full & theta\_t & 102 & 0.3635 & 0.1610 & 0.6210 \\
-hsa\_full & kappa\_t & 0 & 0.0565 & -0.2313 & 0.3414 \\
-hsa\_full & kappa\_t & 4 & 0.0568 & -0.2209 & 0.3393 \\
-hsa\_full & kappa\_t & 9 & 0.0570 & -0.2166 & 0.3348 \\
-hsa\_full & kappa\_t & 13 & 0.0571 & -0.2114 & 0.3279 \\
-hsa\_full & kappa\_t & 17 & 0.0573 & -0.2092 & 0.3274 \\
-hsa\_full & kappa\_t & 22 & 0.0575 & -0.2108 & 0.3300 \\
-hsa\_full & kappa\_t & 26 & 0.0575 & -0.2073 & 0.3292 \\
-hsa\_full & kappa\_t & 30 & 0.0576 & -0.2062 & 0.3244 \\
-hsa\_full & kappa\_t & 34 & 0.0575 & -0.2044 & 0.3207 \\
-hsa\_full & kappa\_t & 39 & 0.0577 & -0.1985 & 0.3216 \\
-hsa\_full & kappa\_t & 43 & 0.0583 & -0.1985 & 0.3212 \\
-hsa\_full & kappa\_t & 47 & 0.0587 & -0.1970 & 0.3201 \\
-hsa\_full & kappa\_t & 52 & 0.0591 & -0.1976 & 0.3207 \\
-hsa\_full & kappa\_t & 56 & 0.0593 & -0.1969 & 0.3233 \\
-hsa\_full & kappa\_t & 60 & 0.0592 & -0.1974 & 0.3242 \\
-hsa\_full & kappa\_t & 65 & 0.0591 & -0.1971 & 0.3255 \\
-hsa\_full & kappa\_t & 69 & 0.0589 & -0.1978 & 0.3250 \\
-hsa\_full & kappa\_t & 73 & 0.0589 & -0.2028 & 0.3257 \\
-hsa\_full & kappa\_t & 77 & 0.0591 & -0.1996 & 0.3253 \\
-hsa\_full & kappa\_t & 82 & 0.0590 & -0.1983 & 0.3248 \\
-hsa\_full & kappa\_t & 86 & 0.0592 & -0.2014 & 0.3258 \\
-hsa\_full & kappa\_t & 90 & 0.0595 & -0.2021 & 0.3261 \\
-hsa\_full & kappa\_t & 95 & 0.0599 & -0.2017 & 0.3277 \\
-hsa\_full & kappa\_t & 99 & 0.0600 & -0.2035 & 0.3290 \\
-hsa\_full & theta\_t & 0 & 0.1562 & -0.0657 & 0.4244 \\
-hsa\_full & theta\_t & 4 & 0.1569 & -0.0583 & 0.4218 \\
-hsa\_full & theta\_t & 9 & 0.1575 & -0.0576 & 0.4193 \\
-hsa\_full & theta\_t & 13 & 0.1571 & -0.0582 & 0.4193 \\
-hsa\_full & theta\_t & 17 & 0.1566 & -0.0600 & 0.4192 \\
-hsa\_full & theta\_t & 22 & 0.1558 & -0.0661 & 0.4197 \\
-hsa\_full & theta\_t & 26 & 0.1556 & -0.0693 & 0.4188 \\
-hsa\_full & theta\_t & 30 & 0.1556 & -0.0762 & 0.4180 \\
-hsa\_full & theta\_t & 34 & 0.1557 & -0.0811 & 0.4176 \\
-hsa\_full & theta\_t & 39 & 0.1562 & -0.0927 & 0.4166 \\
-hsa\_full & theta\_t & 43 & 0.1565 & -0.1054 & 0.4199 \\
-hsa\_full & theta\_t & 47 & 0.1564 & -0.1149 & 0.4214 \\
-hsa\_full & theta\_t & 52 & 0.1562 & -0.1336 & 0.4322 \\
-hsa\_full & theta\_t & 56 & 0.1563 & -0.1425 & 0.4387 \\
-hsa\_full & theta\_t & 60 & 0.1547 & -0.1507 & 0.4362 \\
-hsa\_full & theta\_t & 65 & 0.1538 & -0.1621 & 0.4365 \\
-hsa\_full & theta\_t & 69 & 0.1534 & -0.1672 & 0.4359 \\
-hsa\_full & theta\_t & 73 & 0.1539 & -0.1636 & 0.4392 \\
-hsa\_full & theta\_t & 77 & 0.1548 & -0.1664 & 0.4434 \\
-hsa\_full & theta\_t & 82 & 0.1555 & -0.1662 & 0.4555 \\
-hsa\_full & theta\_t & 86 & 0.1561 & -0.1655 & 0.4619 \\
-hsa\_full & theta\_t & 90 & 0.1544 & -0.1861 & 0.4570 \\
-hsa\_full & theta\_t & 95 & 0.1536 & -0.2011 & 0.4553 \\
-hsa\_full & theta\_t & 99 & 0.1547 & -0.2040 & 0.4616 \\
-hsa\_steady & kappa\_t & 0 & 0.0088 & -0.2213 & 0.2399 \\
-hsa\_steady & kappa\_t & 5 & 0.0093 & -0.2192 & 0.2415 \\
-hsa\_steady & kappa\_t & 11 & 0.0074 & -0.2268 & 0.2391 \\
-hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2357 & 0.2454 \\
-hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2366 & 0.2452 \\
-hsa\_steady & kappa\_t & 27 & 0.0052 & -0.2342 & 0.2420 \\
-hsa\_steady & kappa\_t & 32 & 0.0056 & -0.2341 & 0.2425 \\
-hsa\_steady & kappa\_t & 37 & 0.0056 & -0.2329 & 0.2450 \\
-hsa\_steady & kappa\_t & 43 & 0.0048 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 48 & 0.0041 & -0.2417 & 0.2481 \\
-hsa\_steady & kappa\_t & 53 & 0.0041 & -0.2408 & 0.2484 \\
-hsa\_steady & kappa\_t & 59 & 0.0045 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 64 & 0.0061 & -0.2320 & 0.2452 \\
-hsa\_steady & kappa\_t & 70 & 0.0090 & -0.2215 & 0.2408 \\
-hsa\_steady & kappa\_t & 75 & 0.0113 & -0.2152 & 0.2398 \\
-hsa\_steady & kappa\_t & 80 & 0.0130 & -0.2140 & 0.2429 \\
-hsa\_steady & kappa\_t & 86 & 0.0134 & -0.2134 & 0.2464 \\
-hsa\_steady & kappa\_t & 91 & 0.0137 & -0.2150 & 0.2476 \\
-hsa\_steady & kappa\_t & 96 & 0.0141 & -0.2159 & 0.2454 \\
-hsa\_steady & kappa\_t & 102 & 0.0152 & -0.2152 & 0.2560 \\
-hsa\_steady & kappa\_t & 107 & 0.0160 & -0.2177 & 0.2592 \\
-hsa\_steady & kappa\_t & 112 & 0.0167 & -0.2198 & 0.2622 \\
-hsa\_steady & kappa\_t & 118 & 0.0178 & -0.2207 & 0.2646 \\
-hsa\_steady & kappa\_t & 123 & 0.0182 & -0.2230 & 0.2692 \\
-hsa\_steady & kappa\_t & 0 & 0.0088 & -0.2213 & 0.2399 \\
-hsa\_steady & kappa\_t & 5 & 0.0093 & -0.2192 & 0.2415 \\
-hsa\_steady & kappa\_t & 11 & 0.0074 & -0.2268 & 0.2391 \\
-hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2357 & 0.2454 \\
-hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2366 & 0.2452 \\
-hsa\_steady & kappa\_t & 27 & 0.0052 & -0.2342 & 0.2420 \\
-hsa\_steady & kappa\_t & 32 & 0.0056 & -0.2341 & 0.2425 \\
-hsa\_steady & kappa\_t & 37 & 0.0056 & -0.2329 & 0.2450 \\
-hsa\_steady & kappa\_t & 43 & 0.0048 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 48 & 0.0041 & -0.2417 & 0.2481 \\
-hsa\_steady & kappa\_t & 53 & 0.0041 & -0.2408 & 0.2484 \\
-hsa\_steady & kappa\_t & 59 & 0.0045 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 64 & 0.0061 & -0.2320 & 0.2452 \\
-hsa\_steady & kappa\_t & 70 & 0.0090 & -0.2215 & 0.2408 \\
-hsa\_steady & kappa\_t & 75 & 0.0113 & -0.2152 & 0.2398 \\
-hsa\_steady & kappa\_t & 80 & 0.0130 & -0.2140 & 0.2429 \\
-hsa\_steady & kappa\_t & 86 & 0.0134 & -0.2134 & 0.2464 \\
-hsa\_steady & kappa\_t & 91 & 0.0137 & -0.2150 & 0.2476 \\
-hsa\_steady & kappa\_t & 96 & 0.0141 & -0.2159 & 0.2454 \\
-hsa\_steady & kappa\_t & 102 & 0.0152 & -0.2152 & 0.2560 \\
-hsa\_steady & kappa\_t & 107 & 0.0160 & -0.2177 & 0.2592 \\
-hsa\_steady & kappa\_t & 112 & 0.0167 & -0.2198 & 0.2622 \\
-hsa\_steady & kappa\_t & 118 & 0.0178 & -0.2207 & 0.2646 \\
-hsa\_steady & kappa\_t & 123 & 0.0182 & -0.2230 & 0.2692 \\
-hsa\_steady & kappa\_t & 0 & 0.0104 & -0.2194 & 0.2464 \\
-hsa\_steady & kappa\_t & 5 & 0.0112 & -0.2141 & 0.2444 \\
-hsa\_steady & kappa\_t & 11 & 0.0093 & -0.2231 & 0.2440 \\
-hsa\_steady & kappa\_t & 16 & 0.0069 & -0.2283 & 0.2494 \\
-hsa\_steady & kappa\_t & 21 & 0.0070 & -0.2277 & 0.2476 \\
-hsa\_steady & kappa\_t & 27 & 0.0078 & -0.2258 & 0.2495 \\
-hsa\_steady & kappa\_t & 32 & 0.0083 & -0.2267 & 0.2483 \\
-hsa\_steady & kappa\_t & 37 & 0.0081 & -0.2230 & 0.2484 \\
-hsa\_steady & kappa\_t & 43 & 0.0073 & -0.2273 & 0.2510 \\
-hsa\_steady & kappa\_t & 48 & 0.0064 & -0.2298 & 0.2515 \\
-hsa\_steady & kappa\_t & 53 & 0.0063 & -0.2309 & 0.2504 \\
-hsa\_steady & kappa\_t & 59 & 0.0065 & -0.2303 & 0.2483 \\
-hsa\_steady & kappa\_t & 64 & 0.0076 & -0.2245 & 0.2451 \\
-hsa\_steady & kappa\_t & 70 & 0.0102 & -0.2200 & 0.2432 \\
-hsa\_steady & kappa\_t & 75 & 0.0122 & -0.2157 & 0.2428 \\
-hsa\_steady & kappa\_t & 80 & 0.0136 & -0.2119 & 0.2479 \\
-hsa\_steady & kappa\_t & 86 & 0.0138 & -0.2165 & 0.2511 \\
-hsa\_steady & kappa\_t & 91 & 0.0142 & -0.2173 & 0.2532 \\
-hsa\_steady & kappa\_t & 96 & 0.0144 & -0.2146 & 0.2490 \\
-hsa\_steady & kappa\_t & 102 & 0.0156 & -0.2186 & 0.2599 \\
-hsa\_steady & kappa\_t & 107 & 0.0163 & -0.2194 & 0.2628 \\
-hsa\_steady & kappa\_t & 112 & 0.0165 & -0.2220 & 0.2629 \\
-hsa\_steady & kappa\_t & 118 & 0.0173 & -0.2277 & 0.2639 \\
-hsa\_steady & kappa\_t & 123 & 0.0179 & -0.2298 & 0.2705 \\
-hsa\_steady & kappa\_t & 0 & 0.0077 & -0.2257 & 0.2358 \\
-hsa\_steady & kappa\_t & 5 & 0.0082 & -0.2203 & 0.2382 \\
-hsa\_steady & kappa\_t & 11 & 0.0066 & -0.2239 & 0.2355 \\
-hsa\_steady & kappa\_t & 16 & 0.0041 & -0.2294 & 0.2383 \\
-hsa\_steady & kappa\_t & 21 & 0.0037 & -0.2316 & 0.2410 \\
-hsa\_steady & kappa\_t & 27 & 0.0048 & -0.2283 & 0.2370 \\
-hsa\_steady & kappa\_t & 32 & 0.0055 & -0.2253 & 0.2394 \\
-hsa\_steady & kappa\_t & 37 & 0.0053 & -0.2269 & 0.2378 \\
-hsa\_steady & kappa\_t & 43 & 0.0042 & -0.2321 & 0.2380 \\
-hsa\_steady & kappa\_t & 48 & 0.0038 & -0.2316 & 0.2420 \\
-hsa\_steady & kappa\_t & 53 & 0.0034 & -0.2311 & 0.2412 \\
-hsa\_steady & kappa\_t & 59 & 0.0034 & -0.2311 & 0.2443 \\
-hsa\_steady & kappa\_t & 64 & 0.0048 & -0.2244 & 0.2379 \\
-hsa\_steady & kappa\_t & 70 & 0.0069 & -0.2208 & 0.2334 \\
-hsa\_steady & kappa\_t & 75 & 0.0089 & -0.2190 & 0.2347 \\
-hsa\_steady & kappa\_t & 80 & 0.0104 & -0.2167 & 0.2395 \\
-hsa\_steady & kappa\_t & 86 & 0.0108 & -0.2175 & 0.2431 \\
-hsa\_steady & kappa\_t & 91 & 0.0109 & -0.2183 & 0.2424 \\
-hsa\_steady & kappa\_t & 96 & 0.0110 & -0.2207 & 0.2437 \\
-hsa\_steady & kappa\_t & 102 & 0.0119 & -0.2232 & 0.2455 \\
-hsa\_steady & kappa\_t & 107 & 0.0126 & -0.2261 & 0.2490 \\
-hsa\_steady & kappa\_t & 112 & 0.0130 & -0.2267 & 0.2529 \\
-hsa\_steady & kappa\_t & 118 & 0.0138 & -0.2294 & 0.2563 \\
-hsa\_steady & kappa\_t & 123 & 0.0142 & -0.2291 & 0.2599 \\
-hsa\_steady & kappa\_t & 0 & 0.0088 & -0.2213 & 0.2399 \\
-hsa\_steady & kappa\_t & 5 & 0.0093 & -0.2192 & 0.2415 \\
-hsa\_steady & kappa\_t & 11 & 0.0074 & -0.2268 & 0.2391 \\
-hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2357 & 0.2454 \\
-hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2366 & 0.2452 \\
-hsa\_steady & kappa\_t & 27 & 0.0052 & -0.2342 & 0.2420 \\
-hsa\_steady & kappa\_t & 32 & 0.0056 & -0.2341 & 0.2425 \\
-hsa\_steady & kappa\_t & 37 & 0.0056 & -0.2329 & 0.2450 \\
-hsa\_steady & kappa\_t & 43 & 0.0048 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 48 & 0.0041 & -0.2417 & 0.2481 \\
-hsa\_steady & kappa\_t & 53 & 0.0041 & -0.2408 & 0.2484 \\
-hsa\_steady & kappa\_t & 59 & 0.0045 & -0.2372 & 0.2450 \\
-hsa\_steady & kappa\_t & 64 & 0.0061 & -0.2320 & 0.2452 \\
-hsa\_steady & kappa\_t & 70 & 0.0090 & -0.2215 & 0.2408 \\
-hsa\_steady & kappa\_t & 75 & 0.0113 & -0.2152 & 0.2398 \\
-hsa\_steady & kappa\_t & 80 & 0.0130 & -0.2140 & 0.2429 \\
-hsa\_steady & kappa\_t & 86 & 0.0134 & -0.2134 & 0.2464 \\
-hsa\_steady & kappa\_t & 91 & 0.0137 & -0.2150 & 0.2476 \\
-hsa\_steady & kappa\_t & 96 & 0.0141 & -0.2159 & 0.2454 \\
-hsa\_steady & kappa\_t & 102 & 0.0152 & -0.2152 & 0.2560 \\
-hsa\_steady & kappa\_t & 107 & 0.0160 & -0.2177 & 0.2592 \\
-hsa\_steady & kappa\_t & 112 & 0.0167 & -0.2198 & 0.2622 \\
-hsa\_steady & kappa\_t & 118 & 0.0178 & -0.2207 & 0.2646 \\
-hsa\_steady & kappa\_t & 123 & 0.0182 & -0.2230 & 0.2692 \\
-hsa\_steady & kappa\_t & 0 & 0.1184 & -0.2402 & 0.4748 \\
-hsa\_steady & kappa\_t & 1 & 0.1181 & -0.2381 & 0.4709 \\
-hsa\_steady & kappa\_t & 2 & 0.1177 & -0.2390 & 0.4665 \\
-hsa\_steady & kappa\_t & 3 & 0.1171 & -0.2394 & 0.4694 \\
-hsa\_steady & kappa\_t & 4 & 0.1173 & -0.2387 & 0.4696 \\
-hsa\_steady & kappa\_t & 5 & 0.1175 & -0.2403 & 0.4725 \\
-hsa\_steady & kappa\_t & 6 & 0.1175 & -0.2397 & 0.4733 \\
-hsa\_steady & kappa\_t & 7 & 0.1180 & -0.2418 & 0.4703 \\
-hsa\_steady & kappa\_t & 8 & 0.1179 & -0.2404 & 0.4718 \\
-hsa\_steady & kappa\_t & 9 & 0.1177 & -0.2416 & 0.4688 \\
-hsa\_steady & kappa\_t & 10 & 0.1177 & -0.2394 & 0.4658 \\
-hsa\_steady & kappa\_t & 11 & 0.1173 & -0.2418 & 0.4676 \\
-hsa\_steady & kappa\_t & 12 & 0.1175 & -0.2385 & 0.4663 \\
-hsa\_steady & kappa\_t & 13 & 0.1174 & -0.2410 & 0.4673 \\
-hsa\_steady & kappa\_t & 14 & 0.1173 & -0.2366 & 0.4693 \\
-hsa\_steady & kappa\_t & 15 & 0.1170 & -0.2437 & 0.4672 \\
-hsa\_steady & kappa\_t & 0 & -0.0186 & -0.2210 & 0.1886 \\
-hsa\_steady & kappa\_t & 4 & -0.0177 & -0.2185 & 0.1889 \\
-hsa\_steady & kappa\_t & 9 & -0.0182 & -0.2167 & 0.1884 \\
-hsa\_steady & kappa\_t & 13 & -0.0201 & -0.2195 & 0.1827 \\
-hsa\_steady & kappa\_t & 18 & -0.0216 & -0.2270 & 0.1898 \\
-hsa\_steady & kappa\_t & 22 & -0.0213 & -0.2237 & 0.1887 \\
-hsa\_steady & kappa\_t & 27 & -0.0207 & -0.2223 & 0.1871 \\
-hsa\_steady & kappa\_t & 31 & -0.0203 & -0.2197 & 0.1861 \\
-hsa\_steady & kappa\_t & 35 & -0.0199 & -0.2189 & 0.1864 \\
-hsa\_steady & kappa\_t & 40 & -0.0201 & -0.2194 & 0.1870 \\
-hsa\_steady & kappa\_t & 44 & -0.0207 & -0.2225 & 0.1897 \\
-hsa\_steady & kappa\_t & 49 & -0.0211 & -0.2246 & 0.1913 \\
-hsa\_steady & kappa\_t & 53 & -0.0211 & -0.2256 & 0.1924 \\
-hsa\_steady & kappa\_t & 58 & -0.0212 & -0.2264 & 0.1909 \\
-hsa\_steady & kappa\_t & 62 & -0.0204 & -0.2202 & 0.1901 \\
-hsa\_steady & kappa\_t & 67 & -0.0188 & -0.2130 & 0.1837 \\
-hsa\_steady & kappa\_t & 71 & -0.0170 & -0.2157 & 0.1881 \\
-hsa\_steady & kappa\_t & 75 & -0.0159 & -0.2151 & 0.1923 \\
-hsa\_steady & kappa\_t & 80 & -0.0143 & -0.2146 & 0.1990 \\
-hsa\_steady & kappa\_t & 84 & -0.0146 & -0.2192 & 0.1990 \\
-hsa\_steady & kappa\_t & 89 & -0.0142 & -0.2261 & 0.1998 \\
-hsa\_steady & kappa\_t & 93 & -0.0143 & -0.2258 & 0.2010 \\
-hsa\_steady & kappa\_t & 98 & -0.0137 & -0.2254 & 0.2015 \\
-hsa\_steady & kappa\_t & 102 & -0.0130 & -0.2319 & 0.2059 \\
-hsa\_steady & kappa\_t & 0 & 0.0109 & -0.2482 & 0.2772 \\
-hsa\_steady & kappa\_t & 4 & 0.0111 & -0.2413 & 0.2754 \\
-hsa\_steady & kappa\_t & 9 & 0.0112 & -0.2400 & 0.2741 \\
-hsa\_steady & kappa\_t & 13 & 0.0115 & -0.2398 & 0.2725 \\
-hsa\_steady & kappa\_t & 17 & 0.0112 & -0.2400 & 0.2746 \\
-hsa\_steady & kappa\_t & 22 & 0.0108 & -0.2468 & 0.2762 \\
-hsa\_steady & kappa\_t & 26 & 0.0109 & -0.2464 & 0.2781 \\
-hsa\_steady & kappa\_t & 30 & 0.0104 & -0.2486 & 0.2776 \\
-hsa\_steady & kappa\_t & 34 & 0.0105 & -0.2442 & 0.2748 \\
-hsa\_steady & kappa\_t & 39 & 0.0109 & -0.2402 & 0.2721 \\
-hsa\_steady & kappa\_t & 43 & 0.0113 & -0.2386 & 0.2720 \\
-hsa\_steady & kappa\_t & 47 & 0.0120 & -0.2341 & 0.2699 \\
-hsa\_steady & kappa\_t & 52 & 0.0124 & -0.2326 & 0.2782 \\
-hsa\_steady & kappa\_t & 56 & 0.0127 & -0.2345 & 0.2799 \\
-hsa\_steady & kappa\_t & 60 & 0.0126 & -0.2366 & 0.2756 \\
-hsa\_steady & kappa\_t & 65 & 0.0128 & -0.2382 & 0.2767 \\
-hsa\_steady & kappa\_t & 69 & 0.0126 & -0.2372 & 0.2748 \\
-hsa\_steady & kappa\_t & 73 & 0.0127 & -0.2375 & 0.2788 \\
-hsa\_steady & kappa\_t & 77 & 0.0126 & -0.2378 & 0.2820 \\
-hsa\_steady & kappa\_t & 82 & 0.0129 & -0.2415 & 0.2846 \\
-hsa\_steady & kappa\_t & 86 & 0.0131 & -0.2437 & 0.2850 \\
-hsa\_steady & kappa\_t & 90 & 0.0133 & -0.2448 & 0.2873 \\
-hsa\_steady & kappa\_t & 95 & 0.0133 & -0.2470 & 0.2891 \\
-hsa\_steady & kappa\_t & 99 & 0.0135 & -0.2499 & 0.2912 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0024 & -0.2417 & 0.2480 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0026 & -0.2415 & 0.2436 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0030 & -0.2368 & 0.2398 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & 0.0032 & -0.2332 & 0.2393 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0035 & -0.2303 & 0.2370 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0038 & -0.2297 & 0.2335 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0041 & -0.2245 & 0.2307 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0044 & -0.2224 & 0.2292 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0047 & -0.2217 & 0.2296 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0049 & -0.2197 & 0.2309 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0052 & -0.2192 & 0.2327 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0055 & -0.2188 & 0.2336 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0058 & -0.2186 & 0.2325 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0061 & -0.2152 & 0.2331 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0064 & -0.2173 & 0.2327 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0067 & -0.2147 & 0.2335 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0071 & -0.2150 & 0.2331 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0073 & -0.2175 & 0.2340 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0076 & -0.2196 & 0.2369 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0079 & -0.2207 & 0.2392 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0082 & -0.2224 & 0.2420 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0085 & -0.2229 & 0.2452 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0088 & -0.2257 & 0.2503 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0091 & -0.2281 & 0.2536 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & -0.0944 & -0.2011 & 0.0292 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & -0.0887 & -0.1931 & 0.0314 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & -0.0810 & -0.1829 & 0.0339 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & -0.0759 & -0.1764 & 0.0360 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & -0.0695 & -0.1682 & 0.0389 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & -0.0618 & -0.1635 & 0.0442 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & -0.0560 & -0.1573 & 0.0479 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & -0.0502 & -0.1517 & 0.0552 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & -0.0437 & -0.1488 & 0.0622 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & -0.0382 & -0.1464 & 0.0685 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & -0.0326 & -0.1435 & 0.0741 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & -0.0258 & -0.1408 & 0.0853 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & -0.0193 & -0.1380 & 0.0931 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & -0.0119 & -0.1363 & 0.1056 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & -0.0056 & -0.1350 & 0.1148 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.0007 & -0.1353 & 0.1271 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.0076 & -0.1327 & 0.1422 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & 0.0135 & -0.1327 & 0.1525 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & 0.0190 & -0.1308 & 0.1626 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.0263 & -0.1298 & 0.1773 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & 0.0321 & -0.1298 & 0.1900 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & 0.0376 & -0.1289 & 0.2014 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & 0.0447 & -0.1300 & 0.2174 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & 0.0507 & -0.1302 & 0.2310 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0024 & -0.2417 & 0.2480 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0026 & -0.2415 & 0.2436 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0030 & -0.2368 & 0.2398 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & 0.0032 & -0.2332 & 0.2393 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0035 & -0.2303 & 0.2370 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0038 & -0.2297 & 0.2335 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0041 & -0.2245 & 0.2307 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0044 & -0.2224 & 0.2292 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0047 & -0.2217 & 0.2296 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0049 & -0.2197 & 0.2309 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0052 & -0.2192 & 0.2327 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0055 & -0.2188 & 0.2336 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0058 & -0.2186 & 0.2325 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0061 & -0.2152 & 0.2331 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0064 & -0.2173 & 0.2327 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0067 & -0.2147 & 0.2335 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0071 & -0.2150 & 0.2331 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0073 & -0.2175 & 0.2340 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0076 & -0.2196 & 0.2369 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0079 & -0.2207 & 0.2392 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0082 & -0.2224 & 0.2420 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0085 & -0.2229 & 0.2452 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0088 & -0.2257 & 0.2503 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0091 & -0.2281 & 0.2536 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & -0.0944 & -0.2011 & 0.0292 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & -0.0887 & -0.1931 & 0.0314 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & -0.0810 & -0.1829 & 0.0339 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & -0.0759 & -0.1764 & 0.0360 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & -0.0695 & -0.1682 & 0.0389 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & -0.0618 & -0.1635 & 0.0442 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & -0.0560 & -0.1573 & 0.0479 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & -0.0502 & -0.1517 & 0.0552 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & -0.0437 & -0.1488 & 0.0622 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & -0.0382 & -0.1464 & 0.0685 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & -0.0326 & -0.1435 & 0.0741 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & -0.0258 & -0.1408 & 0.0853 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & -0.0193 & -0.1380 & 0.0931 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & -0.0119 & -0.1363 & 0.1056 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & -0.0056 & -0.1350 & 0.1148 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.0007 & -0.1353 & 0.1271 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.0076 & -0.1327 & 0.1422 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & 0.0135 & -0.1327 & 0.1525 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & 0.0190 & -0.1308 & 0.1626 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.0263 & -0.1298 & 0.1773 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & 0.0321 & -0.1298 & 0.1900 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & 0.0376 & -0.1289 & 0.2014 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & 0.0447 & -0.1300 & 0.2174 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & 0.0507 & -0.1302 & 0.2310 \\
+annual\_q4 & hsa\_full & kappa\_t & 0 & 0.0075 & -0.2273 & 0.2363 \\
+annual\_q4 & hsa\_full & kappa\_t & 5 & 0.0075 & -0.2257 & 0.2356 \\
+annual\_q4 & hsa\_full & kappa\_t & 11 & 0.0076 & -0.2188 & 0.2312 \\
+annual\_q4 & hsa\_full & kappa\_t & 16 & 0.0074 & -0.2207 & 0.2333 \\
+annual\_q4 & hsa\_full & kappa\_t & 21 & 0.0072 & -0.2210 & 0.2363 \\
+annual\_q4 & hsa\_full & kappa\_t & 27 & 0.0072 & -0.2220 & 0.2328 \\
+annual\_q4 & hsa\_full & kappa\_t & 32 & 0.0074 & -0.2224 & 0.2325 \\
+annual\_q4 & hsa\_full & kappa\_t & 37 & 0.0075 & -0.2238 & 0.2347 \\
+annual\_q4 & hsa\_full & kappa\_t & 43 & 0.0076 & -0.2191 & 0.2347 \\
+annual\_q4 & hsa\_full & kappa\_t & 48 & 0.0075 & -0.2236 & 0.2378 \\
+annual\_q4 & hsa\_full & kappa\_t & 53 & 0.0075 & -0.2201 & 0.2377 \\
+annual\_q4 & hsa\_full & kappa\_t & 59 & 0.0074 & -0.2239 & 0.2384 \\
+annual\_q4 & hsa\_full & kappa\_t & 64 & 0.0074 & -0.2235 & 0.2366 \\
+annual\_q4 & hsa\_full & kappa\_t & 70 & 0.0075 & -0.2200 & 0.2307 \\
+annual\_q4 & hsa\_full & kappa\_t & 75 & 0.0077 & -0.2198 & 0.2275 \\
+annual\_q4 & hsa\_full & kappa\_t & 80 & 0.0078 & -0.2184 & 0.2310 \\
+annual\_q4 & hsa\_full & kappa\_t & 86 & 0.0077 & -0.2189 & 0.2316 \\
+annual\_q4 & hsa\_full & kappa\_t & 91 & 0.0077 & -0.2209 & 0.2351 \\
+annual\_q4 & hsa\_full & kappa\_t & 96 & 0.0077 & -0.2258 & 0.2357 \\
+annual\_q4 & hsa\_full & kappa\_t & 102 & 0.0079 & -0.2276 & 0.2375 \\
+annual\_q4 & hsa\_full & kappa\_t & 107 & 0.0079 & -0.2324 & 0.2406 \\
+annual\_q4 & hsa\_full & kappa\_t & 112 & 0.0079 & -0.2334 & 0.2411 \\
+annual\_q4 & hsa\_full & kappa\_t & 118 & 0.0081 & -0.2366 & 0.2443 \\
+annual\_q4 & hsa\_full & kappa\_t & 123 & 0.0081 & -0.2384 & 0.2459 \\
+annual\_q4 & hsa\_full & theta\_t & 0 & 0.0436 & -0.1552 & 0.2518 \\
+annual\_q4 & hsa\_full & theta\_t & 5 & 0.0439 & -0.1530 & 0.2486 \\
+annual\_q4 & hsa\_full & theta\_t & 11 & 0.0443 & -0.1492 & 0.2477 \\
+annual\_q4 & hsa\_full & theta\_t & 16 & 0.0441 & -0.1523 & 0.2486 \\
+annual\_q4 & hsa\_full & theta\_t & 21 & 0.0438 & -0.1549 & 0.2509 \\
+annual\_q4 & hsa\_full & theta\_t & 27 & 0.0440 & -0.1539 & 0.2521 \\
+annual\_q4 & hsa\_full & theta\_t & 32 & 0.0441 & -0.1516 & 0.2520 \\
+annual\_q4 & hsa\_full & theta\_t & 37 & 0.0440 & -0.1549 & 0.2522 \\
+annual\_q4 & hsa\_full & theta\_t & 43 & 0.0439 & -0.1560 & 0.2515 \\
+annual\_q4 & hsa\_full & theta\_t & 48 & 0.0437 & -0.1557 & 0.2525 \\
+annual\_q4 & hsa\_full & theta\_t & 53 & 0.0438 & -0.1563 & 0.2526 \\
+annual\_q4 & hsa\_full & theta\_t & 59 & 0.0438 & -0.1586 & 0.2543 \\
+annual\_q4 & hsa\_full & theta\_t & 64 & 0.0439 & -0.1557 & 0.2516 \\
+annual\_q4 & hsa\_full & theta\_t & 70 & 0.0445 & -0.1527 & 0.2497 \\
+annual\_q4 & hsa\_full & theta\_t & 75 & 0.0449 & -0.1498 & 0.2468 \\
+annual\_q4 & hsa\_full & theta\_t & 80 & 0.0453 & -0.1528 & 0.2541 \\
+annual\_q4 & hsa\_full & theta\_t & 86 & 0.0458 & -0.1535 & 0.2576 \\
+annual\_q4 & hsa\_full & theta\_t & 91 & 0.0461 & -0.1577 & 0.2598 \\
+annual\_q4 & hsa\_full & theta\_t & 96 & 0.0462 & -0.1608 & 0.2610 \\
+annual\_q4 & hsa\_full & theta\_t & 102 & 0.0464 & -0.1635 & 0.2673 \\
+annual\_q4 & hsa\_full & theta\_t & 107 & 0.0467 & -0.1668 & 0.2741 \\
+annual\_q4 & hsa\_full & theta\_t & 112 & 0.0468 & -0.1711 & 0.2779 \\
+annual\_q4 & hsa\_full & theta\_t & 118 & 0.0470 & -0.1770 & 0.2810 \\
+annual\_q4 & hsa\_full & theta\_t & 123 & 0.0473 & -0.1803 & 0.2862 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0351 & -0.2201 & 0.2875 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0355 & -0.2149 & 0.2844 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0347 & -0.2126 & 0.2799 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & 0.0331 & -0.2141 & 0.2791 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0332 & -0.2189 & 0.2804 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0334 & -0.2207 & 0.2822 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0335 & -0.2173 & 0.2816 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0335 & -0.2166 & 0.2819 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0333 & -0.2164 & 0.2826 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0330 & -0.2157 & 0.2863 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0329 & -0.2167 & 0.2850 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0332 & -0.2176 & 0.2840 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0340 & -0.2147 & 0.2811 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0353 & -0.2093 & 0.2837 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0366 & -0.2052 & 0.2840 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0374 & -0.2084 & 0.2929 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0376 & -0.2086 & 0.2898 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0381 & -0.2097 & 0.2908 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0383 & -0.2101 & 0.2938 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0392 & -0.2147 & 0.2979 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0399 & -0.2149 & 0.2993 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0400 & -0.2178 & 0.2985 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0406 & -0.2220 & 0.3028 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0408 & -0.2261 & 0.3072 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.0534 & -0.3812 & 0.4772 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & 0.0545 & -0.3801 & 0.4780 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & 0.0528 & -0.3834 & 0.4761 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & 0.0498 & -0.3860 & 0.4699 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & 0.0492 & -0.3831 & 0.4708 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & 0.0495 & -0.3837 & 0.4698 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & 0.0498 & -0.3857 & 0.4758 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & 0.0504 & -0.3840 & 0.4761 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & 0.0496 & -0.3847 & 0.4716 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & 0.0493 & -0.3839 & 0.4764 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & 0.0498 & -0.3855 & 0.4760 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & 0.0509 & -0.3870 & 0.4722 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & 0.0537 & -0.3820 & 0.4691 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & 0.0564 & -0.3786 & 0.4712 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & 0.0584 & -0.3850 & 0.4751 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.0604 & -0.3886 & 0.4766 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.0605 & -0.3902 & 0.4767 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & 0.0617 & -0.3963 & 0.4755 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & 0.0628 & -0.4062 & 0.4775 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.0661 & -0.4058 & 0.4824 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & 0.0693 & -0.4064 & 0.4917 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & 0.0692 & -0.4059 & 0.4839 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & 0.0694 & -0.4157 & 0.4836 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & 0.0706 & -0.4155 & 0.4930 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0001 & -0.2430 & 0.2380 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0013 & -0.2369 & 0.2350 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0009 & -0.2351 & 0.2359 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & -0.0001 & -0.2393 & 0.2397 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0011 & -0.2390 & 0.2377 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0024 & -0.2308 & 0.2333 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0030 & -0.2308 & 0.2306 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0030 & -0.2287 & 0.2289 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0020 & -0.2332 & 0.2309 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0019 & -0.2364 & 0.2353 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0017 & -0.2338 & 0.2358 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0021 & -0.2300 & 0.2356 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0036 & -0.2258 & 0.2301 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0065 & -0.2191 & 0.2259 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0090 & -0.2190 & 0.2315 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0111 & -0.2211 & 0.2356 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0119 & -0.2252 & 0.2402 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0122 & -0.2258 & 0.2396 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0124 & -0.2258 & 0.2424 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0134 & -0.2327 & 0.2488 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0141 & -0.2353 & 0.2522 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0145 & -0.2400 & 0.2551 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0157 & -0.2406 & 0.2639 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0159 & -0.2416 & 0.2668 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & -0.1769 & -0.3850 & 0.0178 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & -0.1752 & -0.3847 & 0.0156 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & -0.1747 & -0.3843 & 0.0194 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & -0.1761 & -0.3908 & 0.0216 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & -0.1746 & -0.3870 & 0.0214 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & -0.1723 & -0.3845 & 0.0214 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & -0.1712 & -0.3835 & 0.0208 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & -0.1711 & -0.3859 & 0.0271 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & -0.1722 & -0.3874 & 0.0235 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & -0.1725 & -0.3904 & 0.0268 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & -0.1723 & -0.3909 & 0.0271 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & -0.1712 & -0.3891 & 0.0294 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & -0.1688 & -0.3824 & 0.0359 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & -0.1650 & -0.3849 & 0.0383 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & -0.1620 & -0.3914 & 0.0522 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & -0.1594 & -0.3974 & 0.0650 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & -0.1589 & -0.4032 & 0.0690 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & -0.1586 & -0.4046 & 0.0709 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & -0.1581 & -0.4102 & 0.0727 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & -0.1568 & -0.4155 & 0.0803 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & -0.1558 & -0.4167 & 0.0872 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & -0.1558 & -0.4220 & 0.0855 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & -0.1553 & -0.4324 & 0.0938 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & -0.1544 & -0.4289 & 0.0991 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0809 & -0.1521 & 0.3330 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0806 & -0.1552 & 0.3292 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0776 & -0.1572 & 0.3206 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & 0.0739 & -0.1591 & 0.3171 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0718 & -0.1630 & 0.3222 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0712 & -0.1638 & 0.3229 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0707 & -0.1654 & 0.3238 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0709 & -0.1654 & 0.3253 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0701 & -0.1685 & 0.3278 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0700 & -0.1681 & 0.3302 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0701 & -0.1678 & 0.3287 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0704 & -0.1659 & 0.3253 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0722 & -0.1596 & 0.3178 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0746 & -0.1577 & 0.3175 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0768 & -0.1527 & 0.3212 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0786 & -0.1587 & 0.3261 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0783 & -0.1541 & 0.3210 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0780 & -0.1548 & 0.3207 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0784 & -0.1553 & 0.3225 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0802 & -0.1518 & 0.3239 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0816 & -0.1574 & 0.3280 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0818 & -0.1556 & 0.3295 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0824 & -0.1586 & 0.3296 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0833 & -0.1568 & 0.3320 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.3219 & 0.1058 & 0.6004 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & 0.3217 & 0.1070 & 0.5985 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & 0.3187 & 0.1074 & 0.5930 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & 0.3152 & 0.1053 & 0.5805 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & 0.3131 & 0.0977 & 0.5849 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & 0.3120 & 0.0954 & 0.5888 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & 0.3111 & 0.0868 & 0.5907 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & 0.3109 & 0.0846 & 0.5893 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & 0.3103 & 0.0796 & 0.5930 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & 0.3102 & 0.0787 & 0.5947 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & 0.3105 & 0.0804 & 0.5918 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & 0.3113 & 0.0869 & 0.5852 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & 0.3133 & 0.0951 & 0.5875 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & 0.3152 & 0.0964 & 0.5885 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & 0.3172 & 0.1020 & 0.5930 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.3187 & 0.1058 & 0.5946 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.3184 & 0.1046 & 0.5930 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & 0.3183 & 0.1046 & 0.5966 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & 0.3187 & 0.1018 & 0.6005 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.3204 & 0.1044 & 0.6007 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & 0.3227 & 0.1032 & 0.6054 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & 0.3227 & 0.1041 & 0.6055 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & 0.3229 & 0.1003 & 0.6074 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & 0.3239 & 0.1001 & 0.6092 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0351 & -0.2201 & 0.2875 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.0355 & -0.2149 & 0.2844 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.0347 & -0.2126 & 0.2799 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 16 & 0.0331 & -0.2141 & 0.2791 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 21 & 0.0332 & -0.2189 & 0.2804 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0334 & -0.2207 & 0.2822 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 32 & 0.0335 & -0.2173 & 0.2816 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 37 & 0.0335 & -0.2166 & 0.2819 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0333 & -0.2164 & 0.2826 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 48 & 0.0330 & -0.2157 & 0.2863 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0329 & -0.2167 & 0.2850 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 59 & 0.0332 & -0.2176 & 0.2840 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 64 & 0.0340 & -0.2147 & 0.2811 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 70 & 0.0353 & -0.2093 & 0.2837 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0366 & -0.2052 & 0.2840 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0374 & -0.2084 & 0.2929 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0376 & -0.2086 & 0.2898 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 91 & 0.0381 & -0.2097 & 0.2908 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 96 & 0.0383 & -0.2101 & 0.2938 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0392 & -0.2147 & 0.2979 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 107 & 0.0399 & -0.2149 & 0.2993 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 112 & 0.0400 & -0.2178 & 0.2985 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 118 & 0.0406 & -0.2220 & 0.3028 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 123 & 0.0408 & -0.2261 & 0.3072 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.0534 & -0.3812 & 0.4772 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & 0.0545 & -0.3801 & 0.4780 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & 0.0528 & -0.3834 & 0.4761 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 16 & 0.0498 & -0.3860 & 0.4699 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 21 & 0.0492 & -0.3831 & 0.4708 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & 0.0495 & -0.3837 & 0.4698 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 32 & 0.0498 & -0.3857 & 0.4758 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 37 & 0.0504 & -0.3840 & 0.4761 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & 0.0496 & -0.3847 & 0.4716 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 48 & 0.0493 & -0.3839 & 0.4764 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & 0.0498 & -0.3855 & 0.4760 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 59 & 0.0509 & -0.3870 & 0.4722 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 64 & 0.0537 & -0.3820 & 0.4691 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 70 & 0.0564 & -0.3786 & 0.4712 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & 0.0584 & -0.3850 & 0.4751 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.0604 & -0.3886 & 0.4766 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.0605 & -0.3902 & 0.4767 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 91 & 0.0617 & -0.3963 & 0.4755 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 96 & 0.0628 & -0.4062 & 0.4775 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.0661 & -0.4058 & 0.4824 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 107 & 0.0693 & -0.4064 & 0.4917 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 112 & 0.0692 & -0.4059 & 0.4839 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 118 & 0.0694 & -0.4157 & 0.4836 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 123 & 0.0706 & -0.4155 & 0.4930 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.1250 & -0.2187 & 0.4807 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 1 & 0.1246 & -0.2206 & 0.4807 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 2 & 0.1244 & -0.2164 & 0.4826 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 3 & 0.1241 & -0.2146 & 0.4811 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 4 & 0.1238 & -0.2124 & 0.4822 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 5 & 0.1238 & -0.2155 & 0.4804 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 6 & 0.1240 & -0.2136 & 0.4836 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 7 & 0.1244 & -0.2164 & 0.4859 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 8 & 0.1243 & -0.2168 & 0.4823 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 9 & 0.1244 & -0.2144 & 0.4826 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 10 & 0.1243 & -0.2148 & 0.4793 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 11 & 0.1242 & -0.2162 & 0.4777 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 12 & 0.1242 & -0.2179 & 0.4774 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 13 & 0.1241 & -0.2173 & 0.4789 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 14 & 0.1243 & -0.2199 & 0.4829 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 15 & 0.1241 & -0.2159 & 0.4758 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.1001 & -0.3152 & 0.5064 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 1 & 0.1003 & -0.3213 & 0.5050 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 2 & 0.1002 & -0.3179 & 0.5058 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 3 & 0.1000 & -0.3165 & 0.5042 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 4 & 0.0999 & -0.3163 & 0.5045 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 5 & 0.1000 & -0.3172 & 0.5056 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 6 & 0.1000 & -0.3124 & 0.5079 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 7 & 0.1001 & -0.3132 & 0.5099 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 8 & 0.1001 & -0.3140 & 0.5054 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 9 & 0.0998 & -0.3101 & 0.5031 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 10 & 0.0999 & -0.3141 & 0.5060 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 11 & 0.1002 & -0.3143 & 0.5047 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 12 & 0.1001 & -0.3130 & 0.5066 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 13 & 0.1002 & -0.3120 & 0.5041 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 14 & 0.1002 & -0.3108 & 0.5036 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 15 & 0.0998 & -0.3144 & 0.5024 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0803 & -0.1457 & 0.3156 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 4 & 0.0797 & -0.1455 & 0.3133 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 9 & 0.0766 & -0.1392 & 0.2952 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 13 & 0.0729 & -0.1365 & 0.2868 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 18 & 0.0696 & -0.1464 & 0.2808 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 22 & 0.0672 & -0.1558 & 0.2837 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 27 & 0.0667 & -0.1555 & 0.2841 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 31 & 0.0660 & -0.1596 & 0.2838 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 35 & 0.0661 & -0.1570 & 0.2843 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 40 & 0.0674 & -0.1521 & 0.2834 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 44 & 0.0667 & -0.1565 & 0.2842 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 49 & 0.0666 & -0.1549 & 0.2842 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 53 & 0.0665 & -0.1542 & 0.2822 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 58 & 0.0669 & -0.1573 & 0.2830 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 62 & 0.0692 & -0.1475 & 0.2803 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 67 & 0.0715 & -0.1431 & 0.2834 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 71 & 0.0733 & -0.1400 & 0.2933 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 75 & 0.0754 & -0.1356 & 0.2960 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 80 & 0.0773 & -0.1380 & 0.3021 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 84 & 0.0755 & -0.1387 & 0.2963 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 89 & 0.0750 & -0.1372 & 0.2959 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 93 & 0.0749 & -0.1373 & 0.2952 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 98 & 0.0772 & -0.1394 & 0.3028 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 102 & 0.0791 & -0.1394 & 0.3108 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.3622 & 0.1602 & 0.6152 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 4 & 0.3625 & 0.1687 & 0.6127 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 9 & 0.3606 & 0.1668 & 0.6083 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 13 & 0.3584 & 0.1605 & 0.6049 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 18 & 0.3565 & 0.1492 & 0.6016 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 22 & 0.3544 & 0.1417 & 0.6018 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 27 & 0.3535 & 0.1381 & 0.6017 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 31 & 0.3530 & 0.1376 & 0.6028 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 35 & 0.3530 & 0.1359 & 0.6006 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 40 & 0.3538 & 0.1354 & 0.6027 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 44 & 0.3534 & 0.1382 & 0.6015 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 49 & 0.3534 & 0.1373 & 0.6024 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 53 & 0.3535 & 0.1389 & 0.6028 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 58 & 0.3538 & 0.1386 & 0.6012 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 62 & 0.3555 & 0.1459 & 0.6004 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 67 & 0.3570 & 0.1501 & 0.6031 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 71 & 0.3577 & 0.1504 & 0.6050 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 75 & 0.3595 & 0.1582 & 0.6098 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 80 & 0.3621 & 0.1629 & 0.6158 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 84 & 0.3610 & 0.1597 & 0.6103 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 89 & 0.3605 & 0.1613 & 0.6130 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 93 & 0.3607 & 0.1606 & 0.6110 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 98 & 0.3622 & 0.1614 & 0.6136 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 102 & 0.3635 & 0.1610 & 0.6210 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 0 & 0.0565 & -0.2313 & 0.3414 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 4 & 0.0568 & -0.2209 & 0.3393 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 9 & 0.0570 & -0.2166 & 0.3348 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 13 & 0.0571 & -0.2114 & 0.3279 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 17 & 0.0573 & -0.2092 & 0.3274 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 22 & 0.0575 & -0.2108 & 0.3300 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 26 & 0.0575 & -0.2073 & 0.3292 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 30 & 0.0576 & -0.2062 & 0.3244 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 34 & 0.0575 & -0.2044 & 0.3207 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 39 & 0.0577 & -0.1985 & 0.3216 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 43 & 0.0583 & -0.1985 & 0.3212 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 47 & 0.0587 & -0.1970 & 0.3201 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 52 & 0.0591 & -0.1976 & 0.3207 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 56 & 0.0593 & -0.1969 & 0.3233 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 60 & 0.0592 & -0.1974 & 0.3242 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 65 & 0.0591 & -0.1971 & 0.3255 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 69 & 0.0589 & -0.1978 & 0.3250 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 73 & 0.0589 & -0.2028 & 0.3257 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 77 & 0.0591 & -0.1996 & 0.3253 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 82 & 0.0590 & -0.1983 & 0.3248 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 86 & 0.0592 & -0.2014 & 0.3258 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 90 & 0.0595 & -0.2021 & 0.3261 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 95 & 0.0599 & -0.2017 & 0.3277 \\
+quarterly\_interpolated & hsa\_full & kappa\_t & 99 & 0.0600 & -0.2035 & 0.3290 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 0 & 0.1562 & -0.0657 & 0.4244 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 4 & 0.1569 & -0.0583 & 0.4218 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 9 & 0.1575 & -0.0576 & 0.4193 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 13 & 0.1571 & -0.0582 & 0.4193 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 17 & 0.1566 & -0.0600 & 0.4192 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 22 & 0.1558 & -0.0661 & 0.4197 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 26 & 0.1556 & -0.0693 & 0.4188 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 30 & 0.1556 & -0.0762 & 0.4180 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 34 & 0.1557 & -0.0811 & 0.4176 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 39 & 0.1562 & -0.0927 & 0.4166 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 43 & 0.1565 & -0.1054 & 0.4199 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 47 & 0.1564 & -0.1149 & 0.4214 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 52 & 0.1562 & -0.1336 & 0.4322 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 56 & 0.1563 & -0.1425 & 0.4387 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 60 & 0.1547 & -0.1507 & 0.4362 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 65 & 0.1538 & -0.1621 & 0.4365 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 69 & 0.1534 & -0.1672 & 0.4359 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 73 & 0.1539 & -0.1636 & 0.4392 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 77 & 0.1548 & -0.1664 & 0.4434 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 82 & 0.1555 & -0.1662 & 0.4555 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 86 & 0.1561 & -0.1655 & 0.4619 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 90 & 0.1544 & -0.1861 & 0.4570 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 95 & 0.1536 & -0.2011 & 0.4553 \\
+quarterly\_interpolated & hsa\_full & theta\_t & 99 & 0.1547 & -0.2040 & 0.4616 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0098 & -0.2332 & 0.2663 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0100 & -0.2293 & 0.2591 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0102 & -0.2233 & 0.2542 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0103 & -0.2204 & 0.2525 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0106 & -0.2199 & 0.2492 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0108 & -0.2158 & 0.2458 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0110 & -0.2153 & 0.2436 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0111 & -0.2146 & 0.2445 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0113 & -0.2121 & 0.2437 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0115 & -0.2111 & 0.2440 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0117 & -0.2094 & 0.2426 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0118 & -0.2103 & 0.2438 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0120 & -0.2114 & 0.2420 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0122 & -0.2088 & 0.2416 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0124 & -0.2075 & 0.2419 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0125 & -0.2083 & 0.2434 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0127 & -0.2103 & 0.2444 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0129 & -0.2115 & 0.2446 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0131 & -0.2107 & 0.2477 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0133 & -0.2127 & 0.2514 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0135 & -0.2144 & 0.2533 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0136 & -0.2171 & 0.2566 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0138 & -0.2219 & 0.2598 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0140 & -0.2252 & 0.2629 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0098 & -0.2332 & 0.2663 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0100 & -0.2293 & 0.2591 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0102 & -0.2233 & 0.2542 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0103 & -0.2204 & 0.2525 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0106 & -0.2199 & 0.2492 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0108 & -0.2158 & 0.2458 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0110 & -0.2153 & 0.2436 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0111 & -0.2146 & 0.2445 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0113 & -0.2121 & 0.2437 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0115 & -0.2111 & 0.2440 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0117 & -0.2094 & 0.2426 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0118 & -0.2103 & 0.2438 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0120 & -0.2114 & 0.2420 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0122 & -0.2088 & 0.2416 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0124 & -0.2075 & 0.2419 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0125 & -0.2083 & 0.2434 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0127 & -0.2103 & 0.2444 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0129 & -0.2115 & 0.2446 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0131 & -0.2107 & 0.2477 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0133 & -0.2127 & 0.2514 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0135 & -0.2144 & 0.2533 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0136 & -0.2171 & 0.2566 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0138 & -0.2219 & 0.2598 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0140 & -0.2252 & 0.2629 \\
+annual\_q4 & hsa\_steady & kappa\_t & 0 & 0.0044 & -0.2255 & 0.2463 \\
+annual\_q4 & hsa\_steady & kappa\_t & 5 & 0.0047 & -0.2251 & 0.2431 \\
+annual\_q4 & hsa\_steady & kappa\_t & 11 & 0.0049 & -0.2200 & 0.2376 \\
+annual\_q4 & hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2218 & 0.2359 \\
+annual\_q4 & hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2275 & 0.2443 \\
+annual\_q4 & hsa\_steady & kappa\_t & 27 & 0.0040 & -0.2229 & 0.2389 \\
+annual\_q4 & hsa\_steady & kappa\_t & 32 & 0.0044 & -0.2229 & 0.2380 \\
+annual\_q4 & hsa\_steady & kappa\_t & 37 & 0.0045 & -0.2220 & 0.2359 \\
+annual\_q4 & hsa\_steady & kappa\_t & 43 & 0.0045 & -0.2228 & 0.2362 \\
+annual\_q4 & hsa\_steady & kappa\_t & 48 & 0.0044 & -0.2239 & 0.2420 \\
+annual\_q4 & hsa\_steady & kappa\_t & 53 & 0.0042 & -0.2251 & 0.2398 \\
+annual\_q4 & hsa\_steady & kappa\_t & 59 & 0.0041 & -0.2245 & 0.2392 \\
+annual\_q4 & hsa\_steady & kappa\_t & 64 & 0.0043 & -0.2243 & 0.2387 \\
+annual\_q4 & hsa\_steady & kappa\_t & 70 & 0.0047 & -0.2173 & 0.2285 \\
+annual\_q4 & hsa\_steady & kappa\_t & 75 & 0.0053 & -0.2157 & 0.2268 \\
+annual\_q4 & hsa\_steady & kappa\_t & 80 & 0.0058 & -0.2159 & 0.2282 \\
+annual\_q4 & hsa\_steady & kappa\_t & 86 & 0.0060 & -0.2192 & 0.2328 \\
+annual\_q4 & hsa\_steady & kappa\_t & 91 & 0.0062 & -0.2179 & 0.2348 \\
+annual\_q4 & hsa\_steady & kappa\_t & 96 & 0.0062 & -0.2222 & 0.2391 \\
+annual\_q4 & hsa\_steady & kappa\_t & 102 & 0.0063 & -0.2247 & 0.2382 \\
+annual\_q4 & hsa\_steady & kappa\_t & 107 & 0.0066 & -0.2276 & 0.2432 \\
+annual\_q4 & hsa\_steady & kappa\_t & 112 & 0.0068 & -0.2308 & 0.2472 \\
+annual\_q4 & hsa\_steady & kappa\_t & 118 & 0.0070 & -0.2322 & 0.2547 \\
+annual\_q4 & hsa\_steady & kappa\_t & 123 & 0.0071 & -0.2347 & 0.2591 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0088 & -0.2213 & 0.2399 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0093 & -0.2192 & 0.2415 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0074 & -0.2268 & 0.2391 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2357 & 0.2454 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2366 & 0.2452 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0052 & -0.2342 & 0.2420 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0056 & -0.2341 & 0.2425 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0056 & -0.2329 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0048 & -0.2372 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0041 & -0.2417 & 0.2481 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0041 & -0.2408 & 0.2484 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0045 & -0.2372 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0061 & -0.2320 & 0.2452 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0090 & -0.2215 & 0.2408 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0113 & -0.2152 & 0.2398 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0130 & -0.2140 & 0.2429 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0134 & -0.2134 & 0.2464 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0137 & -0.2150 & 0.2476 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0141 & -0.2159 & 0.2454 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0152 & -0.2152 & 0.2560 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0160 & -0.2177 & 0.2592 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0167 & -0.2198 & 0.2622 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0178 & -0.2207 & 0.2646 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0182 & -0.2230 & 0.2692 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0104 & -0.2194 & 0.2464 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0112 & -0.2141 & 0.2444 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0093 & -0.2231 & 0.2440 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0069 & -0.2283 & 0.2494 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0070 & -0.2277 & 0.2476 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0078 & -0.2258 & 0.2495 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0083 & -0.2267 & 0.2483 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0081 & -0.2230 & 0.2484 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0073 & -0.2273 & 0.2510 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0064 & -0.2298 & 0.2515 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0063 & -0.2309 & 0.2504 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0065 & -0.2303 & 0.2483 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0076 & -0.2245 & 0.2451 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0102 & -0.2200 & 0.2432 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0122 & -0.2157 & 0.2428 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0136 & -0.2119 & 0.2479 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0138 & -0.2165 & 0.2511 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0142 & -0.2173 & 0.2532 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0144 & -0.2146 & 0.2490 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0156 & -0.2186 & 0.2599 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0163 & -0.2194 & 0.2628 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0165 & -0.2220 & 0.2629 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0173 & -0.2277 & 0.2639 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0179 & -0.2298 & 0.2705 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0077 & -0.2257 & 0.2358 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0082 & -0.2203 & 0.2382 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0066 & -0.2239 & 0.2355 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0041 & -0.2294 & 0.2383 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0037 & -0.2316 & 0.2410 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0048 & -0.2283 & 0.2370 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0055 & -0.2253 & 0.2394 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0053 & -0.2269 & 0.2378 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0042 & -0.2321 & 0.2380 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0038 & -0.2316 & 0.2420 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0034 & -0.2311 & 0.2412 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0034 & -0.2311 & 0.2443 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0048 & -0.2244 & 0.2379 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0069 & -0.2208 & 0.2334 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0089 & -0.2190 & 0.2347 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0104 & -0.2167 & 0.2395 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0108 & -0.2175 & 0.2431 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0109 & -0.2183 & 0.2424 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0110 & -0.2207 & 0.2437 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0119 & -0.2232 & 0.2455 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0126 & -0.2261 & 0.2490 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0130 & -0.2267 & 0.2529 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0138 & -0.2294 & 0.2563 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0142 & -0.2291 & 0.2599 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0088 & -0.2213 & 0.2399 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.0093 & -0.2192 & 0.2415 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.0074 & -0.2268 & 0.2391 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 16 & 0.0045 & -0.2357 & 0.2454 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 21 & 0.0041 & -0.2366 & 0.2452 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & 0.0052 & -0.2342 & 0.2420 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 32 & 0.0056 & -0.2341 & 0.2425 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 37 & 0.0056 & -0.2329 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0048 & -0.2372 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 48 & 0.0041 & -0.2417 & 0.2481 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & 0.0041 & -0.2408 & 0.2484 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 59 & 0.0045 & -0.2372 & 0.2450 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 64 & 0.0061 & -0.2320 & 0.2452 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 70 & 0.0090 & -0.2215 & 0.2408 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & 0.0113 & -0.2152 & 0.2398 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & 0.0130 & -0.2140 & 0.2429 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0134 & -0.2134 & 0.2464 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 91 & 0.0137 & -0.2150 & 0.2476 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 96 & 0.0141 & -0.2159 & 0.2454 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & 0.0152 & -0.2152 & 0.2560 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 107 & 0.0160 & -0.2177 & 0.2592 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 112 & 0.0167 & -0.2198 & 0.2622 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 118 & 0.0178 & -0.2207 & 0.2646 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 123 & 0.0182 & -0.2230 & 0.2692 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.1184 & -0.2402 & 0.4748 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 1 & 0.1181 & -0.2381 & 0.4709 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 2 & 0.1177 & -0.2390 & 0.4665 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 3 & 0.1171 & -0.2394 & 0.4694 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 4 & 0.1173 & -0.2387 & 0.4696 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 5 & 0.1175 & -0.2403 & 0.4725 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 6 & 0.1175 & -0.2397 & 0.4733 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 7 & 0.1180 & -0.2418 & 0.4703 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 8 & 0.1179 & -0.2404 & 0.4718 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 9 & 0.1177 & -0.2416 & 0.4688 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 10 & 0.1177 & -0.2394 & 0.4658 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 11 & 0.1173 & -0.2418 & 0.4676 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 12 & 0.1175 & -0.2385 & 0.4663 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 13 & 0.1174 & -0.2410 & 0.4673 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 14 & 0.1173 & -0.2366 & 0.4693 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 15 & 0.1170 & -0.2437 & 0.4672 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & -0.0186 & -0.2210 & 0.1886 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 4 & -0.0177 & -0.2185 & 0.1889 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 9 & -0.0182 & -0.2167 & 0.1884 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 13 & -0.0201 & -0.2195 & 0.1827 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 18 & -0.0216 & -0.2270 & 0.1898 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 22 & -0.0213 & -0.2237 & 0.1887 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 27 & -0.0207 & -0.2223 & 0.1871 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 31 & -0.0203 & -0.2197 & 0.1861 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 35 & -0.0199 & -0.2189 & 0.1864 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 40 & -0.0201 & -0.2194 & 0.1870 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 44 & -0.0207 & -0.2225 & 0.1897 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 49 & -0.0211 & -0.2246 & 0.1913 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 53 & -0.0211 & -0.2256 & 0.1924 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 58 & -0.0212 & -0.2264 & 0.1909 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 62 & -0.0204 & -0.2202 & 0.1901 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 67 & -0.0188 & -0.2130 & 0.1837 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 71 & -0.0170 & -0.2157 & 0.1881 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 75 & -0.0159 & -0.2151 & 0.1923 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 80 & -0.0143 & -0.2146 & 0.1990 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 84 & -0.0146 & -0.2192 & 0.1990 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 89 & -0.0142 & -0.2261 & 0.1998 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 93 & -0.0143 & -0.2258 & 0.2010 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 98 & -0.0137 & -0.2254 & 0.2015 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 102 & -0.0130 & -0.2319 & 0.2059 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 0 & 0.0109 & -0.2482 & 0.2772 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 4 & 0.0111 & -0.2413 & 0.2754 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 9 & 0.0112 & -0.2400 & 0.2741 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 13 & 0.0115 & -0.2398 & 0.2725 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 17 & 0.0112 & -0.2400 & 0.2746 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 22 & 0.0108 & -0.2468 & 0.2762 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 26 & 0.0109 & -0.2464 & 0.2781 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 30 & 0.0104 & -0.2486 & 0.2776 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 34 & 0.0105 & -0.2442 & 0.2748 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 39 & 0.0109 & -0.2402 & 0.2721 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 43 & 0.0113 & -0.2386 & 0.2720 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 47 & 0.0120 & -0.2341 & 0.2699 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 52 & 0.0124 & -0.2326 & 0.2782 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 56 & 0.0127 & -0.2345 & 0.2799 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 60 & 0.0126 & -0.2366 & 0.2756 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 65 & 0.0128 & -0.2382 & 0.2767 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 69 & 0.0126 & -0.2372 & 0.2748 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 73 & 0.0127 & -0.2375 & 0.2788 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 77 & 0.0126 & -0.2378 & 0.2820 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 82 & 0.0129 & -0.2415 & 0.2846 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 86 & 0.0131 & -0.2437 & 0.2850 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 90 & 0.0133 & -0.2448 & 0.2873 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 95 & 0.0133 & -0.2470 & 0.2891 \\
+quarterly\_interpolated & hsa\_steady & kappa\_t & 99 & 0.0135 & -0.2499 & 0.2912 \\
 \bottomrule
 \end{tabular}

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from shutil import move
 
 from nkpc_hsa.paths import project_path
 
@@ -94,10 +95,31 @@ Cells show \textit{mean} [\textit{ci\_2.5}, \textit{ci\_97.5}].
 
 \section{Result Blocks}
 Results are organized by condition. Each section fixes a data specification,
-prior specification, and sample period, then reports the coefficient table,
-prior/posterior overlay by model, Savage-Dickey density ratios, time-varying
-\(\kappa_t\) path, and model-comparison output for that condition.
+competition measurement frequency, prior specification, and sample period, then
+reports the coefficient table, prior/posterior overlay by model, Savage-Dickey
+density ratios, time-varying \(\kappa_t\) path, and model-comparison output for
+that condition.
 \input{../tables/result_blocks.tex}
+
+\section{Competition Decomposition}
+For annual-Q4 mixed-frequency HSA runs, Table~\ref{tab:n-decomposition}
+reports selected quarters of the posterior decomposition
+\(N_t=\bar N_t+\hat N_t\). The full quarterly decomposition is written to the
+corresponding CSV artifact.
+
+\begin{table}[H]
+\centering
+\caption{Posterior decomposition of competition \(N_t\)}
+\label{tab:n-decomposition}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/competition_decomposition.tex}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/competition_decomposition_path.png}
+\caption{Posterior mean decomposition of competition}
+\end{figure}
 
 \section{Notes}
 WAIC and LOO are not used as primary criteria because the models contain
@@ -128,4 +150,10 @@ def compile_report(tex_path: str | Path | None = None, out_dir: str | Path | Non
     cmd = ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "-output-directory", str(out), str(tex)]
     subprocess.run(cmd, check=True)
     subprocess.run(cmd, check=True)  # second pass resolves cross-references
+    build = out / "build"
+    build.mkdir(parents=True, exist_ok=True)
+    for suffix in [".aux", ".log", ".out"]:
+        artifact = out / f"{tex.stem}{suffix}"
+        if artifact.exists():
+            move(str(artifact), str(build / artifact.name))
     return out / (tex.stem + ".pdf")

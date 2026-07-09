@@ -5,6 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from numpy.linalg import inv
 
+from analysis.gibbs.func_gibbs.common.competition import finite_N_residuals, initial_competition_path
 from analysis.gibbs.func_gibbs.common.constraints import constraint_stats_summary, draw_with_constraints
 
 
@@ -122,26 +123,29 @@ def _sample_ar2_states_ffbs(
     m_pred = np.zeros((2, T), dtype=float)
     P_pred = np.zeros((2, 2, T), dtype=float)
 
-    m[:, 0] = np.array([y_target[0], 0.0], dtype=float)
+    y_init = initial_competition_path(y_target)
+    m[:, 0] = np.array([y_init[0], 0.0], dtype=float)
     P[:, :, 0] = np.eye(2) * 10.0
 
     for t in range(1, T):
         m_pred[:, t] = F @ m[:, t - 1]
         P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
 
-        H = np.array([[1.0, 0.0], [theta, 0.0]], dtype=float)
-        y = np.array(
-            [
-                y_target[t],
-                alpha * pi_tm1[t]
-                + (1.0 - alpha) * pi_expect[t]
-                + kappa_series[t] * x_t[t]
-                + obs_offset_arr[t]
-                - pi_t[t],
-            ],
-            dtype=float,
+        y_pi = (
+            alpha * pi_tm1[t]
+            + (1.0 - alpha) * pi_expect[t]
+            + kappa_series[t] * x_t[t]
+            + obs_offset_arr[t]
+            - pi_t[t]
         )
-        R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
+        if np.isfinite(y_target[t]):
+            H = np.array([[1.0, 0.0], [theta, 0.0]], dtype=float)
+            y = np.array([y_target[t], y_pi], dtype=float)
+            R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
+        else:
+            H = np.array([[theta, 0.0]], dtype=float)
+            y = np.array([y_pi], dtype=float)
+            R = np.array([[max(sigma_obs2, 1e-10)]], dtype=float)
 
         S = H @ P_pred[:, :, t] @ H.T + R
         K = P_pred[:, :, t] @ H.T @ inv(S)
@@ -211,26 +215,29 @@ def _sample_ar2_states_ffbs_tv_theta(
     m_pred = np.zeros((2, T), dtype=float)
     P_pred = np.zeros((2, 2, T), dtype=float)
 
-    m[:, 0] = np.array([y_target[0], 0.0], dtype=float)
+    y_init = initial_competition_path(y_target)
+    m[:, 0] = np.array([y_init[0], 0.0], dtype=float)
     P[:, :, 0] = np.eye(2) * 10.0
 
     for t in range(1, T):
         m_pred[:, t] = F @ m[:, t - 1]
         P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
 
-        H = np.array([[1.0, 0.0], [theta_series[t], 0.0]], dtype=float)
-        y = np.array(
-            [
-                y_target[t],
-                alpha * pi_tm1[t]
-                + (1.0 - alpha) * pi_expect[t]
-                + kappa_series[t] * x_t[t]
-                + obs_offset_arr[t]
-                - pi_t[t],
-            ],
-            dtype=float,
+        y_pi = (
+            alpha * pi_tm1[t]
+            + (1.0 - alpha) * pi_expect[t]
+            + kappa_series[t] * x_t[t]
+            + obs_offset_arr[t]
+            - pi_t[t]
         )
-        R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
+        if np.isfinite(y_target[t]):
+            H = np.array([[1.0, 0.0], [theta_series[t], 0.0]], dtype=float)
+            y = np.array([y_target[t], y_pi], dtype=float)
+            R = np.diag([max(sigma_target2, 1e-10), max(sigma_obs2, 1e-10)])
+        else:
+            H = np.array([[theta_series[t], 0.0]], dtype=float)
+            y = np.array([y_pi], dtype=float)
+            R = np.array([[max(sigma_obs2, 1e-10)]], dtype=float)
 
         S = H @ P_pred[:, :, t] @ H.T + R
         K = P_pred[:, :, t] @ H.T @ inv(S)
@@ -269,16 +276,21 @@ def _sample_rw_states_ffbs(
     m_pred = np.zeros(T, dtype=float)
     P_pred = np.zeros(T, dtype=float)
 
-    m[0] = y_target[0]
+    y_init = initial_competition_path(y_target)
+    m[0] = y_init[0]
     P[0] = 10.0
 
     for t in range(1, T):
         m_pred[t] = n_drift + m[t - 1]
         P_pred[t] = P[t - 1] + sigma_state2
-        R = max(sigma_target2, 1e-10)
-        K = P_pred[t] / (P_pred[t] + R)
-        m[t] = m_pred[t] + K * (y_target[t] - m_pred[t])
-        P[t] = (1.0 - K) * P_pred[t]
+        if np.isfinite(y_target[t]):
+            R = max(sigma_target2, 1e-10)
+            K = P_pred[t] / (P_pred[t] + R)
+            m[t] = m_pred[t] + K * (y_target[t] - m_pred[t])
+            P[t] = (1.0 - K) * P_pred[t]
+        else:
+            m[t] = m_pred[t]
+            P[t] = P_pred[t]
 
     states = np.zeros(T, dtype=float)
     states[-1] = m[-1] + np.sqrt(max(P[-1], 1e-8)) * rng.standard_normal()
@@ -332,16 +344,13 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
     m_pred = np.zeros(T, dtype=float)
     P_pred = np.zeros(T, dtype=float)
 
-    m[0] = y_target[0]
+    y_init = initial_competition_path(y_target)
+    m[0] = y_init[0]
     P[0] = 10.0
 
     for t in range(1, T):
         m_pred[t] = n_drift + m[t - 1]
         P_pred[t] = P[t - 1] + sigma_state2
-
-        y1 = y_target[t]
-        h1 = 1.0
-        r1 = max(sigma_target2, 1e-10)
 
         y2 = (
             pi_t[t]
@@ -354,9 +363,16 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
         h2 = delta * x_t[t] - gamma * Nhat[t]
         r2 = max(sigma_obs2, 1e-10)
 
-        H = np.array([[1.0], [h2]], dtype=float)
-        y = np.array([y1, y2], dtype=float)
-        R = np.diag([r1, r2])
+        if np.isfinite(y_target[t]):
+            y1 = y_target[t]
+            r1 = max(sigma_target2, 1e-10)
+            H = np.array([[1.0], [h2]], dtype=float)
+            y = np.array([y1, y2], dtype=float)
+            R = np.diag([r1, r2])
+        else:
+            H = np.array([[h2]], dtype=float)
+            y = np.array([y2], dtype=float)
+            R = np.array([[r2]], dtype=float)
 
         S = P_pred[t] * (H @ H.T) + R
         K = (P_pred[t] * H.T) @ inv(S)
@@ -394,13 +410,14 @@ def _summary(draws: np.ndarray) -> dict[str, Any]:
 
 
 def _init_states(N_obs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    T = N_obs.size
+    N_init = initial_competition_path(N_obs)
+    T = N_init.size
     Nbar = np.zeros(T, dtype=float)
     k0 = min(2, T)
-    Nbar[:k0] = N_obs[:k0]
+    Nbar[:k0] = N_init[:k0]
     for t in range(2, T):
-        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_obs[t]
-    return Nbar, N_obs - Nbar
+        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_init[t]
+    return Nbar, N_init - Nbar
 
 
 def _sample_ar2_coeffs(
@@ -765,9 +782,9 @@ def func_nkpc_hsa_full(
             resid_eps = Nbar[1:] - n_drift - Nbar[:-1]
             sigma_eps2 = _sample_invgamma(pri["a_eps"] + 0.5 * resid_eps.size, pri["b_eps"] + 0.5 * float(np.sum(resid_eps**2)), rng)
 
-        resid_N = N_obs - Nhat - Nbar
+        resid_N = finite_N_residuals(N_obs, Nhat, Nbar)
         sigma_N2 = _sample_invgamma(
-            pri["a_N"] + 0.5 * T,
+            pri["a_N"] + 0.5 * resid_N.size,
             pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
             rng,
         )

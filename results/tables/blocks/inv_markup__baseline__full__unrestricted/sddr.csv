@@ -1,2 +1,10 @@
-note
-No output available for this block.
+run,model,data_spec,prior_spec,constraint_spec,restriction,unit,prior_mean,prior_sd,sddr_bf01
+ces_inv_markup_baseline_annual_q4_20260702_132546,ces,inv_markup,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,2.0791091531355796
+hsa_dynamic_inv_markup_baseline_annual_q4_20260702_132551,hsa_dynamic,inv_markup,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,2.43817918682619
+hsa_dynamic_inv_markup_baseline_annual_q4_20260702_132551,hsa_dynamic,inv_markup,baseline,unrestricted,theta=0,inflation effect per +10 log-point Nhat deviation,0.1,0.2,0.8512803272529532
+hsa_full_inv_markup_baseline_annual_q4_20260702_132554,hsa_full,inv_markup,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,2.120133051379068
+hsa_full_inv_markup_baseline_annual_q4_20260702_132554,hsa_full,inv_markup,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,1.0114178041561896
+hsa_full_inv_markup_baseline_annual_q4_20260702_132554,hsa_full,inv_markup,baseline,unrestricted,theta_0=0,inflation effect per +10 log-point Nhat deviation at average Nbar,0.1,0.2,1.431967440330036
+hsa_full_inv_markup_baseline_annual_q4_20260702_132554,hsa_full,inv_markup,baseline,unrestricted,gamma=0,change in theta_t per +10 log-point Nbar deviation,0.0,0.02,0.8571716147696463
+hsa_steady_inv_markup_baseline_annual_q4_20260702_132548,hsa_steady,inv_markup,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,2.1025321887951134
+hsa_steady_inv_markup_baseline_annual_q4_20260702_132548,hsa_steady,inv_markup,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.8581371569342234

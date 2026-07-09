@@ -1,0 +1,10 @@
+severity,parameter,warning
+warning,kappa_t_mid,bulk ESS 384.3 < 400
+warning,rho_1,bulk ESS 62.2 < 400
+warning,rho_1,tail ESS 56.9 < 400
+warning,rho_2,bulk ESS 82.2 < 400
+warning,rho_2,tail ESS 120.7 < 400
+warning,n,bulk ESS 302.5 < 400
+warning,sigma_u,bulk ESS 84.5 < 400
+warning,sigma_eps,bulk ESS 77.5 < 400
+warning,sigma_eps,tail ESS 162.3 < 400

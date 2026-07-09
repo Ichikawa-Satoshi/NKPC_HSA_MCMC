@@ -5,6 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from numpy.linalg import inv
 
+from analysis.gibbs.func_gibbs.common.competition import finite_N_residuals, initial_competition_path
 from analysis.gibbs.func_gibbs.common.constraints import constraint_stats_summary, draw_with_constraints
 
 # Kappa-related parameters are sampled internally on a KAPPA_SCALE-multiplied
@@ -93,17 +94,17 @@ def _summary(draws: np.ndarray) -> dict[str, Any]:
 
 
 def _init_states(N_obs: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    N_obs = _as_1d(N_obs)
-    T = N_obs.size
+    N_init = initial_competition_path(N_obs)
+    T = N_init.size
 
     Nbar = np.zeros(T, dtype=float)
     k0 = min(2, T)
-    Nbar[:k0] = N_obs[:k0]
+    Nbar[:k0] = N_init[:k0]
 
     for t in range(2, T):
-        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_obs[t]
+        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_init[t]
 
-    Nhat = N_obs - Nbar
+    Nhat = N_init - Nbar
     return Nbar, Nhat
 
 
@@ -396,17 +397,20 @@ def _sample_states_kalman_ffbs(
 
         h_pi = (delta / KAPPA_SCALE) * x_t[t]
 
-        y_obs = np.array([N_obs[t], y_pi], dtype=float)
-
-        H = np.array(
-            [
-                [1.0, 0.0, 1.0],
-                [0.0, 0.0, h_pi],
-            ],
-            dtype=float,
-        )
-
-        R = np.diag([sigma_N2, sigma_eta2])
+        if np.isfinite(N_obs[t]):
+            y_obs = np.array([N_obs[t], y_pi], dtype=float)
+            H = np.array(
+                [
+                    [1.0, 0.0, 1.0],
+                    [0.0, 0.0, h_pi],
+                ],
+                dtype=float,
+            )
+            R = np.diag([sigma_N2, sigma_eta2])
+        else:
+            y_obs = np.array([y_pi], dtype=float)
+            H = np.array([[0.0, 0.0, h_pi]], dtype=float)
+            R = np.array([[sigma_eta2]], dtype=float)
 
         S = _force_pd(H @ P_pred[t] @ H.T + R)
         K = P_pred[t] @ H.T @ inv(S)
@@ -567,6 +571,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         raise ValueError("No draws would be stored. Use n_keep >= store_every.")
 
     Nbar, Nhat = _init_states(N_obs)
+    N_init = initial_competition_path(N_obs)
 
     a_t = pi_tm1 - pi_expect
     y = pi_t - pi_expect
@@ -581,7 +586,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         [
             float(_getd(opts, "m0_Nhat", pri["m0_Nhat"])),
             float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"])),
-            float(_getd(opts, "m0_Nbar", _getd(priors or {}, "m0_Nbar", N_obs[0]))),
+            float(_getd(opts, "m0_Nbar", _getd(priors or {}, "m0_Nbar", N_init[0]))),
         ],
         dtype=float,
     )
@@ -798,10 +803,10 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         # ------------------------------------------------------------
         # 7. Draw measurement variance sigma_N2.
         # ------------------------------------------------------------
-        resid_N = N_obs - Nhat - Nbar
+        resid_N = finite_N_residuals(N_obs, Nhat, Nbar)
 
         sigma_N2 = _sample_invgamma(
-            pri["a_N"] + 0.5 * T,
+            pri["a_N"] + 0.5 * resid_N.size,
             pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
             rng,
         )

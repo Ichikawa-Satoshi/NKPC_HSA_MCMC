@@ -1,0 +1,14 @@
+data_spec,model,period,start,end,n_obs,status,warning,n_transform,parameter,posterior_mean,ci_2.5,ci_97.5
+unemployment_gap_core,ces,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,alpha,0.7825369493105869,0.6898713324033149,0.8738115501685405
+unemployment_gap_core,ces,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,kappa,0.0990086345255638,0.045261449665294,0.1521124972461727
+unemployment_gap_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,alpha,0.7876001441328968,0.6938855081192665,0.8776004165480779
+unemployment_gap_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,kappa_0,0.0608524019891921,-0.022288779556129,0.1380374198027218
+unemployment_gap_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,delta,0.0219566020099765,-0.0075468236510957,0.0496216558236523
+unemployment_gap_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,bulk ESS < 400; tail ESS < 400,log100_centered10,alpha,0.780486688439051,0.6884200450360406,0.8668299182660865
+unemployment_gap_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,bulk ESS < 400; tail ESS < 400,log100_centered10,kappa,0.1097650978890551,0.0464020786408129,0.1772033710917001
+unemployment_gap_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,bulk ESS < 400; tail ESS < 400,log100_centered10,theta,0.012453096482694,-0.0517817807312353,0.0726566174762073
+unemployment_gap_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,alpha,0.7745096476950859,0.6852908892333258,0.864689847099948
+unemployment_gap_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,kappa_0,0.0690706933605319,-0.0097199919278944,0.1482328868127304
+unemployment_gap_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,delta,0.0249878331435208,-0.004445805152456,0.0539614823987177
+unemployment_gap_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,theta_0,0.0696665907688763,-0.0097771385442601,0.1496114812171403
+unemployment_gap_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,gamma,-0.0139758586480819,-0.0439225616616837,0.0184820319812449

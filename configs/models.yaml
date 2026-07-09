@@ -5,6 +5,9 @@ defaults:
   chains: 2
   seed: 12345
   n_transform: log100_centered10
+  competition_measurement:
+    frequency: quarterly_interpolated
+    annual_timing: q4
   covariance_structure: e_zeta_only
   enforce_stationary: true
   ar2_max_tries: 2000
@@ -59,6 +62,22 @@ data_specs:
     pi_expect_col: Epi
     x_col: unemp_gap
     x_prev_col: unemp_gap_prev
+    n_col: N_Gustavo
+  unemployment_gap_core:
+    label: Unemployment gap, core CPI
+    pi_col: pi_cpi_core
+    pi_prev_col: pi_cpi_core_prev
+    pi_expect_col: Epi
+    x_col: unemp_gap
+    x_prev_col: unemp_gap_prev
+    n_col: N_Gustavo
+  output_gap_bn_core:
+    label: Output gap BN, core CPI
+    pi_col: pi_cpi_core
+    pi_prev_col: pi_cpi_core_prev
+    pi_expect_col: Epi
+    x_col: output_gap_BN
+    x_prev_col: output_gap_BN_prev
     n_col: N_Gustavo
   default:
     label: Output gap, BN filter

@@ -5,6 +5,7 @@ from pathlib import Path
 import argparse
 import arviz as az
 import json
+import numpy as np
 import pandas as pd
 import yaml
 
@@ -22,6 +23,7 @@ from nkpc_hsa.report.figures import (
     save_prior_posterior_per_model,
     save_time_varying_path,
 )
+from nkpc_hsa.report.estimation_results import competition_decomposition_summary
 from nkpc_hsa.inference.model_comparison import model_comparison_table, save_model_comparison
 from nkpc_hsa.report.tables import (
     coefficient_means_pivot_table,
@@ -76,9 +78,15 @@ def _display(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
 
 
 def _combined_columns(data_spec: str | None, columns: list[str]) -> list[str]:
+    out = list(columns)
+    if "competition_measurement_frequency" not in out:
+        insert_at = 0
+        if out and out[0] == "data_spec":
+            insert_at = 1
+        out.insert(insert_at, "competition_measurement_frequency")
     if data_spec is None and "data_spec" not in columns:
-        return ["data_spec", *columns]
-    return columns
+        return ["data_spec", *out]
+    return out
 
 
 def _load_prior(path):
@@ -146,6 +154,16 @@ def _filter_by_transform(idata_by_run: dict[str, object], n_transform: str | Non
         run: idata
         for run, idata in idata_by_run.items()
         if str(getattr(idata, "attrs", {}).get("n_transform", "")) == n_transform
+    }
+
+
+def _filter_by_competition_frequency(idata_by_run: dict[str, object], frequency: str | None) -> dict[str, object]:
+    if not frequency:
+        return idata_by_run
+    return {
+        run: idata
+        for run, idata in idata_by_run.items()
+        if str(getattr(idata, "attrs", {}).get("competition_measurement_frequency", "quarterly_interpolated")) == frequency
     }
 
 
@@ -344,12 +362,23 @@ def _filter_period_table(
     return out
 
 
-def _block_sort_key(item: tuple[tuple[str, str, str, str], dict[str, object]]) -> tuple:
-    base, prior, period, constraint = item[0]
+def _block_sort_key(item: tuple[tuple[str, str, str, str, str], dict[str, object]]) -> tuple:
+    base, prior, period, constraint, frequency = item[0]
     prior_order = {"baseline": 0, "weak": 1, "tight": 2}
     period_order = {"full": 0, "pre_2008": 1, "post_2008": 2, "exclude_covid": 3, "start_1988": 4, "end_2019": 5}
     constraint_order = {"unrestricted": 0}
-    return (base, prior_order.get(prior, 99), prior, period_order.get(period, 99), period, constraint_order.get(constraint, 1), constraint)
+    frequency_order = {"quarterly_interpolated": 0, "annual_q4": 1}
+    return (
+        base,
+        prior_order.get(prior, 99),
+        prior,
+        period_order.get(period, 99),
+        period,
+        constraint_order.get(constraint, 1),
+        constraint,
+        frequency_order.get(frequency, 99),
+        frequency,
+    )
 
 
 def _write_block_table(df: pd.DataFrame, csv_path: Path, tex_path: Path, display_columns: list[str]) -> pd.DataFrame:
@@ -358,6 +387,114 @@ def _write_block_table(df: pd.DataFrame, csv_path: Path, tex_path: Path, display
     out.to_csv(csv_path, index=False)
     write_latex_fragment(_display(out, display_columns), tex_path)
     return out
+
+
+def _quarterly_index_from_attrs(idata) -> pd.PeriodIndex | None:
+    attrs = getattr(idata, "attrs", {})
+    start = str(attrs.get("sample_start", "") or "")
+    n_obs_raw = attrs.get("n_obs", "")
+    try:
+        n_obs = int(n_obs_raw)
+    except (TypeError, ValueError):
+        return None
+    if not start or n_obs <= 0:
+        return None
+    try:
+        return pd.period_range(pd.Timestamp(start).to_period("Q"), periods=n_obs, freq="Q")
+    except Exception:
+        try:
+            return pd.period_range(start, periods=n_obs, freq="Q")
+        except Exception:
+            return None
+
+
+def _write_competition_decomposition_outputs(
+    *,
+    runs: dict[str, object],
+    tables_dir: Path,
+    figures_dir: Path,
+    data_spec: str | None,
+) -> None:
+    candidates: dict[str, object] = {}
+    for run, idata in runs.items():
+        attrs = getattr(idata, "attrs", {})
+        model = str(attrs.get("model", ""))
+        if not model.startswith("hsa_"):
+            continue
+        frequency = str(attrs.get("competition_measurement_frequency", "quarterly_interpolated"))
+        if frequency != "annual_q4":
+            continue
+        if data_spec is not None and str(attrs.get("data_spec", "")) != data_spec:
+            continue
+        candidates[run] = idata
+
+    if not candidates:
+        out = pd.DataFrame({"note": ["No annual_q4 HSA decomposition output available."]})
+        out.to_csv(tables_dir / "competition_decomposition.csv", index=False)
+        write_latex_fragment(out, tables_dir / "competition_decomposition.tex")
+        save_placeholder_figure(figures_dir / "competition_decomposition_path.png", "No annual_q4 HSA decomposition output available.")
+        return
+
+    latest = _latest_by_fields(candidates, ("model", "data_spec", "prior_spec", "period", "constraint_spec"))
+    selected_run, selected_idata = max(
+        latest.items(),
+        key=lambda item: (str(getattr(item[1], "attrs", {}).get("run_id", "")), item[0]),
+    )
+    attrs = getattr(selected_idata, "attrs", {})
+    q_index = _quarterly_index_from_attrs(selected_idata)
+    decomp = competition_decomposition_summary(selected_idata, q_index)
+    if decomp.empty:
+        out = pd.DataFrame({"note": ["No Nbar/Nhat draws available for decomposition."]})
+        out.to_csv(tables_dir / "competition_decomposition.csv", index=False)
+        write_latex_fragment(out, tables_dir / "competition_decomposition.tex")
+        return
+
+    decomp.insert(0, "run", selected_run)
+    decomp.insert(1, "model", str(attrs.get("model", "")))
+    decomp.insert(2, "data_spec", str(attrs.get("data_spec", "")))
+    decomp.to_csv(tables_dir / "competition_decomposition.csv", index=False)
+
+    display = decomp[
+        [
+            "quarter",
+            "model",
+            "N_total_mean",
+            "N_total_q05",
+            "N_total_q50",
+            "N_total_q95",
+            "Nbar_mean",
+            "Nhat_mean",
+        ]
+    ].copy()
+    if len(display) > 16:
+        idx = np.linspace(0, len(display) - 1, 16).round().astype(int)
+        display = display.iloc[idx].reset_index(drop=True)
+    write_latex_fragment(display, tables_dir / "competition_decomposition.tex")
+
+    import matplotlib.pyplot as plt
+
+    x = pd.PeriodIndex(decomp["quarter"], freq="Q").to_timestamp(how="end")
+    fig, ax = plt.subplots(figsize=(7, 3.8))
+    ax.plot(x, decomp["N_total_mean"].to_numpy(dtype=float), label=r"$N_t=\bar N_t+\hat N_t$", color="C0")
+    ax.plot(x, decomp["Nbar_mean"].to_numpy(dtype=float), label=r"$\bar N_t$", color="C2")
+    ax.plot(x, decomp["Nhat_mean"].to_numpy(dtype=float), label=r"$\hat N_t$", color="C1")
+    ax.fill_between(
+        x,
+        decomp["N_total_q05"].to_numpy(dtype=float),
+        decomp["N_total_q95"].to_numpy(dtype=float),
+        color="C0",
+        alpha=0.14,
+    )
+    ax.axhline(0.0, color="black", lw=0.8, alpha=0.5)
+    ax.set_title(f"Competition decomposition: {attrs.get('model', '')} / {attrs.get('data_spec', '')}")
+    ax.set_xlabel("quarter")
+    ax.set_ylabel("N units")
+    ax.grid(True, alpha=0.25)
+    ax.legend(loc="best", fontsize=8)
+    fig.tight_layout()
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    fig.savefig(figures_dir / "competition_decomposition_path.png", dpi=200, bbox_inches="tight")
+    plt.close(fig)
 
 
 def _write_result_blocks(
@@ -374,14 +511,16 @@ def _write_result_blocks(
 ) -> None:
     # all_baseline_runs: latest run per (model, base_data_spec, constraint_spec) across ALL n_transforms.
     # Used for per-model prior/posterior so all 4 models appear even if n_transform differs.
-    blocks: dict[tuple[str, str, str, str], dict[str, object]] = {}
+    blocks: dict[tuple[str, str, str, str, str], dict[str, object]] = {}
     for run, idata in latest_runs.items():
         base, period = _run_base_period(idata, base_names)
         if data_spec is not None and base != data_spec:
             continue
-        prior = str(getattr(idata, "attrs", {}).get("prior_spec", "baseline") or "baseline")
-        constraint = str(getattr(idata, "attrs", {}).get("constraint_spec", "unrestricted") or "unrestricted")
-        blocks.setdefault((base, prior, period, constraint), {})[run] = idata
+        attrs = getattr(idata, "attrs", {})
+        prior = str(attrs.get("prior_spec", "baseline") or "baseline")
+        constraint = str(attrs.get("constraint_spec", "unrestricted") or "unrestricted")
+        frequency = str(attrs.get("competition_measurement_frequency", "quarterly_interpolated") or "quarterly_interpolated")
+        blocks.setdefault((base, prior, period, constraint, frequency), {})[run] = idata
 
     if not period_table.empty:
         period_rows = period_table.copy()
@@ -392,15 +531,21 @@ def _write_result_blocks(
             period = str(row.get("period", "full") or "full")
             constraint = str(row.get("constraint_spec", "unrestricted") or "unrestricted")
             if base:
-                blocks.setdefault((base, "baseline", period, constraint), {})
+                known_frequencies = {
+                    str(getattr(idata, "attrs", {}).get("competition_measurement_frequency", "quarterly_interpolated") or "quarterly_interpolated")
+                    for idata in latest_runs.values()
+                    if _run_base_period(idata, base_names) == (base, period)
+                } or {"quarterly_interpolated"}
+                for frequency in sorted(known_frequencies):
+                    blocks.setdefault((base, "baseline", period, constraint, frequency), {})
 
     lines: list[str] = []
     if not blocks:
         write_latex_fragment(pd.DataFrame({"note": ["No result blocks available."]}), tables_dir / "result_blocks.tex")
         return
 
-    for (base, prior, period, constraint), block_runs in sorted(blocks.items(), key=_block_sort_key):
-        block_id = _safe_id(base, prior, period, constraint)
+    for (base, prior, period, constraint, frequency), block_runs in sorted(blocks.items(), key=_block_sort_key):
+        block_id = _safe_id(base, prior, period, constraint, frequency)
         block_table_dir = tables_dir / "blocks" / block_id
         block_figure_dir = figures_dir / "blocks" / block_id
         block_table_dir.mkdir(parents=True, exist_ok=True)
@@ -413,6 +558,7 @@ def _write_result_blocks(
                 run: idata for run, idata in all_baseline_runs.items()
                 if _run_base_period(idata, base_names) == (base, period)
                 and str(getattr(idata, "attrs", {}).get("constraint_spec", "unrestricted") or "unrestricted") == constraint
+                and str(getattr(idata, "attrs", {}).get("competition_measurement_frequency", "quarterly_interpolated") or "quarterly_interpolated") == frequency
             } or block_runs
         else:
             pp_runs = block_runs
@@ -479,12 +625,12 @@ def _write_result_blocks(
 
         constraint_label = _constraint_display(constraint)
         constraint_suffix = f", constraint={constraint_label}" if constraint != "unrestricted" else ""
-        title = f"{base}: prior={prior}, period={period}{constraint_suffix}"
+        title = f"{base}: {frequency}, prior={prior}, period={period}{constraint_suffix}"
         lines.extend(
             [
                 r"\clearpage",
                 rf"\section{{{_latex_escape(title)}}}",
-                rf"\noindent\textbf{{Condition.}} data=\texttt{{{_latex_escape(base)}}}, prior=\texttt{{{_latex_escape(prior)}}}, period=\texttt{{{_latex_escape(period)}}}, constraint=\texttt{{{_latex_escape(constraint)}}} ({_latex_escape(constraint_label)}).",
+                rf"\noindent\textbf{{Condition.}} data=\texttt{{{_latex_escape(base)}}}, competition=\texttt{{{_latex_escape(frequency)}}}, prior=\texttt{{{_latex_escape(prior)}}}, period=\texttt{{{_latex_escape(period)}}}, constraint=\texttt{{{_latex_escape(constraint)}}} ({_latex_escape(constraint_label)}).",
                 "",
                 r"\subsection{Coefficient Table}",
                 r"\begin{center}\scriptsize",
@@ -537,6 +683,7 @@ def _make_outputs(
     figures_dir: Path,
     data_spec: str | None = None,
     n_transform: str | None = None,
+    competition_frequency: str | None = None,
     base_data_specs: list[str] | None = None,
     comparison_data: dict[tuple[str, str], dict[str, object]] | None = None,
 ) -> None:
@@ -547,9 +694,10 @@ def _make_outputs(
     base_names = base_data_specs or []
     scoped_runs = _filter_by_base_data_spec(idata_by_run, data_spec, base_names) if base_names else _filter_by_data_spec(idata_by_run, data_spec)
     scoped_runs = _filter_by_transform(scoped_runs, n_transform)
+    scoped_runs = _filter_by_competition_frequency(scoped_runs, competition_frequency)
     latest_runs = _latest_by_fields(
         scoped_runs,
-        ("model", "data_spec", "prior_spec", "period", "constraint_spec", "n_transform", "sample_start", "sample_end"),
+        ("model", "data_spec", "prior_spec", "period", "constraint_spec", "n_transform", "competition_measurement_frequency", "sample_start", "sample_end"),
     )
     baseline_runs = _filter_by_prior(latest_runs, "baseline")
     if not baseline_runs:
@@ -585,6 +733,7 @@ def _make_outputs(
 
     # Pivot: unrestricted runs per (model, data_spec) regardless of n_transform so all 4 models appear.
     all_scoped = _filter_by_base_data_spec(idata_by_run, data_spec, base_names) if base_names else _filter_by_data_spec(idata_by_run, data_spec)
+    all_scoped = _filter_by_competition_frequency(all_scoped, competition_frequency)
     unrestricted_scoped = _filter_by_constraint(all_scoped, "unrestricted") or all_scoped
     latest_all_transforms = _latest_by_fields(
         _filter_by_prior(unrestricted_scoped, "baseline") or unrestricted_scoped,
@@ -630,6 +779,13 @@ def _make_outputs(
         save_placeholder_figure(figures_dir / "kappa_t_path.png", "No kappa_t path available. Run HSA steady or HSA full.")
     if not save_time_varying_path(baseline_runs, "theta_t", figures_dir / "theta_t_path.png"):
         save_placeholder_figure(figures_dir / "theta_t_path.png", "No theta_t path available. Run HSA full.")
+
+    _write_competition_decomposition_outputs(
+        runs=latest_runs,
+        tables_dir=tables_dir,
+        figures_dir=figures_dir,
+        data_spec=data_spec,
+    )
 
     sddr = sddr_summary_table(baseline_runs, priors)
     sddr_out = sddr if not sddr.empty else pd.DataFrame({"note": ["No SDDR restrictions available for current runs."]})
@@ -743,8 +899,9 @@ def _make_outputs(
     # Build cross-transform baseline runs keyed by (model, data_spec, constraint_spec).
     # Keeps both unrestricted and restricted variants so each block gets its own set.
     all_scoped = _filter_by_base_data_spec(idata_by_run, data_spec, base_names) if base_names else _filter_by_data_spec(idata_by_run, data_spec)
+    all_scoped = _filter_by_competition_frequency(all_scoped, competition_frequency)
     all_baseline = _filter_by_prior(all_scoped, "baseline") or all_scoped
-    all_baseline_runs = _latest_by_fields(all_baseline, ("model", "data_spec", "constraint_spec"))
+    all_baseline_runs = _latest_by_fields(all_baseline, ("model", "data_spec", "constraint_spec", "competition_measurement_frequency"))
 
     _write_result_blocks(
         latest_runs=latest_runs,
@@ -772,6 +929,11 @@ def main() -> None:
         dest="data_specs",
         help="Data spec name to render. Repeat for multiple. Defaults to config run_data_specs.",
     )
+    parser.add_argument(
+        "--competition-frequency",
+        choices=["quarterly_interpolated", "annual_q4"],
+        help="Restrict table and figure generation to runs with this competition measurement frequency.",
+    )
     parser.add_argument("--combined-only", action="store_true")
     args = parser.parse_args()
 
@@ -796,6 +958,7 @@ def main() -> None:
         figures_dir=ROOT / "results" / "figures",
         data_spec=None,
         n_transform=n_transform,
+        competition_frequency=args.competition_frequency,
         base_data_specs=list(data_specs),
         comparison_data=comparison_data,
     )
@@ -808,6 +971,7 @@ def main() -> None:
                 figures_dir=ROOT / "results" / "figures" / data_spec_name,
                 data_spec=data_spec_name,
                 n_transform=n_transform,
+                competition_frequency=args.competition_frequency,
                 base_data_specs=list(data_specs),
                 comparison_data=comparison_data,
             )

@@ -1,0 +1,26 @@
+severity,parameter,warning
+warning,theta_0,bulk ESS 287.3 < 400
+warning,theta_0,tail ESS 128.6 < 400
+warning,kappa_t_start,bulk ESS 59.2 < 400
+warning,kappa_t_start,tail ESS 181.9 < 400
+warning,kappa_t_mid,bulk ESS 183.3 < 400
+warning,kappa_t_end,bulk ESS 234.9 < 400
+warning,theta_t_mean,bulk ESS 274.9 < 400
+warning,theta_t_mean,tail ESS 119.6 < 400
+warning,theta_t_start,bulk ESS 165.3 < 400
+warning,theta_t_start,tail ESS 122.0 < 400
+warning,theta_t_mid,bulk ESS 222.2 < 400
+warning,theta_t_mid,tail ESS 129.4 < 400
+warning,theta_t_end,tail ESS 197.8 < 400
+warning,rho_1,R-hat 1.020 > 1.01
+warning,rho_1,bulk ESS 22.7 < 400
+warning,rho_1,tail ESS 44.1 < 400
+warning,rho_2,bulk ESS 23.6 < 400
+warning,rho_2,tail ESS 51.2 < 400
+warning,n,R-hat 1.017 > 1.01
+warning,n,bulk ESS 41.3 < 400
+warning,n,tail ESS 132.4 < 400
+warning,sigma_u,bulk ESS 37.4 < 400
+warning,sigma_u,tail ESS 75.7 < 400
+warning,sigma_eps,bulk ESS 34.5 < 400
+warning,sigma_eps,tail ESS 43.6 < 400

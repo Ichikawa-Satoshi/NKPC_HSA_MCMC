@@ -1,10 +1,2 @@
-run,model,data_spec,prior_spec,constraint_spec,restriction,unit,prior_mean,prior_sd,sddr_bf01
-ces_inv_markup_pre_2008_baseline_20260623_014848,ces,inv_markup_pre_2008,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,2.1323533645187775
-hsa_dynamic_inv_markup_pre_2008_baseline_20260623_020835,hsa_dynamic,inv_markup_pre_2008,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,1.9324080819069638
-hsa_dynamic_inv_markup_pre_2008_baseline_20260623_020835,hsa_dynamic,inv_markup_pre_2008,baseline,unrestricted,theta=0,inflation effect per +10 log-point Nhat deviation,0.1,0.2,0.044945894936091295
-hsa_full_inv_markup_pre_2008_baseline_20260623_022451,hsa_full,inv_markup_pre_2008,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,1.713494483036792
-hsa_full_inv_markup_pre_2008_baseline_20260623_022451,hsa_full,inv_markup_pre_2008,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.9750167552744133
-hsa_full_inv_markup_pre_2008_baseline_20260623_022451,hsa_full,inv_markup_pre_2008,baseline,unrestricted,theta_0=0,inflation effect per +10 log-point Nhat deviation at average Nbar,0.1,0.2,0.0023532532716546415
-hsa_full_inv_markup_pre_2008_baseline_20260623_022451,hsa_full,inv_markup_pre_2008,baseline,unrestricted,gamma=0,change in theta_t per +10 log-point Nbar deviation,0.0,0.02,1.002240099827133
-hsa_steady_inv_markup_pre_2008_baseline_20260623_015218,hsa_steady,inv_markup_pre_2008,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,2.168474961731623
-hsa_steady_inv_markup_pre_2008_baseline_20260623_015218,hsa_steady,inv_markup_pre_2008,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.9607934207756557
+note
+No output available for this block.

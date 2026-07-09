@@ -5,6 +5,7 @@ from typing import Any, Optional
 import numpy as np
 from numpy.linalg import inv
 
+from analysis.gibbs.func_gibbs.common.competition import finite_N_residuals, initial_competition_path
 from analysis.gibbs.func_gibbs.common.constraints import constraint_stats_summary, draw_with_constraints
 
 
@@ -408,17 +409,17 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, Any]:
 
 
 def _init_states(N_obs: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    N_obs = _as_1d(N_obs)
-    T = N_obs.size
+    N_init = initial_competition_path(N_obs)
+    T = N_init.size
 
     Nbar = np.zeros(T, dtype=float)
     k0 = min(2, T)
-    Nbar[:k0] = N_obs[:k0]
+    Nbar[:k0] = N_init[:k0]
 
     for t in range(2, T):
-        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_obs[t]
+        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_init[t]
 
-    Nhat = N_obs - Nbar
+    Nhat = N_init - Nbar
 
     states = np.zeros((T, 3), dtype=float)
     states[:, 0] = Nhat
@@ -870,22 +871,38 @@ def _sample_states_joint_ffbs_fullSigma(
         if t == 0:
             m_pred[t] = _as_1d(m0)
             P_pred[t] = _force_pd(P0)
-            C = np.zeros((3, 2), dtype=float)
+            C_full = np.zeros((3, 2), dtype=float)
         else:
             mu_w_t = np.array([mu_u[t], 0.0, mu_eps[t]], dtype=float)
             m_pred[t] = c + mu_w_t + F @ m_filt[t - 1]
             P_pred[t] = _force_pd(F @ P_filt[t - 1] @ F.T + Q)
-            C = C_base
+            C_full = C_base
 
-        y_obs = np.array([N_obs[t], y_pi[t]], dtype=float)
-        v_mean = np.array([0.0, mu_e[t]], dtype=float)
+        if np.isfinite(N_obs[t]):
+            y_obs = np.array([N_obs[t], y_pi[t]], dtype=float)
+            H_t = np.array(
+                [
+                    [1.0, 0.0, 1.0],
+                    [-theta, 0.0, 0.0],
+                ],
+                dtype=float,
+            )
+            R_t = R
+            C = C_full
+            v_mean = np.array([0.0, mu_e[t]], dtype=float)
+        else:
+            y_obs = np.array([y_pi[t]], dtype=float)
+            H_t = np.array([[-theta, 0.0, 0.0]], dtype=float)
+            R_t = np.array([[var_e]], dtype=float)
+            C = C_full[:, 1:2]
+            v_mean = np.array([mu_e[t]], dtype=float)
 
-        innov = y_obs - H @ m_pred[t] - v_mean
+        innov = y_obs - H_t @ m_pred[t] - v_mean
 
-        S = H @ P_pred[t] @ H.T + R + H @ C + C.T @ H.T
+        S = H_t @ P_pred[t] @ H_t.T + R_t + H_t @ C + C.T @ H_t.T
         S = _force_pd(S)
 
-        cross = P_pred[t] @ H.T + C
+        cross = P_pred[t] @ H_t.T + C
         K = cross @ inv(S)
 
         m_filt[t] = m_pred[t] + K @ innov
@@ -1041,6 +1058,7 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         raise ValueError("No draws would be stored. Use n_keep >= store_every.")
 
     Nbar, Nhat, states = _init_states(N_obs)
+    N_init = initial_competition_path(N_obs)
 
     a_t = pi_tm1 - pi_expect
     y = pi_t - pi_expect
@@ -1049,7 +1067,7 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         [
             float(_getd(opts, "m0_Nhat", pri["m0_Nhat"])),
             float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"])),
-            float(_getd(opts, "m0_Nbar", N_obs[0])),
+            float(_getd(opts, "m0_Nbar", N_init[0])),
         ],
         dtype=float,
     )
@@ -1191,10 +1209,10 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         # ------------------------------------------------------------
         # 6. Draw measurement error variance sigma_N2
         # ------------------------------------------------------------
-        resid_N = N_obs - Nhat - Nbar
+        resid_N = finite_N_residuals(N_obs, Nhat, Nbar)
 
         sigma_N2 = _sample_invgamma(
-            pri["a_N"] + 0.5 * T,
+            pri["a_N"] + 0.5 * resid_N.size,
             pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
             rng,
         )

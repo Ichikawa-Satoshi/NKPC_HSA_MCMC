@@ -1,0 +1,10 @@
+bulk ESS 119.0 < 400
+tail ESS 175.7 < 400
+bulk ESS 94.8 < 400
+tail ESS 145.8 < 400
+R-hat 1.038 > 1.01
+bulk ESS 95.5 < 400
+tail ESS 268.6 < 400
+R-hat 1.030 > 1.01
+bulk ESS 105.5 < 400
+tail ESS 125.5 < 400

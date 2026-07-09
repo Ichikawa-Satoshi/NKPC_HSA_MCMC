@@ -75,14 +75,38 @@ Cells show \textit{mean} [\textit{ci\_2.5}, \textit{ci\_97.5}].
 
 \section{Result Blocks}
 Results are organized by condition. Each section fixes a data specification,
-prior specification, and sample period, then reports the coefficient table,
-prior/posterior overlay by model, Savage-Dickey density ratios, time-varying
-\(\kappa_t\) path, and model-comparison output for that condition.
+competition measurement frequency, prior specification, and sample period, then
+reports the coefficient table, prior/posterior overlay by model, Savage-Dickey
+density ratios, time-varying \(\kappa_t\) path, and model-comparison output for
+that condition.
 \input{../tables/result_blocks.tex}
+
+\section{Competition Decomposition}
+For annual-Q4 mixed-frequency HSA runs, Table~\ref{tab:n-decomposition}
+reports selected quarters of the posterior decomposition
+\(N_t=\bar N_t+\hat N_t\). The full quarterly decomposition is written to the
+corresponding CSV artifact.
+
+\begin{table}[H]
+\centering
+\caption{Posterior decomposition of competition \(N_t\)}
+\label{tab:n-decomposition}
+\scriptsize
+\resizebox{\textwidth}{!}{\input{../tables/competition_decomposition.tex}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../figures/competition_decomposition_path.png}
+\caption{Posterior mean decomposition of competition}
+\end{figure}
 
 \section{Notes}
 WAIC and LOO are not used as primary criteria because the models contain
 latent states. Chib marginal likelihoods are reported only when the legacy
 ordinate calculation can be matched to the sampler units and supplied data.
+For the full HSA model, the reported Chib quantity is conditional on posterior
+mean latent states because the observation equation is nonlinear in
+\(\hat N_t\) and \(\bar N_t\).
 
 \end{document}

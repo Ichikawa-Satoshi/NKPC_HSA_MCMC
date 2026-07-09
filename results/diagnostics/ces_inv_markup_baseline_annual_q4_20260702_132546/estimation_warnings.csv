@@ -1,0 +1,16 @@
+severity,parameter,warning
+warning,alpha,bulk ESS 40.0 < 400
+warning,alpha,tail ESS 40.0 < 400
+warning,kappa,bulk ESS 40.0 < 400
+warning,kappa,tail ESS 40.0 < 400
+warning,phi_1,bulk ESS 40.0 < 400
+warning,phi_1,tail ESS 23.3 < 400
+warning,lambda_ez,bulk ESS 40.0 < 400
+warning,lambda_ez,tail ESS 40.0 < 400
+warning,rho,bulk ESS 34.7 < 400
+warning,rho,tail ESS 40.0 < 400
+warning,sigma_e,bulk ESS 40.0 < 400
+warning,sigma_e,tail ESS 40.0 < 400
+warning,sigma_zeta,R-hat 1.015 > 1.01
+warning,sigma_zeta,bulk ESS 40.0 < 400
+warning,sigma_zeta,tail ESS 40.0 < 400

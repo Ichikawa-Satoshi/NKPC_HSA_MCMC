@@ -1,0 +1,14 @@
+data_spec,model,period,start,end,n_obs,status,warning,n_transform,parameter,posterior_mean,ci_2.5,ci_97.5
+output_gap_bn_core,ces,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,alpha,0.737335290774179,0.6271438817091416,0.8427145675232488
+output_gap_bn_core,ces,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,kappa,0.0390365997903748,-0.0251185081664559,0.1029369143052644
+output_gap_bn_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,alpha,0.7501698913004259,0.6376124628140258,0.861949604052377
+output_gap_bn_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,kappa_0,0.027464222272729,-0.0470196301187788,0.1001040894667342
+output_gap_bn_core,hsa_steady,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,delta,0.0141828470968853,-0.0140453160364132,0.041103151311237
+output_gap_bn_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,alpha,0.7712964650299431,0.6578351056332928,0.8829341987501258
+output_gap_bn_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,kappa,0.0475338684792327,-0.0161688081650166,0.1118416729832636
+output_gap_bn_core,hsa_dynamic,pre_2008,1913-03-31,2007-09-30,379,estimated,,log100_centered10,theta,-0.0419496329546388,-0.0936612687988791,0.0184187778152492
+output_gap_bn_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,alpha,0.8082862929813236,0.6856191934906848,0.930314293549881
+output_gap_bn_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,kappa_0,0.0438644994265079,-0.024824979411096,0.1122864380274953
+output_gap_bn_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,delta,0.0135514386210682,-0.0090647266613173,0.0363692144756824
+output_gap_bn_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,theta_0,0.0386820234576101,-0.052570795107371,0.1316519233842839
+output_gap_bn_core,hsa_full,pre_2008,1913-03-31,2007-09-30,379,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400,log100_centered10,gamma,-0.0337412369158539,-0.0618724205827711,-0.007533942840903

@@ -1,0 +1,14 @@
+data_spec,model,period,start,end,n_obs,status,warning,n_transform,parameter,posterior_mean,ci_2.5,ci_97.5
+unemployment_gap_core,ces,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.753554670608606,0.6719327991035109,0.8331761593472449
+unemployment_gap_core,ces,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa,0.0399521793419662,0.007688561768775,0.0715499410347487
+unemployment_gap_core,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.79451716852386,0.7154905660103019,0.873444804842891
+unemployment_gap_core,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa_0,0.051010272782309,0.0165958234143381,0.0871734546199656
+unemployment_gap_core,hsa_steady,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,delta,0.0224351687761919,0.0097242586725068,0.0383519137962747
+unemployment_gap_core,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,alpha,0.7598148602337992,0.680639049812874,0.8404831965781265
+unemployment_gap_core,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,kappa,0.0326386101808671,-0.0024065430025611,0.0672425288523592
+unemployment_gap_core,hsa_dynamic,exclude_covid,1913-03-31,2025-09-30,444,estimated,,log100_centered10,theta,-0.021990893672835,-0.0769817471903451,0.0381551830547643
+unemployment_gap_core,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400; bulk ESS < 400,log100_centered10,alpha,0.7866262222886509,0.7062957376344365,0.8683243745033654
+unemployment_gap_core,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400; bulk ESS < 400,log100_centered10,kappa_0,0.0633871133777801,0.0202121672055307,0.1066151344921134
+unemployment_gap_core,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400; bulk ESS < 400,log100_centered10,delta,0.024900903432688,0.0095227375386996,0.0402883042710417
+unemployment_gap_core,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400; bulk ESS < 400,log100_centered10,theta_0,0.0635538081821186,-0.0140465230490056,0.1387859666858293
+unemployment_gap_core,hsa_full,exclude_covid,1913-03-31,2025-09-30,444,estimated,R-hat > 1.01; R-hat > 1.01; bulk ESS < 400; R-hat > 1.01; bulk ESS < 400; tail ESS < 400; bulk ESS < 400,log100_centered10,gamma,-0.0130653740190834,-0.043865644736839,0.017803609023013

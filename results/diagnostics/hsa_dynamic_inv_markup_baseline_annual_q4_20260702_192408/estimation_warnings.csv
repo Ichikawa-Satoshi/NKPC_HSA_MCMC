@@ -1,0 +1,14 @@
+severity,parameter,warning
+warning,theta,tail ESS 225.6 < 400
+warning,rho_1,R-hat 1.088 > 1.01
+warning,rho_1,bulk ESS 55.6 < 400
+warning,rho_1,tail ESS 51.5 < 400
+warning,rho_2,R-hat 1.249 > 1.01
+warning,rho_2,bulk ESS 45.6 < 400
+warning,rho_2,tail ESS 73.6 < 400
+warning,n,R-hat 1.018 > 1.01
+warning,sigma_u,bulk ESS 230.7 < 400
+warning,sigma_u,tail ESS 378.6 < 400
+warning,sigma_eps,R-hat 1.071 > 1.01
+warning,sigma_eps,bulk ESS 132.5 < 400
+warning,sigma_eps,tail ESS 240.1 < 400

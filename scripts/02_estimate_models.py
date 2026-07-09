@@ -53,6 +53,12 @@ def main() -> None:
         default=None,
         help="Maximum rejection-sampling proposals for stationary AR(2) coefficients before keeping the previous value.",
     )
+    parser.add_argument(
+        "--competition-frequency",
+        choices=["quarterly_interpolated", "annual_q4"],
+        default=None,
+        help="Competition measurement frequency. Defaults to configs/models.yaml.",
+    )
     args = parser.parse_args()
 
     config = load_model_config(args.config)
@@ -69,6 +75,9 @@ def main() -> None:
     covariance_structure = defaults.get("covariance_structure", "e_zeta_only")
     enforce_stationary = not args.no_ar2_stationarity and bool(defaults.get("enforce_stationary", True))
     ar2_max_tries = int(args.ar2_max_tries or defaults.get("ar2_max_tries", 2000))
+    competition_measurement = dict(defaults.get("competition_measurement", {}) or {})
+    if args.competition_frequency is not None:
+        competition_measurement["frequency"] = args.competition_frequency
     coefficient_constraints = coefficient_constraints_from_config(
         defaults,
         positive=args.positive,
@@ -92,6 +101,7 @@ def main() -> None:
                 n_transform=n_transform,
                 covariance_structure=covariance_structure,
                 coefficient_constraints=coefficient_constraints,
+                competition_measurement=competition_measurement,
                 enforce_stationary=enforce_stationary,
                 ar2_max_tries=ar2_max_tries,
             )

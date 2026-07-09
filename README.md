@@ -67,7 +67,7 @@ python scripts/06_model_comparison.py
 # 7. 表・図の生成（results/tables/, results/figures/ に出力）
 python scripts/07_make_tables_figures.py
 
-# 8. レポートコンパイル（results/report/main.pdf を生成）
+# 8. レポートコンパイル（results/report/*.pdf を生成）
 python scripts/08_compile_report.py
 ```
 
@@ -119,8 +119,10 @@ python scripts/08_compile_report.py
 - `configs/`: model, path, and prior YAML files.
 - `data/raw/`: raw input files, grouped by source/topic.
 - `data/processed/`: generated model-ready datasets.
-- `results/runs/`: one folder per estimation run with posterior draws, configs, and metadata.
-- `results/tables/`, `results/figures/`, `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`, `results/model_comparison/`, `results/report/`: generated outputs.
+- `results/runs/`: one folder per estimation run with posterior draws, configs, metadata, and run-level support files.
+- `results/tables/`, `results/figures/`, `results/model_comparison/`: report inputs generated from saved runs.
+- `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`: robustness and diagnostic outputs.
+- `results/report/`: primary PDF reports. LaTeX build byproducts are moved to `results/report/build/`.
 - `reports/`: LaTeX report sources.
 - `notebooks/`: exploration only.
 - `analysis/gibbs/func_gibbs/`: legacy Gibbs sampler backend used by the current adapters.
@@ -148,6 +150,58 @@ If a supplied `N` series is already transformed, call the wrapper with
 `n_transform="identity"` and verify that the run metadata records this.
 Under the default transform, one unit of `N_model`, `Nhat`, or `Nbar` is a
 ten-log-point movement around the sample mean.
+
+Competition measurement frequency is configured under
+`defaults.competition_measurement` in `configs/models.yaml`:
+
+```yaml
+competition_measurement:
+  frequency: quarterly_interpolated
+  annual_timing: q4
+```
+
+`quarterly_interpolated` is the default and preserves the existing behavior:
+annual competition data are transformed and PCHIP-interpolated to quarterly
+frequency, and the resulting quarterly `N_obs_t` enters the N measurement
+equation every quarter. `annual_q4` is a mixed-frequency robustness
+specification: annual competition data are transformed but not interpolated, the
+annual observation is loaded only in Q4, and Q1-Q3 are treated as missing in the
+N measurement equation. In `annual_q4` runs, quarterly latent competition states
+are inferred by the state-space model; the PCHIP series shown in comparison
+plots is not used in estimation.
+
+Use the CLI override when needed:
+
+```bash
+python scripts/02_estimate_models.py --competition-frequency annual_q4
+```
+
+Each saved run also writes support artifacts under
+`results/runs/<run_name>/report/`, `results/runs/<run_name>/tables/`, and
+`results/runs/<run_name>/figures/`. The primary manuscript-style reports remain
+the PDFs under `results/report/`. To build report inputs from only
+mixed-frequency annual-Q4 runs:
+
+```bash
+python scripts/07_make_tables_figures.py --competition-frequency annual_q4
+python scripts/08_compile_report.py
+```
+
+To include both the default quarterly-interpolated case and the annual-Q4
+mixed-frequency case in the same PDF report, estimate both cases and then build
+tables and figures without a competition-frequency filter:
+
+```bash
+python scripts/02_estimate_models.py --competition-frequency quarterly_interpolated
+python scripts/02_estimate_models.py --competition-frequency annual_q4
+python scripts/07_make_tables_figures.py
+python scripts/08_compile_report.py
+```
+
+For annual-Q4 HSA runs, the PDF report includes a posterior decomposition of
+competition, \(N_t=\bar N_t+\hat N_t\). The full quarterly decomposition is
+written to `results/tables/competition_decomposition.csv` and to the
+data-spec-specific table folders.
 
 The default HSA dynamic covariance convention is `e_zeta_only`: the sampler
 allows correlation between the NKPC shock `e_t` and output-gap shock `zeta_t`
@@ -253,11 +307,19 @@ physical units; the wrapper converts them to sampler-internal units.
 
 ## Report
 
-`scripts/08_compile_report.py` writes `reports/main.tex` and compiles
-`results/report/main.pdf`. It also writes one PDF per configured data
-specification, such as `results/report/inv_markup.pdf`,
-`results/report/output_gap_bn.pdf`, `results/report/output_gap_hp.pdf`, and
-`results/report/labor_share_gap_hp.pdf`, and `results/report/unemployment_gap.pdf`.
+`scripts/08_compile_report.py` writes `reports/main.tex` and compiles the main
+PDF report to `results/report/main.pdf`. It also writes one PDF per configured
+data specification, such as `results/report/inv_markup.pdf`,
+`results/report/output_gap_bn.pdf`, `results/report/output_gap_hp.pdf`,
+`results/report/labor_share_gap_hp.pdf`, and
+`results/report/unemployment_gap.pdf`. These PDFs are the primary report
+format.
+
 Table fragments are read from `results/tables/` and figures from
-`results/figures/`. Baseline model results, prior-set robustness, and
-sample-period robustness are displayed in separate tables and figures.
+`results/figures/`. Baseline model results are grouped by data specification,
+competition measurement frequency, prior, period, and coefficient-constraint
+condition, so the quarterly-interpolated and annual-Q4 cases can appear in the
+same PDF. Prior-set robustness, sample-period robustness, and annual-Q4 HSA
+competition decomposition are displayed in separate tables and figures. LaTeX
+auxiliary files are moved to `results/report/build/` after compilation so the
+report folder primarily contains PDFs.

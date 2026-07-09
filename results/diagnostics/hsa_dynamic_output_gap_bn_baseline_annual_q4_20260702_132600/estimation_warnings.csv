@@ -1,0 +1,32 @@
+severity,parameter,warning
+warning,alpha,bulk ESS 35.6 < 400
+warning,alpha,tail ESS 23.3 < 400
+warning,kappa,bulk ESS 29.3 < 400
+warning,kappa,tail ESS 40.0 < 400
+warning,theta,R-hat 1.431 > 1.01
+warning,theta,bulk ESS 40.0 < 400
+warning,theta,tail ESS 40.0 < 400
+warning,phi_1,bulk ESS 21.8 < 400
+warning,phi_1,tail ESS 22.5 < 400
+warning,rho_1,R-hat 2.569 > 1.01
+warning,rho_1,bulk ESS 12.1 < 400
+warning,rho_1,tail ESS 24.2 < 400
+warning,rho_2,R-hat 2.645 > 1.01
+warning,rho_2,bulk ESS 8.7 < 400
+warning,rho_2,tail ESS 19.8 < 400
+warning,n,R-hat 1.927 > 1.01
+warning,n,bulk ESS 40.0 < 400
+warning,n,tail ESS 40.0 < 400
+warning,sigma_e,R-hat 1.098 > 1.01
+warning,sigma_e,bulk ESS 40.0 < 400
+warning,sigma_e,tail ESS 40.0 < 400
+warning,sigma_zeta,bulk ESS 40.0 < 400
+warning,sigma_zeta,tail ESS 40.0 < 400
+warning,sigma_u,R-hat 1.237 > 1.01
+warning,sigma_u,bulk ESS 6.3 < 400
+warning,sigma_u,tail ESS 24.2 < 400
+warning,sigma_eps,R-hat 2.109 > 1.01
+warning,sigma_eps,bulk ESS 6.9 < 400
+warning,sigma_eps,tail ESS 22.5 < 400
+warning,sigma_N,bulk ESS 14.3 < 400
+warning,sigma_N,tail ESS 23.3 < 400

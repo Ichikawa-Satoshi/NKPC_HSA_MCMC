@@ -1,10 +1,2 @@
-run,model,data_spec,prior_spec,constraint_spec,restriction,unit,prior_mean,prior_sd,sddr_bf01
-ces_unemployment_gap_exclude_covid_baseline_20260623_032414,ces,unemployment_gap_exclude_covid,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,1.477439410694546
-hsa_dynamic_unemployment_gap_exclude_covid_baseline_20260623_034730,hsa_dynamic,unemployment_gap_exclude_covid,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,1.3135315668227387
-hsa_dynamic_unemployment_gap_exclude_covid_baseline_20260623_034730,hsa_dynamic,unemployment_gap_exclude_covid,baseline,unrestricted,theta=0,inflation effect per +10 log-point Nhat deviation,0.1,0.2,0.2588124530917529
-hsa_full_unemployment_gap_exclude_covid_baseline_20260623_040307,hsa_full,unemployment_gap_exclude_covid,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.7075201188763041
-hsa_full_unemployment_gap_exclude_covid_baseline_20260623_040307,hsa_full,unemployment_gap_exclude_covid,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.6724780869090633
-hsa_full_unemployment_gap_exclude_covid_baseline_20260623_040307,hsa_full,unemployment_gap_exclude_covid,baseline,unrestricted,theta_0=0,inflation effect per +10 log-point Nhat deviation at average Nbar,0.1,0.2,0.8981906633886743
-hsa_full_unemployment_gap_exclude_covid_baseline_20260623_040307,hsa_full,unemployment_gap_exclude_covid,baseline,unrestricted,gamma=0,change in theta_t per +10 log-point Nbar deviation,0.0,0.02,1.0218912317615212
-hsa_steady_unemployment_gap_exclude_covid_baseline_20260623_033059,hsa_steady,unemployment_gap_exclude_covid,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.4520373899440588
-hsa_steady_unemployment_gap_exclude_covid_baseline_20260623_033059,hsa_steady,unemployment_gap_exclude_covid,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.1757587130097212
+note
+No output available for this block.

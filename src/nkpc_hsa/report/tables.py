@@ -101,6 +101,7 @@ def coefficient_means_table(idata_by_run: dict[str, object]) -> pd.DataFrame:
         data_spec = attrs.get("data_spec", "")
         prior_spec = attrs.get("prior_spec", "")
         n_transform = attrs.get("n_transform", "")
+        competition_frequency = attrs.get("competition_measurement_frequency", "quarterly_interpolated")
         sample_start = attrs.get("sample_start", "")
         sample_end = attrs.get("sample_end", "")
         for name in COEFFICIENT_PARAMETERS:
@@ -117,6 +118,7 @@ def coefficient_means_table(idata_by_run: dict[str, object]) -> pd.DataFrame:
                 "prior_spec": prior_spec,
                 "constraint_spec": constraint_spec,
                 "n_transform": n_transform,
+                "competition_measurement_frequency": competition_frequency,
                 "sample_start": sample_start,
                 "sample_end": sample_end,
             }
@@ -141,6 +143,7 @@ def kappa_comparison_table(idata_by_run: dict[str, object]) -> pd.DataFrame:
             "prior_spec": attrs.get("prior_spec", ""),
             "constraint_spec": attrs.get("constraint_spec", "unrestricted"),
             "n_transform": attrs.get("n_transform", ""),
+            "competition_measurement_frequency": attrs.get("competition_measurement_frequency", "quarterly_interpolated"),
         }
         for name in ["kappa", "kappa_0", "delta"]:
             if name in posterior:
@@ -176,6 +179,7 @@ def time_varying_coefficients_table(idata_by_run: dict[str, object], *, max_rows
         constraint_spec = attrs.get("constraint_spec", "unrestricted")
         data_spec = attrs.get("data_spec", "")
         prior_spec = attrs.get("prior_spec", "")
+        competition_frequency = attrs.get("competition_measurement_frequency", "quarterly_interpolated")
         for name in ["kappa_t", "theta_t"]:
             if name not in posterior:
                 continue
@@ -196,6 +200,7 @@ def time_varying_coefficients_table(idata_by_run: dict[str, object], *, max_rows
                         "data_spec": data_spec,
                         "prior_spec": prior_spec,
                         "constraint_spec": constraint_spec,
+                        "competition_measurement_frequency": competition_frequency,
                         "coefficient": name,
                         "time_index": int(t),
                         "posterior_mean": float(np.mean(vals)),
@@ -227,6 +232,7 @@ def sddr_summary_table(idata_by_run: dict[str, object], priors: dict[str, object
         constraint_spec = attrs.get("constraint_spec", "unrestricted")
         data_spec = attrs.get("data_spec", "")
         prior_spec = attrs.get("prior_spec", "")
+        competition_frequency = attrs.get("competition_measurement_frequency", "quarterly_interpolated")
         run_priors = attrs.get("run_priors") if isinstance(attrs.get("run_priors"), Mapping) else priors
         for var, prior_key in prior_names.items():
             if var not in posterior or prior_key not in run_priors:
@@ -245,6 +251,7 @@ def sddr_summary_table(idata_by_run: dict[str, object], priors: dict[str, object
                     "data_spec": data_spec,
                     "prior_spec": prior_spec,
                     "constraint_spec": constraint_spec,
+                    "competition_measurement_frequency": competition_frequency,
                     "restriction": f"{var}=0",
                     "unit": parameter_unit(var),
                     "prior_mean": mu,
@@ -270,8 +277,18 @@ def coefficient_means_pivot_table(idata_by_run: dict[str, object]) -> pd.DataFra
 
     long = long.copy()
     long["cell"] = long.apply(_fmt, axis=1)
-    pivot = long.pivot_table(index="parameter", columns="model", values="cell", aggfunc="first")
-    models = [m for m in _MODEL_ORDER if m in pivot.columns]
+    frequency_col = "competition_measurement_frequency"
+    frequencies = sorted(str(value) for value in long.get(frequency_col, pd.Series(dtype=str)).dropna().unique())
+    use_frequency_columns = len(frequencies) > 1
+    column_name = "model"
+    if use_frequency_columns:
+        long["model_frequency"] = long["model"].astype(str) + " / " + long[frequency_col].astype(str)
+        column_name = "model_frequency"
+    pivot = long.pivot_table(index="parameter", columns=column_name, values="cell", aggfunc="first")
+    if use_frequency_columns:
+        models = [f"{model} / {frequency}" for model in _MODEL_ORDER for frequency in frequencies if f"{model} / {frequency}" in pivot.columns]
+    else:
+        models = [m for m in _MODEL_ORDER if m in pivot.columns]
     params = [p for p in _PARAM_ORDER if p in pivot.index]
     pivot = pivot.reindex(index=params, columns=models)
     pivot.index.name = "parameter"

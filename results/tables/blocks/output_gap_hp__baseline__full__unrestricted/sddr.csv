@@ -1,10 +1,10 @@
 run,model,data_spec,prior_spec,constraint_spec,restriction,unit,prior_mean,prior_sd,sddr_bf01
-ces_output_gap_hp_baseline_20260623_105152,ces,output_gap_hp,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,0.058700548183639664
-hsa_dynamic_output_gap_hp_baseline_20260623_105525,hsa_dynamic,output_gap_hp,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,0.10193490844505257
-hsa_dynamic_output_gap_hp_baseline_20260623_105525,hsa_dynamic,output_gap_hp,baseline,unrestricted,theta=0,inflation effect per +10 log-point Nhat deviation,0.1,0.2,0.6200490677684866
-hsa_full_output_gap_hp_baseline_20260623_105859,hsa_full,output_gap_hp,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.16663126374746307
-hsa_full_output_gap_hp_baseline_20260623_105859,hsa_full,output_gap_hp,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.8607714823377031
-hsa_full_output_gap_hp_baseline_20260623_105859,hsa_full,output_gap_hp,baseline,unrestricted,theta_0=0,inflation effect per +10 log-point Nhat deviation at average Nbar,0.1,0.2,0.2892761199793216
-hsa_full_output_gap_hp_baseline_20260623_105859,hsa_full,output_gap_hp,baseline,unrestricted,gamma=0,change in theta_t per +10 log-point Nbar deviation,0.0,0.02,0.9883408515525217
-hsa_steady_output_gap_hp_baseline_20260623_105155,hsa_steady,output_gap_hp,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.12460751309140723
-hsa_steady_output_gap_hp_baseline_20260623_105155,hsa_steady,output_gap_hp,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,1.0043339928659905
+ces_output_gap_hp_baseline_annual_q4_20260702_132605,ces,output_gap_hp,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,0.06176365786282002
+hsa_dynamic_output_gap_hp_baseline_annual_q4_20260702_132608,hsa_dynamic,output_gap_hp,baseline,unrestricted,kappa=0,inflation points per x point,0.1,0.2,0.17771109373390717
+hsa_dynamic_output_gap_hp_baseline_annual_q4_20260702_132608,hsa_dynamic,output_gap_hp,baseline,unrestricted,theta=0,inflation effect per +10 log-point Nhat deviation,0.1,0.2,1.3683240148642024
+hsa_full_output_gap_hp_baseline_annual_q4_20260702_132612,hsa_full,output_gap_hp,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.05406724095718476
+hsa_full_output_gap_hp_baseline_annual_q4_20260702_132612,hsa_full,output_gap_hp,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,1.1194525395310195
+hsa_full_output_gap_hp_baseline_annual_q4_20260702_132612,hsa_full,output_gap_hp,baseline,unrestricted,theta_0=0,inflation effect per +10 log-point Nhat deviation at average Nbar,0.1,0.2,1.1092964728449601
+hsa_full_output_gap_hp_baseline_annual_q4_20260702_132612,hsa_full,output_gap_hp,baseline,unrestricted,gamma=0,change in theta_t per +10 log-point Nbar deviation,0.0,0.02,0.8654370476653382
+hsa_steady_output_gap_hp_baseline_annual_q4_20260702_132606,hsa_steady,output_gap_hp,baseline,unrestricted,kappa_0=0,inflation points per x point at average Nbar,0.1,0.2,0.010249542424497386
+hsa_steady_output_gap_hp_baseline_annual_q4_20260702_132606,hsa_steady,output_gap_hp,baseline,unrestricted,delta=0,change in kappa_t per +10 log-point Nbar deviation,0.0,0.02,0.8322676486114978

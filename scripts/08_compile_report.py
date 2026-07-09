@@ -25,6 +25,7 @@ def _ensure_inputs(tables_dir: Path, figures_dir: Path, model_comparison_dir: Pa
     _ensure_fragment(tables_dir / "sddr.tex", "Run scripts/07_make_tables_figures.py first.")
     _ensure_fragment(tables_dir / "prior_set_coefficients.tex", "Run scripts/07_make_tables_figures.py first.")
     _ensure_fragment(tables_dir / "posterior_summary.tex", "Run scripts/07_make_tables_figures.py first.")
+    _ensure_fragment(tables_dir / "competition_decomposition.tex", "Run scripts/07_make_tables_figures.py first.")
     _ensure_fragment(tables_dir / "mcmc_diagnostics.tex", "Run scripts/03_run_diagnostics.py first.")
     _ensure_fragment(tables_dir / "prior_robustness.tex", "Run scripts/04_prior_robustness.py first.")
     _ensure_fragment(tables_dir / "period_robustness.tex", "Run scripts/05_period_robustness.py first.")
@@ -41,6 +42,7 @@ def _ensure_inputs(tables_dir: Path, figures_dir: Path, model_comparison_dir: Pa
         (figures_dir / "prior_posterior_gamma.png", "No prior/posterior gamma figure available yet."),
         (figures_dir / "prior_set_key_coefficients.png", "No prior-set coefficient figure available yet."),
         (figures_dir / "period_set_key_coefficients.png", "No period coefficient figure available yet."),
+        (figures_dir / "competition_decomposition_path.png", "No competition decomposition figure available yet."),
     ]:
         if not path.exists():
             save_placeholder_figure(path, text)

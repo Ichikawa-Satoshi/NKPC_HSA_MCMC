@@ -1,0 +1,9 @@
+bulk ESS 384.3 < 400
+bulk ESS 62.2 < 400
+tail ESS 56.9 < 400
+bulk ESS 82.2 < 400
+tail ESS 120.7 < 400
+bulk ESS 302.5 < 400
+bulk ESS 84.5 < 400
+bulk ESS 77.5 < 400
+tail ESS 162.3 < 400
