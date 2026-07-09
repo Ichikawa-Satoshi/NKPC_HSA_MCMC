@@ -35,7 +35,7 @@ def test_period_filter_excludes_covid() -> None:
 
 
 def test_hsa_full_conditional_chib_is_computed() -> None:
-    from analysis.gibbs.func_gibbs.gibbs_marginal_likelihood import chib_conditional_marginal_likelihood
+    from nkpc_hsa.gibbs.gibbs_marginal_likelihood import chib_conditional_marginal_likelihood
 
     chains, draws, time = 2, 20, 8
     rng = np.random.default_rng(123)

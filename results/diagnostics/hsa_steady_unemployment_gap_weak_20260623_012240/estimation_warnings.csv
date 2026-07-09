@@ -1,5 +1,0 @@
-severity,parameter,warning
-warning,delta,bulk ESS 165.4 < 400
-warning,delta,tail ESS 114.5 < 400
-warning,kappa_t_mid,bulk ESS 360.3 < 400
-warning,kappa_t_mid,tail ESS 176.7 < 400

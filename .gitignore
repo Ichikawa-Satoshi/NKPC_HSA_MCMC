@@ -3,8 +3,9 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 .DS_Store
-results/.mplconfig/
+*.egg-info/
 
+# LaTeX aux
 *.aux
 *.fdb_latexmk
 *.fls
@@ -14,8 +15,8 @@ results/.mplconfig/
 *.snm
 *.synctex.gz
 *.toc
+*.lyx~
 
-results/runs/
-results/report/*.aux
-results/report/*.log
-results/report/*.out
+# generated outputs and dead code (kept on disk, not in git)
+results/
+archive/

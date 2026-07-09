@@ -15,7 +15,7 @@ def write_default_report(
     figure_dir: str = "../figures",
     model_comparison_dir: str = "../model_comparison",
 ) -> Path:
-    target = Path(path) if path is not None else project_path("reports", "main.tex")
+    target = Path(path) if path is not None else project_path("paper", "main.tex")
     target.parent.mkdir(parents=True, exist_ok=True)
     text = (
         r"""\documentclass[11pt]{article}

@@ -123,10 +123,10 @@ python scripts/08_compile_report.py
 - `results/tables/`, `results/figures/`, `results/model_comparison/`: report inputs generated from saved runs.
 - `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`: robustness and diagnostic outputs.
 - `results/report/`: primary PDF reports. LaTeX build byproducts are moved to `results/report/build/`.
-- `reports/`: LaTeX report sources.
-- `notebooks/`: exploration only.
-- `analysis/gibbs/func_gibbs/`: legacy Gibbs sampler backend used by the current adapters.
-- `archive/`: old notebooks, old scripts, and old generated outputs retained for reference.
+- `paper/`: LaTeX report sources.
+- `references/`: literature PDFs and research notes.
+- `src/nkpc_hsa/gibbs/`: Gibbs sampler backend used by the current adapters (moved from `analysis/gibbs/func_gibbs/`).
+- `archive/`: old notebooks, scripts, and generated outputs retained for reference (git-ignored).
 
 Raw data should never be overwritten. Processed data and estimation outputs are
 regenerated under `data/processed/` and `results/`. Legacy outputs are retained
@@ -307,7 +307,7 @@ physical units; the wrapper converts them to sampler-internal units.
 
 ## Report
 
-`scripts/08_compile_report.py` writes `reports/main.tex` and compiles the main
+`scripts/08_compile_report.py` uses `paper/main.tex` and compiles the main
 PDF report to `results/report/main.pdf`. It also writes one PDF per configured
 data specification, such as `results/report/inv_markup.pdf`,
 `results/report/output_gap_bn.pdf`, `results/report/output_gap_hp.pdf`,

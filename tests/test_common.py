@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from analysis.gibbs.func_gibbs.common.constraints import draw_with_constraints
+from nkpc_hsa.gibbs.common.constraints import draw_with_constraints
 from nkpc_hsa.models.common import (
     KAPPA_SCALE,
     coefficient_constraints_to_internal,

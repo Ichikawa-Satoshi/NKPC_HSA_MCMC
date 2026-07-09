@@ -51,7 +51,7 @@ def _ensure_inputs(tables_dir: Path, figures_dir: Path, model_comparison_dir: Pa
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--tex", default=str(ROOT / "reports" / "main.tex"))
+    parser.add_argument("--tex", default=str(ROOT / "paper" / "main.tex"))
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
     parser.add_argument(
         "--data-spec",
@@ -73,7 +73,7 @@ def main() -> None:
         written.append(Path(args.tex))
     if not args.combined_only:
         for data_spec_name, data_spec in data_specs.items():
-            tex = ROOT / "reports" / f"{data_spec_name}.tex"
+            tex = ROOT / "paper" / f"{data_spec_name}.tex"
             write_default_report(
                 tex,
                 title_suffix=f": {data_spec_label(data_spec)}",

@@ -112,7 +112,7 @@ def test_hsa_full_uses_sigma_N_measurement_error(tmp_path) -> None:
 
 
 def test_chib_priors_are_threaded() -> None:
-    from analysis.gibbs.func_gibbs.gibbs_marginal_likelihood import _resolve_priors
+    from nkpc_hsa.gibbs.gibbs_marginal_likelihood import _resolve_priors
 
     pri = _resolve_priors({"delta": [0.0, 0.02], "rho_1": [0.5, 0.2], "a_N": 2.0})
     assert pri["delta"] == (0.0, 0.02)

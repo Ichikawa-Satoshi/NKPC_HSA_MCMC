@@ -1,3 +1,0 @@
-severity,parameter,warning
-warning,n,bulk ESS 272.3 < 400
-warning,n,tail ESS 329.1 < 400

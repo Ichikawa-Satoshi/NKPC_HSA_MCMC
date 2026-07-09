@@ -1,9 +1,0 @@
-severity,parameter,warning
-warning,kappa_0,tail ESS 339.0 < 400
-warning,delta,R-hat 1.014 > 1.01
-warning,delta,bulk ESS 73.1 < 400
-warning,delta,tail ESS 45.3 < 400
-warning,rho_1,R-hat 1.012 > 1.01
-warning,n,R-hat 1.070 > 1.01
-warning,n,bulk ESS 56.1 < 400
-warning,n,tail ESS 45.3 < 400

@@ -169,7 +169,7 @@ def model_comparison_table(results: Mapping[str, object], *, data_by_model: Mapp
             if family is None:
                 row["notes"] += " Chib not computed for unknown model family."
             elif data is not None:
-                from analysis.gibbs.func_gibbs.gibbs_marginal_likelihood import (
+                from nkpc_hsa.gibbs.gibbs_marginal_likelihood import (
                     chib_conditional_marginal_likelihood,
                     chib_marginal_likelihood,
                 )

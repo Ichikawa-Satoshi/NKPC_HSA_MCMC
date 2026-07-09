@@ -121,7 +121,7 @@ def add_labor_share_gap(data: pd.DataFrame, raw_dir: str | Path, lamb: float = 1
 def build_processed_dataset(raw_dir: str | Path | None = None, out_path: str | Path | None = None) -> pd.DataFrame:
     """Build the processed model-ready dataset without overwriting raw data."""
     try:
-        from analysis.gibbs.func_data_build import build_dataset
+        from nkpc_hsa.data.func_data_build import build_dataset
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError("Legacy data builder is unavailable.") from exc
 

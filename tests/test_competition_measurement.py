@@ -5,7 +5,7 @@ import json
 import numpy as np
 import pandas as pd
 
-from analysis.gibbs.func_gibbs.common.competition import finite_N_residuals
+from nkpc_hsa.gibbs.common.competition import finite_N_residuals
 from nkpc_hsa.data.competition import build_competition_observation, pchip_interpolate_annual_q4
 from nkpc_hsa.inference.wrappers import run_model
 from nkpc_hsa.report.data_model_report import write_data_model_report
