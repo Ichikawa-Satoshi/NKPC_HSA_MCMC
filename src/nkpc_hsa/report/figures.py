@@ -269,7 +269,14 @@ def save_coefficient_interval_plot(
     return True
 
 
-def save_time_varying_path(idata_by_run: dict[str, object], var_name: str, out_path: str | Path) -> bool:
+def save_time_varying_path(
+    idata_by_run: dict[str, object],
+    var_name: str,
+    out_path: str | Path,
+    *,
+    title: str | None = None,
+    subtitle: str | None = None,
+) -> bool:
     import matplotlib.dates as mdates
     import matplotlib.pyplot as plt
     import numpy as np
@@ -304,7 +311,12 @@ def save_time_varying_path(idata_by_run: dict[str, object], var_name: str, out_p
         plt.close(fig)
         return False
     ax.axhline(0.0, color="black", lw=0.8, alpha=0.5)
-    ax.set_title(f"Time-varying coefficient path: {var_name}")
+    if title:
+        fig.suptitle(title, fontsize=12)
+        if subtitle:
+            ax.set_title(subtitle, fontsize=8.5, color="0.35", pad=8)
+    else:
+        ax.set_title(f"Time-varying coefficient path: {var_name}")
     if sample_start:
         ax.xaxis.set_major_locator(mdates.YearLocator(5))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
@@ -315,7 +327,7 @@ def save_time_varying_path(idata_by_run: dict[str, object], var_name: str, out_p
     ax.set_ylabel("posterior mean and 95% interval")
     ax.legend(loc="best")
     ax.grid(True, alpha=0.25)
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 0.92) if title else None)
     fig.savefig(target, dpi=200, bbox_inches="tight")
     plt.close(fig)
     return True

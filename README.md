@@ -10,11 +10,11 @@ The canonical workflow is script-based. Notebooks are kept only for exploration.
 ## Quick Start
 
 ```bash
-cd /path/to/NKPC_HSA_MCMC   # ← プロジェクトルートに移動（以降のコマンドはここから実行）
-python -m pip install -e .   # 初回のみ：パッケージをローカルにインストール
+cd /path/to/NKPC_HSA_MCMC   # move to the project root (all commands run from here)
+python -m pip install -e .   # first time only: install the package locally
 ```
 
-動作確認（スモークテスト、数秒で完了）:
+Smoke test (completes in seconds):
 
 ```bash
 python scripts/01_build_data.py
@@ -23,69 +23,81 @@ python scripts/02_estimate_models.py --quick
 
 ---
 
-## Full Pipeline（推定からレポートまで）
+## Full Pipeline (estimation to reports)
 
-プロジェクトルートから下記8ステップを順に実行する。
-4モデル（CES / hsa_steady / hsa_dynamic / hsa_full）× 5データ系列 = 計20本のギブスサンプリング
-（`n_iter=12000`、バーンイン`4000`、チェーン数`2`）。
+Run the steps below in order from the project root.
+5 models (CES / hsa_steady / hsa_dynamic / hsa_full / hsa_const_theta)
+x 8 data specifications = 40 Gibbs sampling runs for the baseline pass
+(`n_iter=12000`, burn-in `4000`, `2` chains).
 
 ```bash
-cd /Users/satoshi/GitHub/NKPC_HSA_MCMC   # ← 最初に必ずここへ移動
+cd /path/to/NKPC_HSA_MCMC   # always move here first
 
-# 1. データ構築（data/processed/model_ready.csv を生成）
+# 1. Build data (writes data/processed/model_ready.csv)
 python scripts/01_build_data.py
 
-# 2. フル推定（最も時間がかかる：20本のGibbs sampling）
+# 2. Full estimation (the slowest step: 40 Gibbs sampling runs)
 python scripts/02_estimate_models.py \
     --config configs/models.yaml \
     --priors configs/priors_baseline.yaml
 
-# 2b. 制約付き推定（kappa >= 0 制約あり版：reportで制約なし版と比較するため）
+# 2b. Constrained estimation (kappa >= 0, compared against the
+#     unrestricted runs in the report)
 python scripts/02_estimate_models.py \
     --config configs/models.yaml \
     --priors configs/priors_baseline.yaml \
     --positive kappa
 
-# 時変kappaモデルで全時点の kappa_t >= 0 を課す版
+# Same, imposing kappa_t >= 0 at every period in time-varying-kappa models
 python scripts/02_estimate_models.py \
     --config configs/models.yaml \
     --priors configs/priors_baseline.yaml \
     --positive kappa_t
 
-# 3. MCMC収束診断（R-hat, ESS を results/diagnostics/ に出力）
+# 3. MCMC convergence diagnostics (R-hat, ESS -> results/diagnostics/)
 python scripts/03_run_diagnostics.py
 
-# 4. 事前分布ロバストネス（baseline / weak / tight の3種で hsa_steady を再推定）
+# 4. Prior robustness (re-estimates under baseline / weak / tight priors)
 python scripts/04_prior_robustness.py
 
-# 5. サブサンプル期間ロバストネス（configs/periods.yaml の各期間で再推定）
+# 5. Sub-sample robustness (re-estimates each period in configs/periods.yaml)
 python scripts/05_period_robustness.py
 
-# 6. モデル比較（SDDR・予測スコアを results/model_comparison/ に出力）
+# 6. Model comparison (SDDR and predictive scores -> results/model_comparison/)
 python scripts/06_model_comparison.py
 
-# 7. 表・図の生成（results/tables/, results/figures/ に出力）
+# 7. Tables and figures (-> results/tables/, results/figures/)
 python scripts/07_make_tables_figures.py
 
-# 8. レポートコンパイル（results/report/*.pdf を生成）
+# 8. Compile the PDF reports (-> results/report/*.pdf)
 python scripts/08_compile_report.py
+
+# 9. (Optional) identification diagnostics (-> results/diagnostics/)
+python scripts/09_identification_diagnostics.py
+
+# 10. Browsable HTML report (-> results/report.html)
+python scripts/10_build_html_report.py
 ```
 
-推定結果は `results/runs/<model>_<data_spec>_<prior>_<timestamp>/posterior.nc` に保存される。
+Estimation output is saved under
+`results/runs/<model>_<data_spec>_<prior>_<timestamp>/posterior.nc`.
 
-特定データ系列のみ推定する場合:
+To estimate selected data specifications only:
 
 ```bash
-python scripts/02_estimate_models.py --data-spec inv_markup        # 逆マークアップのみ
-python scripts/02_estimate_models.py --data-spec output_gap_bn     # 産出ギャップのみ
-python scripts/02_estimate_models.py --data-spec output_gap_hp     # HPフィルター産出ギャップのみ
-python scripts/02_estimate_models.py --data-spec labor_share_gap_hp # HPフィルター労働分配率ギャップのみ
-python scripts/02_estimate_models.py --data-spec unemployment_gap  # 失業率ギャップのみ
+python scripts/02_estimate_models.py --data-spec inv_markup            # inverse markup gap only
+python scripts/02_estimate_models.py --data-spec output_gap_bn         # BN output gap only
+python scripts/02_estimate_models.py --data-spec output_gap_bn_core    # BN output gap (core CPI)
+python scripts/02_estimate_models.py --data-spec output_gap_hp         # HP output gap only
+python scripts/02_estimate_models.py --data-spec output_gap_hp_core    # HP output gap (core CPI)
+python scripts/02_estimate_models.py --data-spec labor_share_gap_hp    # HP labor-share gap only
+python scripts/02_estimate_models.py --data-spec unemployment_gap      # unemployment gap only
+python scripts/02_estimate_models.py --data-spec unemployment_gap_core # unemployment gap (core CPI)
 ```
 
 ---
 
-## Reproducible Pipeline（フルパイプライン）
+## Reproducible Pipeline
 
 ```bash
 python scripts/01_build_data.py
@@ -99,7 +111,7 @@ python scripts/07_make_tables_figures.py
 python scripts/08_compile_report.py
 ```
 
-スモークテスト版:
+Smoke-test version:
 
 ```bash
 python scripts/01_build_data.py
@@ -115,22 +127,54 @@ python scripts/08_compile_report.py
 ## Structure
 
 - `src/nkpc_hsa/`: reusable package code.
+- `src/nkpc_hsa/gibbs/`: Gibbs sampler backend used by the current adapters
+  (moved from `analysis/gibbs/func_gibbs/`).
 - `scripts/`: canonical pipeline entry points.
 - `configs/`: model, path, and prior YAML files.
 - `data/raw/`: raw input files, grouped by source/topic.
 - `data/processed/`: generated model-ready datasets.
-- `results/runs/`: one folder per estimation run with posterior draws, configs, metadata, and run-level support files.
-- `results/tables/`, `results/figures/`, `results/model_comparison/`: report inputs generated from saved runs.
-- `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`: robustness and diagnostic outputs.
-- `results/report/`: primary PDF reports. LaTeX build byproducts are moved to `results/report/build/`.
+- `results/runs/`: one folder per estimation run with posterior draws, configs,
+  metadata, and run-level support files.
+- `results/tables/`, `results/figures/`, `results/model_comparison/`: report
+  inputs generated from saved runs.
+- `results/diagnostics/`, `results/prior_robustness/`,
+  `results/period_robustness/`: robustness and diagnostic outputs.
+- `results/report/`: primary PDF reports. LaTeX build byproducts are moved to
+  `results/report/build/`.
 - `paper/`: LaTeX report sources.
-- `references/`: literature PDFs and research notes.
-- `src/nkpc_hsa/gibbs/`: Gibbs sampler backend used by the current adapters (moved from `analysis/gibbs/func_gibbs/`).
-- `archive/`: old notebooks, scripts, and generated outputs retained for reference (git-ignored).
+- `references/`: literature PDFs and research notes (including
+  `references/notes/annual_q4_state_space.md`, the mixed-frequency methodology
+  note).
+- `archive/`: old notebooks, scripts, and generated outputs retained for
+  reference (git-ignored).
 
 Raw data should never be overwritten. Processed data and estimation outputs are
 regenerated under `data/processed/` and `results/`. Legacy outputs are retained
 under `archive/legacy_results/` and are not used by the pipeline.
+
+## Models
+
+All variants share the NKPC observation equation
+
+```text
+pi_t = alpha*pi_{t-1} + (1-alpha)*E_t pi_{t+1} + kappa_t*x_t - theta_t*Nhat_t + e_t
+```
+
+and differ only in the slope restrictions:
+
+| Model | kappa_t | theta_t |
+|---|---|---|
+| `ces` | constant | 0 |
+| `hsa_steady` | `kappa_0 + delta*Nbar_t` | 0 |
+| `hsa_dynamic` | constant | constant |
+| `hsa_const_theta` | `kappa_0 + delta*Nbar_t` | constant |
+| `hsa_full` | `kappa_0 + delta*Nbar_t` | `theta_0 + gamma*Nbar_t` |
+
+HSA models decompose competition as `N_obs_t = Nbar_t + Nhat_t + nu_t`, with an
+AR(2) gap `Nhat_t` (truncated to the stationary region) and a random-walk
+trend `Nbar_t` with drift. `hsa_const_theta` restricts `hsa_full` by fixing
+`gamma = 0`; it exists because the `gamma` regressor (`Nhat*Nbar`) is nearly
+collinear with the `theta_0` regressor (`Nhat`) and `gamma` is not identified.
 
 ## Unit Conventions
 
@@ -164,11 +208,13 @@ competition_measurement:
 annual competition data are transformed and PCHIP-interpolated to quarterly
 frequency, and the resulting quarterly `N_obs_t` enters the N measurement
 equation every quarter. `annual_q4` is a mixed-frequency robustness
-specification: annual competition data are transformed but not interpolated, the
-annual observation is loaded only in Q4, and Q1-Q3 are treated as missing in the
-N measurement equation. In `annual_q4` runs, quarterly latent competition states
-are inferred by the state-space model; the PCHIP series shown in comparison
-plots is not used in estimation.
+specification: annual competition data are transformed but not interpolated,
+the annual observation is loaded only in Q4, and Q1-Q3 are treated as missing
+in the N measurement equation. In `annual_q4` runs, quarterly latent
+competition states are inferred by the state-space model; the PCHIP series
+shown in comparison plots is not used in estimation. See
+`references/notes/annual_q4_state_space.md` for the full state-space
+formulation.
 
 Use the CLI override when needed:
 
@@ -199,7 +245,7 @@ python scripts/08_compile_report.py
 ```
 
 For annual-Q4 HSA runs, the PDF report includes a posterior decomposition of
-competition, \(N_t=\bar N_t+\hat N_t\). The full quarterly decomposition is
+competition, `N_t = Nbar_t + Nhat_t`. The full quarterly decomposition is
 written to `results/tables/competition_decomposition.csv` and to the
 data-spec-specific table folders.
 
@@ -221,7 +267,7 @@ of `S_Sigma` for the `hsa_dynamic` inverse-Wishart prior. Earlier IG(2, 2)
 settings forced these variances two orders of magnitude too large, which made
 the `Nbar`/`Nhat` decomposition spuriously volatile and attenuated `delta`.
 
-`hsa_full` now includes an explicit N measurement error
+`hsa_full` includes an explicit N measurement error
 (`N_obs_t = Nhat_t + Nbar_t + nu_t`, `nu_t ~ N(0, sigma_N^2)`) like the other
 HSA models. Conditional on this measurement equation, its two-block state
 sampler (`Nhat | Nbar`, then `Nbar | Nhat`) is an exact Gibbs step; the old
@@ -236,6 +282,10 @@ the legacy raw-data builder. The resulting HP cycle is therefore in the same
 `labor_share_gap_HP` is generated from `data/raw/laborshare/PRS85006173.csv` by
 applying the HP filter to `100 * log(labor_share_index)`. It is treated as an
 additional real-activity proxy in the same script pipeline.
+The `*_core` data specifications re-estimate a given activity measure with core
+CPI inflation (`pi_cpi_core`) on the left-hand side instead of headline CPI;
+they exist because oil-driven headline swings in 2008Q3-2009Q4 contaminate the
+GDP-based specifications.
 `kappa_0` and `theta_0` are intercepts at average competition because the
 default `N` transform is centered.
 
@@ -270,7 +320,7 @@ Bounds for `kappa`, `kappa_0`, `kappa_t`, and `delta` are specified in physical
 units and converted internally by the wrapper. Bounds for `theta`, `theta_0`,
 `gamma`, `alpha`, `rho_1`, and `rho_2` are used as written. In HSA steady/full
 models, `kappa_t` is a path restriction: each candidate draw must satisfy the
-bound for every sampled period of \(\kappa_t=\kappa_0+\delta\bar N_t\). A
+bound for every sampled period of `kappa_t = kappa_0 + delta*Nbar_t`. A
 generic `--positive kappa` also applies to the time-varying kappa path in
 models that do not have a scalar `kappa`. These constraints define a different
 posterior with hard prior support; they should be reported as a restricted
@@ -290,8 +340,11 @@ marginal likelihood when the legacy ordinate calculation is compatible with the
 model family and supplied data. For `hsa_full`, the Chib output is a
 conditional Chib calculation for the inflation equation, conditioning on
 posterior mean `Nhat` and `Nbar` paths, because the full observation equation
-contains the nonlinear term `gamma * Nbar_t * Nhat_t`. WAIC/LOO are not used as
-primary criteria for these latent-state models.
+contains the nonlinear term `gamma * Nbar_t * Nhat_t`. Chib log-ML is not
+computed for `hsa_const_theta`, and log-ML values for `annual_q4` blocks are
+currently invalid (the Chib routine does not handle missing N observations);
+use SDDR and predictive scores there. WAIC/LOO are not used as primary
+criteria for these latent-state models.
 
 ## Adding A Model Variant
 
@@ -311,6 +364,7 @@ physical units; the wrapper converts them to sampler-internal units.
 PDF report to `results/report/main.pdf`. It also writes one PDF per configured
 data specification, such as `results/report/inv_markup.pdf`,
 `results/report/output_gap_bn.pdf`, `results/report/output_gap_hp.pdf`,
+`results/report/output_gap_hp_core.pdf`,
 `results/report/labor_share_gap_hp.pdf`, and
 `results/report/unemployment_gap.pdf`. These PDFs are the primary report
 format.
@@ -323,3 +377,8 @@ same PDF. Prior-set robustness, sample-period robustness, and annual-Q4 HSA
 competition decomposition are displayed in separate tables and figures. LaTeX
 auxiliary files are moved to `results/report/build/` after compilation so the
 report folder primarily contains PDFs.
+
+`scripts/10_build_html_report.py` builds a single browsable HTML version of
+the same content (`results/report.html`): a sidebar per activity measure, one
+section per result block with coefficient/SDDR/model-comparison tables, and a
+figure selector with click-to-enlarge.

@@ -70,6 +70,20 @@ def _constraint_display(constraint: str) -> str:
     return labels.get(constraint, constraint.replace("restricted_", "").replace("_", " ") + " restricted")
 
 
+def _data_spec_display(data_spec: str | None, labels: dict[str, str] | None) -> str:
+    if data_spec is None:
+        return "All configured specifications"
+    return (labels or {}).get(data_spec, data_spec.replace("_", " "))
+
+
+def _frequency_display(frequency: str) -> str:
+    labels = {
+        "quarterly_interpolated": "quarterly interpolated",
+        "annual_q4": "annual Q4",
+    }
+    return labels.get(frequency, frequency.replace("_", " "))
+
+
 def _display(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     if df.empty:
         return df
@@ -505,6 +519,7 @@ def _write_result_blocks(
     figures_dir: Path,
     data_spec: str | None,
     base_names: list[str],
+    data_spec_labels: dict[str, str] | None,
     period_table: pd.DataFrame,
     comparison_data: dict[tuple[str, str], dict[str, object]] | None = None,
     all_baseline_runs: dict[str, object] | None = None,
@@ -550,6 +565,12 @@ def _write_result_blocks(
         block_figure_dir = figures_dir / "blocks" / block_id
         block_table_dir.mkdir(parents=True, exist_ok=True)
         block_figure_dir.mkdir(parents=True, exist_ok=True)
+        data_label = _data_spec_display(base, data_spec_labels)
+        constraint_label = _constraint_display(constraint)
+        figure_subtitle = (
+            f"competition={_frequency_display(frequency)}; prior={prior}; "
+            f"period={period}; constraint={constraint_label}"
+        )
 
         # Cross-transform runs for this block: all models matching this constraint, regardless of n_transform.
         # Used for coefficient pivot and prior/posterior figures.
@@ -617,13 +638,24 @@ def _write_result_blocks(
         )
 
         kappa_path = block_figure_dir / "kappa_t_path.png"
-        if not save_time_varying_path(block_runs, "kappa_t", kappa_path):
+        if not save_time_varying_path(
+            block_runs,
+            "kappa_t",
+            kappa_path,
+            title=f"{data_label}: time-varying kappa_t path",
+            subtitle=figure_subtitle,
+        ):
             save_placeholder_figure(kappa_path, "No kappa_t path for this block.")
         theta_path = block_figure_dir / "theta_t_path.png"
-        if not save_time_varying_path(block_runs, "theta_t", theta_path):
+        if not save_time_varying_path(
+            block_runs,
+            "theta_t",
+            theta_path,
+            title=f"{data_label}: time-varying theta_t path",
+            subtitle=figure_subtitle,
+        ):
             save_placeholder_figure(theta_path, "No theta_t path for this block.")
 
-        constraint_label = _constraint_display(constraint)
         constraint_suffix = f", constraint={constraint_label}" if constraint != "unrestricted" else ""
         title = f"{base}: {frequency}, prior={prior}, period={period}{constraint_suffix}"
         lines.extend(
@@ -685,6 +717,7 @@ def _make_outputs(
     n_transform: str | None = None,
     competition_frequency: str | None = None,
     base_data_specs: list[str] | None = None,
+    data_spec_labels: dict[str, str] | None = None,
     comparison_data: dict[tuple[str, str], dict[str, object]] | None = None,
 ) -> None:
     tables_dir.mkdir(parents=True, exist_ok=True)
@@ -775,9 +808,22 @@ def _make_outputs(
         _display(tv_out, _combined_columns(data_spec, ["model", "coefficient", "time_index", "posterior_mean", "ci_2.5", "ci_97.5"])),
         tables_dir / "time_varying_coefficients.tex",
     )
-    if not save_time_varying_path(baseline_runs, "kappa_t", figures_dir / "kappa_t_path.png"):
+    data_label = _data_spec_display(data_spec, data_spec_labels)
+    if not save_time_varying_path(
+        baseline_runs,
+        "kappa_t",
+        figures_dir / "kappa_t_path.png",
+        title=f"{data_label}: time-varying kappa_t path",
+        subtitle="baseline runs",
+    ):
         save_placeholder_figure(figures_dir / "kappa_t_path.png", "No kappa_t path available. Run HSA steady or HSA full.")
-    if not save_time_varying_path(baseline_runs, "theta_t", figures_dir / "theta_t_path.png"):
+    if not save_time_varying_path(
+        baseline_runs,
+        "theta_t",
+        figures_dir / "theta_t_path.png",
+        title=f"{data_label}: time-varying theta_t path",
+        subtitle="baseline runs",
+    ):
         save_placeholder_figure(figures_dir / "theta_t_path.png", "No theta_t path available. Run HSA full.")
 
     _write_competition_decomposition_outputs(
@@ -910,6 +956,7 @@ def _make_outputs(
         figures_dir=figures_dir,
         data_spec=data_spec,
         base_names=base_names,
+        data_spec_labels=data_spec_labels,
         period_table=period_source,
         comparison_data=comparison_data,
         all_baseline_runs=all_baseline_runs,
@@ -939,6 +986,7 @@ def main() -> None:
 
     config = load_model_config(args.config)
     data_specs = configured_data_specs(config, args.data_specs)
+    data_spec_labels = {name: str(spec.get("label") or name) for name, spec in data_specs.items()}
     n_transform = str(config.get("defaults", {}).get("n_transform", DEFAULT_N_TRANSFORM))
     idata_by_run = _load_idata_by_run(args.runs_dir)
     priors = _load_prior(args.priors)
@@ -960,6 +1008,7 @@ def main() -> None:
         n_transform=n_transform,
         competition_frequency=args.competition_frequency,
         base_data_specs=list(data_specs),
+        data_spec_labels=data_spec_labels,
         comparison_data=comparison_data,
     )
     if not args.combined_only:
@@ -973,6 +1022,7 @@ def main() -> None:
                 n_transform=n_transform,
                 competition_frequency=args.competition_frequency,
                 base_data_specs=list(data_specs),
+                data_spec_labels=data_spec_labels,
                 comparison_data=comparison_data,
             )
 

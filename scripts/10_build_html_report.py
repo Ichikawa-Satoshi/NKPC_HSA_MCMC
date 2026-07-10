@@ -7,13 +7,14 @@ TAB = os.path.join(ROOT, "results/tables")
 FIGREL = "figures"   # relative to results/report.html
 
 SPECS = [
-    ("unemployment_gap", "Unemployment gap"),
-    ("unemployment_gap_core", "Unemployment gap · core CPI"),
-    ("output_gap_bn", "Output gap · BN filter"),
-    ("output_gap_bn_core", "Output gap BN · core CPI"),
-    ("output_gap_hp", "Output gap · HP filter"),
-    ("inv_markup", "Inverse-markup gap"),
-    ("labor_share_gap_hp", "Labor-share gap · HP"),
+    ("unemployment_gap", "Unemployment gap", "headline CPI inflation", "unemployment gap"),
+    ("unemployment_gap_core", "Unemployment gap · core CPI", "core CPI inflation", "unemployment gap"),
+    ("output_gap_bn", "Output gap · BN filter", "headline CPI inflation", "output gap, BN filter"),
+    ("output_gap_bn_core", "Output gap BN · core CPI", "core CPI inflation", "output gap, BN filter"),
+    ("output_gap_hp", "Output gap · HP filter", "headline CPI inflation", "output gap, HP filter"),
+    ("output_gap_hp_core", "Output gap HP · core CPI", "core CPI inflation", "output gap, HP filter"),
+    ("inv_markup", "Inverse-markup gap", "headline CPI inflation", "inverse-markup gap"),
+    ("labor_share_gap_hp", "Labor-share gap · HP", "headline CPI inflation", "labor-share gap, HP filter"),
 ]
 FREQ_R = {"quarterly_interpolated": 0, "annual_q4": 1}
 PRIOR_R = {"baseline": 0, "weak": 1, "tight": 2}
@@ -128,9 +129,9 @@ def figs_for(spec, name):
 
 
 def build():
-    data = {"specs": [], "labels": {}, "overview": {}}
+    data = {"specs": [], "labels": {}, "details": {}, "overview": {}}
     headline = []
-    for spec, label in SPECS:
+    for spec, label, inflation, activity in SPECS:
         bdir_root = os.path.join(TAB, spec, "blocks")
         if not os.path.isdir(bdir_root):
             continue
@@ -152,6 +153,7 @@ def build():
             del b["rank"]
         data["specs"].append(spec)
         data["labels"][spec] = label
+        data["details"][spec] = {"inflation": inflation, "activity": activity}
         data.setdefault("blocks", {})[spec] = blocks
     data["overview"]["headline"] = headline
     return data

@@ -8,6 +8,7 @@ import xarray as xr
 
 from nkpc_hsa.inference.period_robustness import apply_period
 from nkpc_hsa.inference.model_comparison import model_comparison_table
+from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.report.latex import write_default_report
 from nkpc_hsa.report.tables import write_latex_fragment
 
@@ -25,6 +26,17 @@ def test_report_source_has_expected_paths(tmp_path) -> None:
     text = tex.read_text(encoding="utf-8")
     assert "../tables/result_blocks.tex" in text
     assert "prior specification, and sample period" in text
+
+
+def test_output_gap_hp_core_is_configured() -> None:
+    config = load_model_config()
+    assert "output_gap_hp_core" in config["run_data_specs"]
+    spec = configured_data_specs(config, ["output_gap_hp_core"])["output_gap_hp_core"]
+    assert spec["label"] == "Output gap HP, core CPI"
+    assert spec["pi_col"] == "pi_cpi_core"
+    assert spec["pi_prev_col"] == "pi_cpi_core_prev"
+    assert spec["x_col"] == "output_gap_HP"
+    assert spec["x_prev_col"] == "output_gap_HP_prev"
 
 
 def test_period_filter_excludes_covid() -> None:

@@ -21,6 +21,7 @@ run_data_specs:
   - output_gap_bn
   - output_gap_bn_core
   - output_gap_hp
+  - output_gap_hp_core
   - labor_share_gap_hp
   - unemployment_gap
   - unemployment_gap_core
@@ -45,6 +46,14 @@ data_specs:
     label: Output gap, HP filter
     pi_col: pi_cpi
     pi_prev_col: pi_cpi_prev
+    pi_expect_col: Epi
+    x_col: output_gap_HP
+    x_prev_col: output_gap_HP_prev
+    n_col: N_Gustavo
+  output_gap_hp_core:
+    label: Output gap HP, core CPI
+    pi_col: pi_cpi_core
+    pi_prev_col: pi_cpi_core_prev
     pi_expect_col: Epi
     x_col: output_gap_HP
     x_prev_col: output_gap_HP_prev

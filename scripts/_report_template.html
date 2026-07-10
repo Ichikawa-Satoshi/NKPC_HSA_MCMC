@@ -74,6 +74,7 @@ td.model{font-weight:600;color:var(--c)}
   cursor:zoom-in;max-width:660px}
 .fv figure img{width:100%;display:block;background:#fff}
 .fv figcaption{font-family:var(--mono);font-size:11px;color:var(--muted);padding:7px 10px;border-top:1px solid var(--hair)}
+.fv figcaption small{display:block;margin-top:2px;color:var(--faint);white-space:normal;line-height:1.35}
 /* math block */
 .eqbox{background:var(--panel);border:1px solid var(--hair);border-radius:11px;padding:16px 18px;margin:6px 0 10px;
   font-family:var(--math);font-size:16px;line-height:2.3;overflow-x:auto}
@@ -157,14 +158,22 @@ const FIGREG={};
 function shortCap(cap){
   return cap.replace("Prior vs posterior · ","p/p ").replace("Time-varying ","").replace(" path"," path");
 }
-function figViewer(fg,uid){
+function figContext(spec,b){
+  const d=(DATA.details||{})[spec]||{};
+  return [DATA.labels[spec], d.inflation, d.activity, b.meta].filter(Boolean).join(" · ");
+}
+function figCaption(cap,context){
+  return context ? `${cap} — ${context}` : cap;
+}
+function figViewer(fg,uid,context){
   if(!fg||!fg.length) return "";
   FIGREG[uid]=fg;
   const tabs=fg.map(([cap,_],i)=>
-    `<button class="ftab${i===0?" on":""}" data-uid="${uid}" data-i="${i}">${shortCap(cap)}</button>`).join("");
+    `<button class="ftab${i===0?" on":""}" data-uid="${uid}" data-i="${i}" title="${figCaption(cap,context)}">${shortCap(cap)}</button>`).join("");
   const [cap0,src0]=fg[0];
+  const full0=figCaption(cap0,context);
   return `<div class="fv" id="fv-${uid}"><div class="ftabs">${tabs}</div>
-    <figure data-src="${src0}" data-cap="${cap0}"><img loading="lazy" src="${src0}" alt="${cap0}"><figcaption>${cap0}</figcaption></figure></div>`;
+    <figure data-src="${src0}" data-cap="${full0}" data-context="${context}"><img loading="lazy" src="${src0}" alt="${full0}"><figcaption>${cap0}<small>${context}</small></figcaption></figure></div>`;
 }
 function switchFig(btn){
   const uid=btn.dataset.uid, i=parseInt(btn.dataset.i,10);
@@ -173,7 +182,8 @@ function switchFig(btn){
   const fv=document.getElementById("fv-"+uid); if(!fv) return;
   fv.querySelectorAll(".ftab").forEach(b=>b.classList.toggle("on",b===btn));
   const f=fv.querySelector("figure"), img=f.querySelector("img"), fc=f.querySelector("figcaption");
-  f.dataset.src=src; f.dataset.cap=cap; img.src=src; img.alt=cap; fc.textContent=cap;
+  const context=f.dataset.context||"", full=figCaption(cap,context);
+  f.dataset.src=src; f.dataset.cap=full; img.src=src; img.alt=full; fc.innerHTML=`${cap}<small>${context}</small>`;
 }
 
 function renderOverview(){
@@ -189,7 +199,7 @@ function renderOverview(){
       <td><span class="pill ${sig&&pos?'sig':''}">${verdict}</span></td></tr>`;
   }
   return `<h1>NKPC-HSA Bayesian State-Space Estimation</h1>
-   <p class="lead">Heterogeneous strategic-complementarity Phillips curve estimated by Gibbs/FFBS across four models and five activity measures. This report collects the coefficient tables, Savage–Dickey ratios, prior-vs-posterior figures, time-varying slope paths, and model comparison for every condition. Pick an activity measure on the left.</p>
+   <p class="lead">Heterogeneous strategic-complementarity Phillips curve estimated by Gibbs/FFBS across five model variants and headline/core inflation specifications. This report collects the coefficient tables, Savage–Dickey ratios, prior-vs-posterior figures, time-varying slope paths, and model comparison for every condition. Pick a specification on the left.</p>
 
    <div class="sub">Model specifications</div>
    <div class="eqbox">
@@ -215,9 +225,13 @@ function renderOverview(){
 function renderSpec(spec){
   const blocks=(DATA.blocks||{})[spec]||[];
   const label=DATA.labels[spec];
+  const d=(DATA.details||{})[spec]||{};
+  const leadBits=[d.activity?`Activity: ${d.activity}`:"", d.inflation?`inflation: ${d.inflation}`:""].filter(Boolean).join("; ");
+  const conditionWord=blocks.length===1?"condition":"conditions";
   let chips=blocks.map((b,i)=>`<a class="chip" href="#${spec}::${i}" onclick="jump('${spec}',${i});return false">${b.t}</a>`).join("");
   let body="";
   blocks.forEach((b,i)=>{
+    const context=figContext(spec,b);
     body+=`<section class="block" id="blk-${spec}-${i}">
       <div class="bhead"><h3>${b.t}</h3><span class="bmeta">${b.meta}</span></div>`;
     if(b.co){
@@ -226,10 +240,10 @@ function renderSpec(spec){
     }
     if(b.sd) body+=`<div class="sub">Savage–Dickey density ratios (BF₁₀ = evidence for effect)</div>${sddrTable(b.sd)}`;
     if(b.mc) body+=`<div class="sub">Model comparison</div>${mcTable(b.mc)}`;
-    if(b.fg&&b.fg.length) body+=`<div class="sub">Figures — select one to display</div>${figViewer(b.fg, spec+"-"+i)}`;
+    if(b.fg&&b.fg.length) body+=`<div class="sub">Figures — select one to display</div>${figViewer(b.fg, spec+"-"+i, context)}`;
     body+="</section>";
   });
-  return `<h2 class="spec">${label}</h2><p class="lead">${blocks.length} conditions — baseline, mixed-frequency, restricted, prior and sub-sample robustness. Click any figure to enlarge.</p>
+  return `<h2 class="spec">${label}</h2><p class="lead">${leadBits ? leadBits + ". " : ""}${blocks.length} ${conditionWord} currently available. Baseline, mixed-frequency, restricted, prior and sub-sample robustness blocks appear here when generated. Click any figure to enlarge.</p>
     <div class="chips">${chips}</div>${body}`;
 }
 
