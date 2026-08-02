@@ -157,9 +157,21 @@ def write_estimation_results_report(
     if not param_summary.empty:
         param_summary.to_csv(tables_dir / "posterior_summary.csv", index=False)
         param_summary.to_csv(out / "posterior_summary.csv", index=False)
+        param_summary.to_latex(
+            tables_dir / "posterior_summary.tex",
+            index=False,
+            escape=True,
+            float_format="%.4f",
+        )
     if not decomp.empty:
         decomp.to_csv(tables_dir / "competition_decomposition_summary.csv", index=False)
         decomp.to_csv(out / "competition_decomposition_summary.csv", index=False)
+        decomp.to_latex(
+            tables_dir / "competition_decomposition_summary.tex",
+            index=False,
+            escape=True,
+            float_format="%.4f",
+        )
 
     target = report_dir / "estimation_results_report.md"
     created = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -211,7 +223,9 @@ def write_estimation_results_report(
             "## Output Files",
             "",
             f"- {tables_dir / 'posterior_summary.csv'}" if not param_summary.empty else "- posterior_summary.csv not generated",
+            f"- {tables_dir / 'posterior_summary.tex'}" if not param_summary.empty else "- posterior_summary.tex not generated",
             f"- {tables_dir / 'competition_decomposition_summary.csv'}" if not decomp.empty else "- competition_decomposition_summary.csv not generated",
+            f"- {tables_dir / 'competition_decomposition_summary.tex'}" if not decomp.empty else "- competition_decomposition_summary.tex not generated",
         ]
     )
     target.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")

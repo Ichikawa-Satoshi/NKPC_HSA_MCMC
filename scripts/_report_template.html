@@ -146,7 +146,7 @@ function sddrTable(sd){
 }
 function mcTable(mc){
   if(!mc||!mc.length) return "";
-  let h='<div class="tw"><table><thead><tr><th>model</th><th>predictive score</th><th>log ML (Chib)</th><th>BF vs CES</th></tr></thead><tbody>';
+  let h='<div class="tw"><table><thead><tr><th>model</th><th>in-sample conditional lppd</th><th>log ML</th><th>BF vs baseline</th></tr></thead><tbody>';
   for(const [m,ps,ml,bf] of mc){
     const bfs = bf==null?"—":(bf>=1e6||bf<=1e-6)?bf.toExponential(1):bf.toFixed(2);
     h+=`<tr><td class="model" style="--c:var(--m-${m})">${MLBL[m]}</td>
@@ -218,7 +218,7 @@ function renderOverview(){
    <ul class="conv">
      <li>Competition transform: <i>N</i><sup>model</sup> = (100·log <i>N</i> − mean) / 10, so δ, θ, θ<sub>0</sub>, γ are effects per ten-log-point move in the relevant N component.</li>
      <li>Priors for κ, κ<sub>0</sub>, δ are in physical units; the sampler uses KAPPA_SCALE=100 internally but all draws, tables, figures and SDDR are reported in physical units.</li>
-     <li>Model comparison log-ML is Chib; for HSA-full it is conditional on posterior-mean latent states (nonlinear observation eq.). Annual-Q4 log-ML is unreliable — read predictive score and SDDR there.</li>
+     <li>The lppd is in-sample and conditional on smoothed state draws, not an out-of-sample forecast score. Automated Chib log marginal likelihood is withheld until latent-state integration and truncated-prior normalization are validated.</li>
    </ul>`;
 }
 

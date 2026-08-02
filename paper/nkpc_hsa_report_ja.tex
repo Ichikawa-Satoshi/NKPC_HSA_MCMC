@@ -1,0 +1,1283 @@
+\documentclass[11pt]{article}
+\usepackage[landscape,margin=0.8in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{xeCJK}
+\setCJKmainfont[
+  Path=/usr/local/texlive/2025/texmf-dist/fonts/opentype/public/haranoaji/,
+  BoldFont=HaranoAjiGothic-Bold.otf
+]{HaranoAjiGothic-Regular.otf}
+\setCJKmonofont[
+  Path=/usr/local/texlive/2025/texmf-dist/fonts/opentype/public/haranoaji/
+]{HaranoAjiGothic-Regular.otf}
+\usepackage[hidelinks]{hyperref}
+\usepackage{etoolbox}
+% 各セクションを改ページから開始
+\pretocmd{\section}{\clearpage}{}{}
+\renewcommand{\contentsname}{目次}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\kt}{\kappa_t}
+\newcommand{\Nbar}{\bar N}
+\newcommand{\Nhat}{\hat N}
+\graphicspath{{/Users/satoshi/GitHub/NKPC_HSA_MCMC/results/figures/}}
+
+\begin{document}
+\input{results/tables/cpi_ppi_report/result_macros.tex}
+\input{results/tables/cpi_ppi_report/bias_macros.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/result_macros.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/bias_macros.tex}
+
+\begin{center}
+\small\colorbox{blue!5}{\parbox{0.91\linewidth}{
+\textbf{推定ステータス（自動生成）.}
+修正版 revision \ReportEstimationRevision{} の \ReportRunCount{} ランを使用した.
+うち \ReportWarningCount{} ランは最大 $\hat R\leq1.01$ かつ最小 bulk ESS $\geq400$ の
+基準を満たさないため,係数を主結論に用いない.主要な推定値・表・図は保存済みposteriorから
+自動生成し,旧revisionの数値を読み込まない.これに加え,企業数を年次Q4のみで観測し四半期
+状態を推定するannual-Q4版を,HSA 61セルの新規推定と企業数を使わないCES 16セルの共通参照
+から構成した.annual-Q4比較表の\AnnualReportRunCount{}セル中,
+\AnnualReportWarningCount{}セルが同じ収束基準外である.}}
+\end{center}
+
+\begin{abstract}
+\noindent 本稿は,ニューケインジアン・フィリップス曲線(NKPC)の傾きが財市場の構造と
+共変動してきたかを問う.Matsuyama--Ushchev の Homothetic Single Aggregator (HSA)需要体系に
+基づき,$\kt=\kappa_0+\delta\bar N_t$ を含む状態空間モデルをGibbs/FFBSで推定する.
+修正後の主標本は1982Q1--2012Q4 ($T=124$),各仕様2チェーン・12,000反復である.
+HSA steady・失業ギャップでは,ヘッドラインCPIの
+$\delta=\HeadlineUnempDelta$ ($\mathrm{BF}_{10}=\HeadlineUnempDeltaBF$),コアCPIの
+$\delta=\CoreUnempDelta$ ($\mathrm{BF}_{10}=\CoreUnempDeltaBF$)が正である.含意される
+$\kt$ はコアCPIで $\CoreUnempKappaStart$ から $\CoreUnempKappaEnd$ へ低下する.
+出力ギャップ別の結果は補論に分離する.一方,理論の左辺に近いPPIでは
+$\delta=\PPIUnempDelta$ ($\mathrm{BF}_{10}=\PPIUnempDeltaBF$)で,失業・HP・BNの全てが
+ゼロを含む.したがってCPIの関係は川上価格一般には確認されない.また,const-theta/fullの
+多くは再推定後も収束せず,循環的参入経路の確認は未了である.さらに,理論論文の
+CES推定量の負のバイアス予測を,逆マークアップを用いたCES--HSA dynamic比較で直接評価する.
+annual-Q4版では$\delta$の周辺鎖と点推定はCPI結果を概ね再現するが,潜在状態経路とAR(2)
+ブロックは収束基準外であり,完全な頑健性確認には数えない.結果は因果効果ではなく,HSAの
+符号予測と整合する時系列上の証拠として読む.
+\end{abstract}
+\tableofcontents
+\clearpage
+
+\section{イントロダクション}
+インフレ動学の中心的な謎の一つは,フィリップス曲線の傾き---限界費用ないしスラックへの
+インフレ感応度---が時間とともに低下してきたように見えること,いわゆる「平坦化」である.
+本稿はこの時間変動が\emph{財市場の構造},とりわけ企業数の低頻度トレンドと共変動してきたかを
+問い,ベイズ状態空間モデルで定量的に評価する.
+
+理論的基礎は Matsuyama--Ushchev の \emph{Homothetic Single Aggregator} (HSA) 需要体系
+であり,これを Fujiwara--Matsuyama (2026) がニューケインジアン・モデルに組み込んだ.HSA
+経済では企業間の戦略的相互作用が需要集計子の曲率,ひいては価格設定の弾力性を左右し,その
+結果フィリップス曲線の傾き $\kt$ は競争企業数に依存する.同論文の中心的含意は,\emph{企業数の
+減少}---市場集中の上昇,マークアップの上昇,パススルーの低下---が曲線を\emph{平坦化}させる
+というものである.企業数の低頻度成分を $\bar N_t$ と書けば,これは線形の傾き方程式
+\begin{equation}
+\kt=\kappa_0+\delta\,\bar N_t,
+\end{equation}
+であり,理論は $\delta>0$ を予測する:傾きは企業数と共に動くため,集中が高まるほど低下する.
+
+本稿の貢献は3点であり,控えめに述べる.第一に,我々の知る限り,HSA の集中-フィリップス曲線
+メカニズムの最初期の実証的操作化を与える:これを状態空間モデル---インフレ観測方程式と
+企業数の三成分分解---として定式化し,\emph{理論駆動の半構造的}推定として推定する
+(第\ref{sec:distance}節で理論からの距離を明示する).第二に,平均的な傾きが平坦化したか
+\emph{どうか}を問うだけでなく,傾きの時間変動の\emph{駆動要因}を推定し,企業数の潜在的な
+トレンドと循環を状態空間で分離する.第三に,価格指標・活動指標・モデル・事前分布を同一の
+推定系で比較するとともに,理論が予測するCES傾きの負のバイアスを,逆マークアップを用いる
+直接対応仕様で検証する.
+
+\paragraph{予告.} 正の $\delta$(企業数の減少,すなわち集中の上昇とともに傾きが平坦化)は
+失業ギャップのCPI仕様で頑健である.一方,PPIでは識別されず,CES傾きの負のバイアス予測も
+現データでは支持されない.出力ギャップ別の結果は補論にまとめる.したがって本発見は因果効果
+ではなく,消費者価格に現れる理論整合的な時系列証拠として解釈する.
+
+\section{なぜこの式を推定するのか:HSA フィリップス曲線}
+\label{sec:why}
+我々の推定式は,HSA 需要体系のもとで Fujiwara--Matsuyama (2026, \emph{Journal of Monetary
+Economics}) が導出したニューケインジアン・フィリップス曲線の理論駆動の対応物である.本節は
+彼らの結果を述べ,データに持ち込むものへ対応づけ,実証仕様が理論からどれだけ離れているかを
+明示する.
+
+\subsection{HSA フィリップス曲線}
+最終財生産者は,市場シェア関数 $s(z)$ をもつ HSA 需要体系を通じて連続体の変種を集計する.
+ここで $z=p/A$ は単一価格集計子 $A$(企業にとっての参照価格,競争圧力の逆指標)で
+基準化した企業の価格である.中間財企業は Rotemberg 調整費用 $\chi$ のもとで価格を設定し,
+1期の time-to-build ラグを伴って内生的に参入する.企業の問題を解くと,PPI インフレは
+(彼らの Eq.~21)
+\begin{equation}
+\hat\pi_t=\beta(1-\delta)\,\mathbb E_t\hat\pi_{t+1}
++\underbrace{\frac{\zeta(z)-1}{\chi}}_{\text{限界費用への傾き}}
+\big(\hat W_t-\hat Z_{P,t}-\hat p_t\big)
+-\underbrace{\frac{1}{\chi}\,\frac{1-\rho(z)}{\rho(z)}}_{\text{参入 / コストプッシュ}}\hat N_t,
+\label{eq:fm}
+\end{equation}
+に従う.ここで $\hat N_t$ は(対数)企業数,$\hat W_t-\hat Z_{P,t}-\hat p_t$ は逆マークアップ
+(モデルの実質限界費用の指標),$\zeta(z)=1-s'(z)z/s(z)>1$ は価格弾力性関数
+(したがって伸縮価格マークアップは $\mu=\zeta/(\zeta-1)$),$\rho(z)$ はパススルー率である.
+
+\subsection{競争が入る2つの経路}
+\paragraph{(1) 傾きが企業数の関数(構造的平坦化).}
+限界費用への係数 $(\zeta(z)-1)/\chi$ は価格弾力性 $\zeta(z)$ に依存し,これは $z=p/A$ と
+対称均衡条件 $s(z)=1/N$ を通じて企業数 $N$ の関数となる.市場集中の上昇---\emph{企業数の
+減少},マークアップの上昇,パススルー $\rho(z)$ の低下---はこの傾きを低下させる.すなわち
+フィリップス曲線は\emph{構造的に}平坦化する.傾きを企業数の低頻度水準 $\bar N_t$ で
+線形化すると
+\begin{equation}
+\kt=\kappa_0+\delta\,\bar N_t,
+\end{equation}
+が得られる.したがって\emph{正の} $\delta$ が理論の平坦化予測である.傾きは企業数と共に
+動き,集中が高まり $N$ が減るほど低下する.
+
+\paragraph{(2) 内生参入はコストプッシュ項(推定バイアス).} 第2項
+$-\tfrac{1}{\chi}\tfrac{1-\rho(z)}{\rho(z)}\hat N_t$ は CES から離れて初めて現れる.これは,
+企業参入の循環成分が戦略的補完性を通じてコストプッシュ・ショックとして作用することを
+意味する.これを省略すると実証的なフィリップス曲線の推定にバイアスが生じる(欠落変数
+問題).循環項を自らの係数 $\theta_t=\theta_0+\gamma\,\bar N_t$ とともに明示的に残すが,
+主力モデルではこれをゼロに設定する点は後述する.
+
+\paragraph{CES は無関連ケース.} CES では $s(z)=\gamma_{\mathrm{CES}}\,z^{1-\theta}$ で
+あり,$\zeta(z)=\theta$ が定数,パススルーは $\rho(z)=1$ となる.参入項は消え,傾きは
+定数 $(\theta-1)/\chi$ となる.すなわち市場集中は曲線を平坦化させず,インフレも動かさない.
+これがまさに我々の \code{ces} ベンチマークであり,CES から離れること(HSA モデル)が
+$\delta$ と $\hat N_t$ 項を非ゼロにしうる理由である.
+
+\subsection{理論から推定式へ}
+活動/逆マークアップ・ギャップを $x_t$ と書き,後方参照の慣性項($\alpha$)と縮約形
+ショック $e_t$ を加え,観測された企業数をトレンドと循環に分解する:
+\begin{equation}
+N^{\mathrm{obs}}_t=\bar N_t+\hat N_t+\nu_t,
+\end{equation}
+ここで $\bar N_t$ はドリフト付きランダムウォークのトレンド,$\hat N_t$ は定常 AR(2) ギャップ
+(定常領域に切断),$\nu_t\sim\mathcal N(0,\sigma_N^2)$ は測定誤差である.すると HSA
+フィリップス曲線は我々が推定する式となる:
+\begin{equation}
+\boxed{\;\pi_t=\alpha\,\pi_{t-1}+(1-\alpha)\,\mathbb E_t\pi_{t+1}
++\kt\,x_t-\theta_t\,\hat N_t+e_t,\qquad
+\kt=\kappa_0+\delta\,\bar N_t,\;\;\theta_t=\theta_0+\gamma\,\bar N_t.\;}
+\label{eq:est}
+\end{equation}
+トレンド $\bar N_t$ は構造的平坦化の経路($\delta$ 経由)を,循環 $\hat N_t$ は参入
+コストプッシュの経路($\theta_t$ 経由)を担う.
+
+\subsection{理論からの距離}
+\label{sec:distance}
+本研究を構造的ではなく\emph{半構造的}と呼ぶのは,仕様が \eqref{eq:fm} からいくつかの点で
+離れているためである.係数を過大解釈しないよう,各点を明示する:
+\begin{itemize}
+\item 理論は\emph{PPI}インフレだが,PPI期待が存在せず,観測PPIと共通の外部期待系列を
+組み合わせるため,期待項まで整合した構造式ではない;
+\item 理論上の説明変数は実質限界費用/逆マークアップだが,主結果は失業ギャップと HP 出力
+ギャップを用いる;
+\item 理論の係数間制約を課さず,$\kt$ を $\bar N_t$ の\emph{線形}式として近似する;
+\item \eqref{eq:fm} に無い後方慣性($\alpha$)を加える;
+\item 期待インフレは外部のサーベイ指標である(第\ref{sec:data}節);
+\item 主力の \code{hsa\_steady} は循環的参入項 $\theta_t$ をゼロに設定,すなわちトレンド
+経路のみを用いる.
+\end{itemize}
+したがって $\delta>0$ の検定は,Fujiwara--Matsuyama メカニズムの深いパラメータの構造推定
+ではなく,その\emph{符号制約と整合する縮約形の検定}として読むのが最善である.メカニズムは
+(i) $\delta>0$,および (ii) $\bar N_t$ の低下に沿った $\kt$ の単調な低下を含意し,$\delta=0$
+($\theta=0$ を伴う)は \eqref{eq:est} を CES ベンチマークに潰す---まさに第\ref{sec:bench}節の
+定数対時変傾きの比較である.第\ref{sec:main}--\ref{sec:bench}節で両者を検討する.
+
+\section{データ}
+\label{sec:data}
+\paragraph{標本.} 四半期,1982Q1--2012Q4 ($T=124$).今回の再推定は価格指標3種,活動指標3種,
+モデル5種のベースライン45セルと,主比較のweak/tight 30セルからなる.これに理論上の
+傾きバイアスを直接診断する逆マークアップのCES/HSA dynamic 2セルを加え,合計77セルとする.
+期間を途中で削除すると
+状態遷移を誤って連続四半期として扱うため,非連続標本は推定しない.旧revisionの期間表は
+現在の77セルと同列には扱わず,結論から除外する.
+
+\paragraph{インフレ.} ヘッドライン CPI (\code{pi\_cpi}),コア CPI
+(\code{pi\_cpi\_core}),PPI (\code{pi\_ppi})を比較する.期待インフレ $\mathbb{E}\pi$ は全仕様で
+同じ外部サーベイ系列を使う.Survey of Professional ForecastersはPPI予測を公表していないため,
+PPI仕様でもCPIと共通の期待系列である.したがってPPI推定は期待項まで整合した構造推定ではなく,
+観測インフレ指標だけを替える半構造的な外的妥当性検証である.コアCPIについても期待系列との
+測定対象の不一致は残る.
+
+\paragraph{活動ギャップ(5種).} 失業ギャップ,BN 出力ギャップ,HP 出力ギャップ
+($100\times$ 対数実質産出を HP フィルタ,BN と同じ $100$-log-point 単位),
+HP 労働分配率ギャップ,逆マークアップ.
+
+\paragraph{競争の代理変数.} 競争度系列は Gustavo の企業カウント指標
+(\code{N\_Gustavo},年次),すなわち米国の\emph{上場企業総数}である.主結果ではPCHIPで
+四半期補間した値を毎四半期の観測として用い,追加結果では年次値をQ4だけで観測し,Q1--Q3の
+四半期状態を状態空間モデル内で推定する.後者は補間値をデータと見なさず,補間不確実性を
+posteriorへ伝えるmixed-frequency仕様である.
+理論上の $N$ は\emph{同一市場で戦略的に競争する}企業数であり,同じ対象ではない.そこで
+\code{N\_Gustavo} を\emph{活動的/上場企業の総体に対する集計的代理変数であり,理論上の
+競争者数を近似する意図のもの}として用いる.両者は乖離しうる:非上場企業が増える一方で上場
+企業が減る,産業構成が変化する,合併・上場廃止制度が変化する,外国企業や輸入との競争が
+強まる,といった可能性があり,さらに経済全体の企業数は産業内集中度と同一ではない.本稿は
+この測定範囲を明示し,上場企業総数を一般的な「競争度」や産業内集中度と同一視しない.
+標本を通じて変換後の潜在トレンド $\bar N_t$ は約 $+3.13$ から $-2.56$ へ低下し
+(図\ref{fig:data}(c)),これが $\delta>0$ のもとで $\kt$ を\emph{低下}させる理由である.
+
+\paragraph{単位規約.} 既定の変換は $(100\log N-\overline{100\log N})/10$ で,$\bar N$ や
+$\hat N$ の 1 単位は標本平均まわりの 10-log-point の変化に当たる.報告される
+$\delta,\theta,\theta_0,\gamma$ は全てこの 10-log-point スケール上の値である.
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.68\textheight,keepaspectratio]{report/data_series.png}
+\caption{データ.(a) ヘッドライン対コア CPI インフレ.網掛けは 2008--09 金融危機の期間で,
+この間に油価の暴落がヘッドライン CPI を大きく負(約 $-1.6\%$)に振らせた一方,コア CPI は
+$1.5\%$ 付近で安定していた.(b) 実体活動ギャップ.(c) 推定変換後の上場企業カウント代理変数.
+その低頻度トレンドは標本を通じて\emph{低下}し,傾き方程式の駆動要素である.}
+\label{fig:data}
+\end{figure}
+
+\section{計量モデルと推定}
+\label{sec:model}
+
+\subsection{モデル変種}
+5つのモデルは傾きの制約のみで異なる(表\ref{tab:models}).
+
+\begin{table}[H]
+\centering
+\caption{モデル変種.}
+\label{tab:models}
+\begin{tabular}{llll}
+\toprule
+モデル & $\kt$ & $\theta_t$ & 役割 \\
+\midrule
+\code{ces}             & 定数 & $0$ & 教科書的 NKPC ベンチマーク \\
+\code{hsa\_steady}     & $\kappa_0+\delta\bar N_t$ & $0$ & \textbf{主力}:トレンド経路のみ \\
+\code{hsa\_dynamic}    & 定数 & 定数 & $\hat N$ チャネルのみ \\
+\code{hsa\_const\_theta} & $\kappa_0+\delta\bar N_t$ & 定数 & $\gamma=0$ とした \code{hsa\_full} \\
+\code{hsa\_full}       & $\kappa_0+\delta\bar N_t$ & $\theta_0+\gamma\bar N_t$ & フルモデル \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent 主力の \code{hsa\_steady} はトレンド経路のみ($\theta_t=0$)を用いる.$\delta$ を
+最もクリーンに読める場所だが,理論の循環的参入項を落とす代償を伴う.\code{hsa\_const\_theta}
+を置くのは,$\gamma$ の回帰子 $\hat N\!\cdot\!\bar N$ が $\theta_0$ の回帰子 $\hat N$ と
+ほぼ共線(約 $98\%$)で,$\gamma$ が識別されないためである.
+
+\subsection{実際に推定するインフレ式}
+理論式\eqref{eq:est}をそのまま回帰形にするため,期待インフレを左辺へ移し,
+\begin{equation}
+y_t\equiv\pi_t-E_t\pi_{t+1},\qquad
+a_t\equiv\pi_{t-1}-E_t\pi_{t+1}
+\label{eq:ya-def}
+\end{equation}
+と定義する.活動変数の予測不能成分を明示すると,推定系は
+\begin{align}
+y_t
+ &=\alpha a_t+(\kappa_0+\delta\bar N_t)x_t
+   -(\theta_0+\gamma\bar N_t)\hat N_t
+   +\lambda_{e\zeta}\zeta_t+\eta_t, \label{eq:estimated-inflation}\\
+x_t&=\phi_1x_{t-1}+\zeta_t,\qquad
+\eta_t\perp\zeta_t. \label{eq:activity-ar1}
+\end{align}
+である.すなわち元のNKPCショックは
+$e_t=\lambda_{e\zeta}\zeta_t+\eta_t$ と分解される.
+$\lambda_{e\zeta}$ を推定することで,当期の活動ショックとインフレショックの相関を許し,
+$x_t$を外生と置いた単純回帰にしない.保存される相関係数は
+\begin{equation}
+\rho_{e\zeta}
+=\frac{\lambda_{e\zeta}\sigma_\zeta}
+{\sqrt{\lambda_{e\zeta}^2\sigma_\zeta^2+\sigma_\eta^2}}
+\end{equation}
+である.主力\code{hsa\_steady}では$\theta_0=\gamma=0$,
+\code{hsa\_dynamic}では$\delta=\gamma=0$となる.
+
+実装では数値安定性のため,$\kappa_0$と$\delta$の回帰列をそれぞれ$x_t/100$,
+$x_t\bar N_t/100$として内部係数を更新する.保存時に係数を100で戻すので,本文・表・図の
+$\kappa_0,\delta,\kt$はすべて\eqref{eq:estimated-inflation}の物理単位である.したがって
+出力をさらに100倍または100分の1にしてはならない.
+
+\subsection{企業数をトレンドと循環へ分ける状態空間表現}
+企業数の観測式と遷移式は
+\begin{align}
+N_t^{\mathrm{obs}}&=\bar N_t+\hat N_t+\nu_t,
+&\nu_t&\sim N(0,\sigma_N^2), \label{eq:N-measurement}\\
+\hat N_t&=\rho_1\hat N_{t-1}+\rho_2\hat N_{t-2}+u_t,
+&u_t&\sim N(0,\sigma_u^2), \label{eq:N-gap}\\
+\bar N_t&=n+\bar N_{t-1}+\varepsilon_t,
+&\varepsilon_t&\sim N(0,\sigma_\varepsilon^2) \label{eq:N-trend}
+\end{align}
+である.$\bar N_t$はドリフト$n$をもつ低頻度トレンド,$\hat N_t$は定常AR(2)循環である.
+観測企業数を先にフィルタで分解してからNKPCへ代入する二段階推定ではなく,
+企業数式とインフレ式を同じGibbs反復内で使って両状態を抽出する.
+
+\paragraph{二つの観測頻度.} PCHIP版では式\eqref{eq:N-measurement}を全124四半期で使う.
+annual-Q4版では,年次企業数を各年のQ4に置き,
+\begin{equation}
+N_t^{\mathrm{obs}}=
+\begin{cases}
+(100\log N_{y(t)}^{\mathrm{annual}}-\bar c)/10,&t\in\mathcal T_N\;(\mathrm{Q4}),\\
+\mathrm{missing},&t\notin\mathcal T_N\;(\mathrm{Q1--Q3}),
+\end{cases}
+\qquad |\mathcal T_N|=31,
+\label{eq:annual-q4-observation}
+\end{equation}
+とする.$\bar c$はPCHIP参照系列と共通の中心化定数であり,係数の単位を比較可能に保つ.
+Q4では企業数式とインフレ式の2観測行,Q1--Q3ではインフレ式の1観測行だけでKalman更新を
+行う.状態遷移と予測は全四半期で継続するため,Q1--Q3の$\bar N_t,\hat N_t$は単純補間ではなく,
+年次アンカー,状態遷移,およびインフレ式に条件づけたFFBS drawとして毎反復更新される.
+$\sigma_N^2$の逆ガンマ更新も31個の有限なQ4残差だけを用いる.
+
+主力\code{hsa\_steady}では状態を
+\begin{equation}
+s_t=(\hat N_t,\hat N_{t-1},\bar N_t)',\qquad
+s_t=c+Fs_{t-1}+w_t
+\end{equation}
+と置き,
+\begin{equation}
+c=\begin{bmatrix}0\\0\\n\end{bmatrix},\quad
+F=\begin{bmatrix}\rho_1&\rho_2&0\\1&0&0\\0&0&1\end{bmatrix},\quad
+Q=\operatorname{Var}(w_t)
+=\begin{bmatrix}\sigma_u^2&0&0\\0&0&0\\0&0&\sigma_\varepsilon^2\end{bmatrix}.
+\label{eq:state-matrices}
+\end{equation}
+インフレ式から既知部分を引いた
+\begin{equation}
+y_t^\pi=y_t-\alpha a_t-\kappa_0x_t
+-\lambda_{e\zeta}\zeta_t
+\end{equation}
+を企業数観測と積み重ねると,
+\begin{equation}
+\underbrace{\begin{bmatrix}N_t^{\mathrm{obs}}\\y_t^\pi\end{bmatrix}}_{z_t}
+=
+\underbrace{\begin{bmatrix}1&0&1\\0&0&\delta x_t\end{bmatrix}}_{H_t}s_t
++v_t,\qquad
+\operatorname{Var}(v_t)=
+\begin{bmatrix}\sigma_N^2&0\\0&\sigma_\eta^2\end{bmatrix}.
+\label{eq:steady-measurement-matrix}
+\end{equation}
+となる.係数と分散に条件づければ線形ガウス状態空間モデルなので,$s_{0:T}$を一括して
+厳密なKalman filter / forward-filtering backward-sampling (FFBS)で抽出できる.
+
+初期状態は
+\begin{equation}
+s_0=(\hat N_0,\hat N_{-1},\bar N_0)'\sim N(m_0,P_0),\qquad
+m_0=(0,0,0)',\quad P_0=10I_3
+\label{eq:initial-state}
+\end{equation}
+という固定事前から始める.$N_0^{\mathrm{obs}}$を$m_0$へ代入せず,第0期の企業数とインフレを
+通常のKalman観測更新に含める.またAR(2)の最初の遷移でも,事前から更新された
+$\hat N_{-1}$を実際に使用する.これは初期観測を二重利用したり,最初のAR(2)尤度を落としたり
+しないための処理である.
+
+\subsection{係数・分散の条件付き事後分布}
+主力モデルを例に,$\beta=(\alpha,\kappa_0,\delta)'$,
+$X_t=(a_t,x_t,x_t\bar N_t)$,$y_t^*=y_t-\lambda_{e\zeta}\zeta_t$とする.
+独立正規事前$\beta\sim N(b_0,V_0)$のもとで,
+\begin{align}
+V_1&=\left(V_0^{-1}+\frac{X'X}{\sigma_\eta^2}\right)^{-1},\\
+b_1&=V_1\left(V_0^{-1}b_0+\frac{X'y^*}{\sigma_\eta^2}\right),\\
+\beta\mid\text{rest}&\sim N(b_1,V_1) \label{eq:beta-posterior}
+\end{align}
+から一括更新する.実装上は前述の100倍スケールの$X$と係数を用いるが,同じ式である.
+ベースライン推定は符号制約を課さないので,$\delta$も標本末の$\kt$も負になりうる.
+
+$\lambda_{e\zeta}$は$e_t$を$\zeta_t$へ回帰した正規条件付き事後から更新する.
+$\phi_1$は\eqref{eq:activity-ar1}だけでなく,
+$e_t=\lambda_{e\zeta}(x_t-\phi_1x_{t-1})+\eta_t$が与える情報も同時に用いる.
+$\rho_1,\rho_2$も正規条件付き事後から引くが,
+\begin{equation}
+|\rho_2|<1,\qquad \rho_1+\rho_2<1,\qquad \rho_2-\rho_1<1
+\end{equation}
+のAR(2)定常領域に切断する.最大2,000回の提案で受容されない場合のfallback回数と棄却率は
+各runのmetadataへ保存する.
+
+分散事前は$\sigma^2\sim\operatorname{IG}(a,b)$
+（密度核$(\sigma^2)^{-(a+1)}\exp(-b/\sigma^2)$）とし,残差二乗和を加えた逆ガンマ条件付き
+事後から更新する.ベースラインの具体的な事前は表\ref{tab:baseline-priors}である.
+
+\begin{table}[H]
+\centering
+\caption{主力HSA steadyのベースライン事前分布.正規分布は平均と標準偏差,
+逆ガンマ分布は$(a,b)$を表示.係数事前は対応する他モデルでも共通.}
+\label{tab:baseline-priors}
+\small
+\begin{tabular}{llll}
+\toprule
+ブロック & パラメータ & 事前 & 解釈 \\
+\midrule
+インフレ式 & $\alpha$ & $N(0.5,0.2^2)$ & 後方慣性 \\
+ & $\kappa,\kappa_0$ & $N(0.1,0.2^2)$ & 傾きの水準 \\
+ & $\delta$ & $N(0,0.02^2)$ & 企業数による傾き変化 \\
+ & $\theta,\theta_0$ & $N(0.1,0.2^2)$ & 循環的参入効果 \\
+ & $\gamma$ & $N(0,0.02^2)$ & 参入効果の時変係数 \\
+活動式 & $\phi_1$ & $N(0.7,0.2^2)$ & 活動変数のAR(1) \\
+ & $\lambda_{e\zeta}$ & $N(0,0.5^2)$ & 同時ショック補正 \\
+企業数状態 & $(\rho_1,\rho_2)$ & $N(0.5,0.2^2)\times N(-0.5,0.2^2)$ & 定常域へ切断 \\
+ & $n$ & $N(0,0.1^2)$ & トレンドのドリフト \\
+\midrule
+分散 & $\sigma_\eta^2,\sigma_\zeta^2$ & $\operatorname{IG}(2,2),\operatorname{IG}(.001,.001)$ & インフレ・活動ショック \\
+ & $\sigma_u^2,\sigma_\varepsilon^2,\sigma_N^2$ & $\operatorname{IG}(2,.02),\operatorname{IG}(2,.01),\operatorname{IG}(2,.01)$ & 状態・測定誤差 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent \code{hsa\_dynamic}のショック共分散には
+$\Sigma\sim\operatorname{IW}(8,S_0)$,
+$S_0=\operatorname{diag}(3,3,0.06,0.03)$を置く.既定の\code{e\_zeta\_only}では,
+この事前の対応する周辺分布を$(e,\zeta)$ブロックと二つの状態分散へ適用する.
+
+\subsection{Kalman filterとFFBSで何をしているか}
+時点$t$の予測平均・分散を$a_t^s,P_{t|t-1}$,フィルタ済み平均・分散を$m_t,P_t$と書く.
+式\eqref{eq:state-matrices}--\eqref{eq:steady-measurement-matrix}に対する前向き更新は
+\begin{align}
+a_t^s&=c+Fm_{t-1},&P_{t|t-1}&=FP_{t-1}F'+Q,\\
+q_t&=z_t-H_ta_t^s,&S_t&=H_tP_{t|t-1}H_t'+R,\\
+K_t&=P_{t|t-1}H_t'S_t^{-1},&m_t&=a_t^s+K_tq_t
+\end{align}
+である.共分散更新には数値的に安定なJoseph formを用いる.終点を
+$s_T\sim N(m_T,P_T)$から引いた後,
+\begin{align}
+J_t&=P_tF'P_{t+1|t}^{-1},\\
+s_t\mid s_{t+1},z_{1:T}
+&\sim N\!\left(m_t+J_t(s_{t+1}-c-Fm_t),
+P_t-J_tP_{t+1|t}J_t'\right)
+\end{align}
+を$t=T-1,\ldots,0$の順に使い,平滑化状態経路を一括抽出する.したがって図に描く
+$\bar N_t,\hat N_t,\kt$には,係数だけでなく状態分解の事後不確実性も入る.
+
+\subsection{一回のGibbs反復とモデル間の違い}
+\code{hsa\_steady}の一反復は次の順序である.
+\begin{enumerate}
+\item 現在の$\bar N_t$から$(\alpha,\kappa_0,\delta)$を式\eqref{eq:beta-posterior}で更新;
+\item $\lambda_{e\zeta}$と$\phi_1$を更新し,$\zeta_t,\eta_t$を再計算;
+\item $\sigma_\zeta^2,\sigma_\eta^2$を更新;
+\item $(\rho_1,\rho_2)$と$\sigma_u^2$を更新;
+\item $n$と$\sigma_\varepsilon^2$,次に$\sigma_N^2$を更新;
+\item 更新済みの係数と分散を使い,$s_{0:T}$全体をFFBSで更新.
+\end{enumerate}
+CESは潜在企業数状態を持たない共役回帰ベンチマークである.\par
+\code{hsa\_dynamic}は
+$r_t=(e_t,\zeta_t,u_t,\varepsilon_t)'$の共分散を扱い,既定の\code{e\_zeta\_only}では
+$(e_t,\zeta_t)$の$2\times2$ブロックと$\sigma_u^2,\sigma_\varepsilon^2$を,制約された
+パラメータ空間上で直接更新する.無制約逆Wishartドローの非対角要素を後からゼロにする方法ではない.
+
+\code{hsa\_full}には$-\gamma\bar N_t\hat N_t$という状態同士の積があるため,
+$(\bar N_t,\hat N_t)$について一度に線形ガウスではない.そこで各反復で
+$\hat N_{0:T}\mid\bar N_{0:T},\text{rest}$をAR(2) FFBS,
+$\bar N_{0:T}\mid\hat N_{0:T},\text{rest}$をランダムウォークFFBSで順に更新する.
+\code{hsa\_const\_theta}は$\gamma=0$に固定した同じ実装である.fullの双線形項に加え,
+両モデルで循環状態$\hat N_t$の弱い信号を別係数として識別する負荷が,
+full/const-thetaで収束が弱い理由の一つである.
+
+\subsection{反復数・保存ドロー・収束判定}
+各セルは独立な2チェーンで,各チェーンの\emph{総反復数}は12,000である.最初の4,000を
+burn-inとして捨て,残り8,000を5反復ごとに保存するので,1チェーン1,600ドロー,
+1セル合計3,200ドローを診断と要約に使う.主要分析はベースライン45セル
+（3価格指標$\times$3活動指標$\times$5モデル）と,weak/tight事前の30セルを合わせた75セルである.
+これとは別に逆マークアップのCES/HSA dynamic 2セルを同じ設定で推定する.
+
+最大$\hat R\leq1.01$かつ最小bulk ESS$\geq400$を採用基準とする.HSA steadyとCESは今回の
+報告セルを全て通過した.const-theta/fullの多くとdynamicの一部は基準外であり,係数表には
+$\dagger$を付けて主推論から外す.95\%信用区間は保存ドローの2.5\%点と97.5\%点,
+図表の点は事後平均である.
+
+\paragraph{数式とコードの対応.}
+\begin{itemize}
+\item データ・事前・単位変換・チェーン管理: \path{src/nkpc_hsa/inference/wrappers.py}
+\item 主力モデルの係数更新と三次元FFBS: \path{src/nkpc_hsa/gibbs/hsa_steady/model.py}
+\item 共分散付きdynamicモデル: \path{src/nkpc_hsa/gibbs/hsa_dynamic/model.py}
+\item full/const-thetaの二つの条件付きFFBS: \path{src/nkpc_hsa/gibbs/hsa_full/model.py}
+\item 詳細な実行ガイド: \path{docs/estimation_code_guide_ja.md}
+\end{itemize}
+単独仕様は次のコマンドで実行する:
+\begin{center}
+\code{python scripts/02\_estimate\_models.py}
+\end{center}
+全77セル・自動生成TeX・本PDFは次のコマンドで再現する:
+\begin{center}
+\code{python scripts/13\_estimate\_cpi\_ppi\_report.py --jobs 4}
+\end{center}
+レポート本文は
+保存済みposteriorから生成したTeXを\code{\textbackslash input}し,推定値を手入力しない.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{cpi_ppi_report/competition_decomposition_hsa_steady_core_unemployment.png}
+\caption{主力HSA steadyにおける企業数の事後分解
+$N_t=\bar N_t+\hat N_t$(失業ギャップ,コア CPI).線は事後平均,帯は95\%信用区間.
+状態経路が滑らかに推定されること自体は,$\kappa_0$や$\delta$の識別を意味しない.}
+\label{fig:main-state-decomposition}
+\end{figure}
+
+\section{主要結果}
+\label{sec:main}
+
+\subsection{失業ギャップの傾きは企業数の減少とともに平坦化する}
+主標本のベースライン \code{hsa\_steady} で,コア CPI 失業仕様は
+\[
+\delta=\CoreUnempDelta,
+\]
+を与え,$\delta=0$ に対する Savage--Dickey ベイズファクターは
+$\mathrm{BF}_{10}=\CoreUnempDeltaBF$である.$\bar N_t$ が標本を通じて低下するため,含意される
+傾き $\kt$ は $\CoreUnempKappaStart$ から $\CoreUnempKappaEnd$ へ
+単調に低下する:企業数が減る(集中が高まる)につれてフィリップス曲線は平坦化する,HSA
+メカニズムが予測する符号である.ヘッドライン CPI でも
+$\delta=\HeadlineUnempDelta$ ($\mathrm{BF}_{10}=\HeadlineUnempDeltaBF$)であり,失業ギャップの
+CPI結果はインフレ指標に頑健である.
+
+\paragraph{「ほぼゼロ」について.} $\kt$ の終点事後平均はわずかに\emph{負}である($-0.005$ コア;
+$-0.010$ ヘッドライン)し,終点の信用帯はゼロを含む(図\ref{fig:kt_unemp}).したがって
+「ほぼゼロへ平坦化」が正確な表現であり,厳密に正の残存傾きではない.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth]{cpi_ppi_report/kappa_t_unemployment_by_inflation.png}
+\caption{失業ギャップの時変傾き $\kt$(事後平均と $95\%$ 帯).CPIでは標本末までに
+ほぼゼロへ低下する一方,PPIの帯は広い.}
+\label{fig:kt_unemp}
+\end{figure}
+
+\subsection{経済的な大きさ:傾きの低下は何ポイントか}
+\label{sec:magnitude}
+係数の統計的な識別を経済単位に翻訳する.コア CPI・失業ギャップ仕様における傾きの始点と
+終点の差は約0.126である.したがって,失業ギャップの変化幅を $g$ ポイント
+とすると,両時点のインフレ反応の差は $g(\kappa_{\mathrm{start}}-\kappa_{\mathrm{end}})$
+ポイントとなる.
+
+\begin{table}[H]
+\centering
+\caption{時変傾きの経済的な大きさ(コア CPI・失業ギャップ).各行は同じ失業ギャップ変化に
+対する1982年頃と2012年頃のインフレ反応の差.}
+\label{tab:magnitude}
+\input{results/tables/report_additions/economic_magnitude.tex}
+\end{table}
+
+\noindent たとえば4ポイントの景気悪化($x_t=-4$)は,標本始点の傾きならコアインフレ率を
+約0.48ポイント押し下げるが,標本終点の傾きでは反応はほぼゼロである.実際の失業ギャップ
+系列について,傾きを始点値に固定した寄与と時変傾きの寄与との差は,RMSで
+$0.176\;[0.076,0.278]$ ポイント,最大絶対値で $0.616\;[0.262,0.968]$ ポイントとなる.
+ただしこれは推定モデル内の反実仮想であり,企業数減少がその差を因果的に生んだという分解ではない.
+
+\subsection{傾きの水準:曲線は生きているか}
+失業ギャップ仕様の平均競争度での傾き $\kappa_0$ は,ヘッドラインCPIとコアCPIで
+信用区間がゼロを除外する.PPIでは区間が広い.
+$\delta$ は傾きの\emph{時間変化},$\kappa_0$ は中心化された平均企業数での\emph{水準}なので,
+両者を区別する必要がある.出力ギャップ仕様の傾き水準と競争依存は補論
+\ref{app:output-gaps}にまとめる.
+
+\section{PPIでの直接検証}
+\label{sec:ppi-direct}
+
+\subsection{なぜPPIを見るのか}
+Fujiwara--Matsuyamaの理論式は生産者価格インフレについて導出される.CPIで正の$\delta$が
+得られても,それが小売・流通マージン,消費者価格へのパススルー,価格構成に固有なら,
+生産者段階の一般的なHSA効果とは言えない.そこで標本,活動指標,企業数系列,期待系列を固定し,
+観測インフレ率だけをPPIへ替える.
+
+\subsection{結果}
+HSA steadyの失業仕様は$\delta=\PPIUnempDelta$,
+$\mathrm{BF}_{10}=\PPIUnempDeltaBF$である.点推定は正だが95\%信用区間はゼロを含む.HPとBNの
+点推定は小さな負で,やはり区間はゼロを含む.三仕様のベイズファクターはいずれも1近傍である.
+したがって,「方向は一部整合するが精度が不足」より強く,現時点では$\delta\ne0$を支持する
+PPI証拠はないと読む.
+
+PPIはCPIよりエネルギー,輸入原材料,産業構成の影響を強く受け,事後区間も広い.しかしこれは
+非結果を捨てる理由ではない.むしろ,CPIで得られた低頻度関係が川上価格一般には明確に現れない
+ことが,PPIを加えた実質的な発見である.
+
+\subsection{期待インフレの限界}
+SPFにはPPI期待がないため,PPI仕様でも共通の外部期待系列を用いる.この設計は左辺だけを替える
+比較としては透明だが,期待形成まで理論式と一致しない.Livingston Survey等のPPI予測を接続
+できれば,期待項まで整合した補助推定が可能になる.現結果を「PPI構造式の完全な推定」とは呼ばない.
+
+\begin{table}[H]
+\centering
+\caption{PPI・失業ギャップ・ベースライン事前のモデル別MCMC診断.}
+\label{tab:ppi-main-diagnostics}
+\small
+\input{results/tables/cpi_ppi_report/ppi_diagnostics.tex}
+\end{table}
+
+\section{CESで推定したフィリップス曲線傾きのバイアス}
+\label{sec:ces-hsa-bias}
+
+\subsection{理論予測と実証上の対応}
+Fujiwara--Matsuyama (2026) は,内生参入が戦略的補完性を通じてコストプッシュ項を生むため,
+実質限界費用だけにインフレを回帰するCES型の式では,NKPC傾きが過小推定されることを示す.
+本稿のHSA dynamic表現では,期待インフレを左辺へ移した式を
+\begin{equation}
+y_t=\alpha a_t+\kappa_{\mathrm{HSA}}x_t+q_t+e_t,
+\qquad q_t=-\theta\hat N_t,
+\label{eq:bias-hsa}
+\end{equation}
+と書ける.ここで $y_t=\pi_t-\mathbb E_t\pi_{t+1}$,
+$a_t=\pi_{t-1}-\mathbb E_t\pi_{t+1}$ である.CES式が $q_t$ を省略すると,
+\begin{equation}
+\operatorname{Bias}(\hat\kappa_{\mathrm{CES}})
+=\operatorname{plim}(\hat\kappa_{\mathrm{CES}}-\hat\kappa_{\mathrm{HSA}})
+=\frac{\tilde x'\tilde q}{\tilde x'\tilde x},
+\label{eq:bias-ovb}
+\end{equation}
+となる.チルダは $a_t$ と活動ショック
+$\zeta_t=x_t-\phi_1x_{t-1}$ を除いた残差である.理論予測は式\eqref{eq:bias-ovb}が負,
+すなわち $\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0$ である.
+
+この対応を曖昧にしないため,主結果のスラック指標とは別に,実質限界費用の代理として
+BN分解した逆マークアップを用い,CESとHSA dynamicを同じ標本・事前・MCMC設定で再推定した.
+さらに各HSA posterior drawについて $q_t^{(s)}=-\theta^{(s)}\hat N_t^{(s)}$ を作り,
+式\eqref{eq:bias-ovb}のバイアスを直接計算する.CES--HSA差は別々に推定したposterior間の比較
+なので,HSA側のドローを固定seedで無作為に並べ替えて差のモンテカルロ分布を作る.
+
+\subsection{推定結果}
+理論に直接対応する逆マークアップ仕様の結果は
+\begin{align*}
+\kappa_{\mathrm{CES}}&=\BiasDirectCES,&
+\kappa_{\mathrm{HSA}}&=\BiasDirectHSA,\\
+\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}&=\BiasDirectDifference,&
+\Pr(\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0)&=\BiasDirectProbability,\\
+B_{\mathrm{HSA}}&=\BiasDirectOVB,&
+\Pr(B_{\mathrm{HSA}}<0)&=\BiasDirectOVBProbability
+\end{align*}
+である.CES--HSA差は負のバイアスを示さない.HSA自身が含意する省略変数バイアスも点推定は
+理論と逆の正符号で,信用区間はゼロを含む.
+
+\begin{table}[H]
+\centering
+\caption{CES--HSA dynamicの傾き比較とHSAが含意する省略変数バイアス.各区間は95\%信用区間.
+$\dagger$はCESまたはHSA dynamicの少なくとも一方が収束基準外.}
+\label{tab:ces-hsa-bias}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/ces_hsa_kappa_bias.tex}}
+\end{table}
+
+\paragraph{判定.} 逆マークアップ行は両モデルとも収束基準を満たすが,傾きの区間は広く,
+CES--HSA差とモデル内OVBのいずれも理論が予測する負符号を支持しない.失業ギャップを使う
+三つの補助行でも同じ結論である.ただしこれは理論の反証とまでは言えない.逆マークアップは
+企業レベルの実質限界費用ではなく集計系列であり,HSA dynamicは理論モデル全体を同時推定した
+ものではない.本稿から言えるのは,\emph{現データと半構造モデルでは,理論論文のCES傾きの
+負のバイアス予測に対応する推定結果が得られなかった},までである.
+
+\section{傾きが定数のとき:ベンチマークと時変の必要性}
+\label{sec:bench}
+第\ref{sec:main}節の時変の結果を評価するには,定数傾きのベンチマークが必要である.本節は
+定数傾きモデル(\code{ces} と \code{hsa\_dynamic})を提示し,次に傾きを企業数で変動させる
+ことが他の係数と収束診断を含めてどう見えるかを問う.
+
+\begin{table}[H]
+\centering
+\caption{失業ギャップ仕様のモデル別結果.slopeはCES/HSA dynamicでは$\kappa$,その他では
+$\kappa_0$.entryは$\theta$または$\theta_0$.$\dagger$は収束基準を満たさず解釈しない.}
+\label{tab:current-models}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/unemployment_by_model.tex}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.68\textheight,keepaspectratio]{cpi_ppi_report/slope_by_model_inflation.png}
+\caption{失業ギャップ仕様の平均点での傾き.CES/HSA dynamicは$\kappa$,その他は$\kappa_0$.
+丸は収束基準を満たすラン,灰色の×は要注意ラン.}
+\label{fig:current-slope-model}
+\end{figure}
+
+\paragraph{CES.} 定数傾きの基準である.収束したコアCPIでは$\kappa$の区間が正側にあるが,
+ヘッドラインCPIとPPIはゼロを含む.CESは平均的な曲線の存在を測るが,平坦化の要因は説明しない.
+
+\paragraph{HSA steady.} 平均点の$\kappa_0$と競争依存$\delta$を最も直接に分ける主力である.
+15セル全てが収束基準を満たし,CPIの失業仕様で$\delta>0$,PPIで非識別という比較が成立する.
+
+\paragraph{HSA dynamic.} 傾きを定数とし,$-\theta\hat N_t$だけを追加する.収束したコアCPIと
+PPIの$\theta$区間はゼロを含み,循環的参入項を独立に識別したとは言えない.ヘッドラインは
+ESS基準外なので参考値である.
+
+\paragraph{HSA const-theta / full.} 理論経路を増やすほど識別負荷が高くなる.const-thetaは
+15セル中14セル,fullは15セル中12セルが基準外である.したがって,これらの$\delta$,entry,
+$\gamma$が理論と整合する場合でも,steady結果の頑健性確認には使わない.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\linewidth]{cpi_ppi_report/alpha_entry_by_model_inflation.png}
+\caption{失業ギャップ仕様のインフレ慣性$\alpha$（左）と参入係数$\theta$または$\theta_0$
+（右）.丸と灰色の×は図\ref{fig:current-slope-model}と同じ.}
+\label{fig:alpha-entry-main}
+\end{figure}
+
+収束したモデル間で$\alpha$は概ね同程度であり,HSA変数の追加だけでインフレ慣性が大幅に
+変わるわけではない.一方,収束したentry係数の区間はゼロを含む.したがって現在の中心的な
+証拠は循環的参入経路ではなく,HSA steadyの低頻度な傾き経路である.
+
+\begin{table}[H]
+\centering
+\caption{全\ReportRunCount{}ランのモデル別収束集計.warningsは採用基準外のラン数.}
+\label{tab:main-convergence}
+\small
+\input{results/tables/cpi_ppi_report/convergence_summary.tex}
+\end{table}
+
+\paragraph{モデル比較の限界.} Savage--Dickey比は同じHSA状態モデル内の点帰無
+$\delta=0$に限定して読む.CES対HSAの周辺尤度比ではない.潜在状態へ条件づけた標本内LPPDや
+RMSEも標本外予測ではないため,複雑モデルを選択する根拠にはしない.自動Chib周辺尤度は
+潜在状態の積分と切断事前の正規化が未検証なので本表から除外した.
+
+\iffalse
+
+\subsection{定数傾きモデル(\code{ces} / \code{hsa\_dynamic})}
+\paragraph{CES(定数 $\kappa$).} 教科書的 NKPC の傾きは一部の活動指標で明確に正である
+(表\ref{tab:ceskappa}).HP 出力ギャップとコア CPI 失業ギャップは信用区間がゼロを除外する.
+労働分配率ギャップと逆マークアップは定数としてもゼロと区別できず,そこにインフレ信号が
+無いことを裏づける.
+
+\begin{table}[H]
+\centering
+\caption{定数傾き $\kappa$(\code{ces},ベースライン):事後平均 [95\% CI].}
+\label{tab:ceskappa}
+\begin{tabular}{lcc}
+\toprule
+活動指標 & ヘッドライン CPI & コア CPI \\
+\midrule
+失業ギャップ    & $+0.056\;[-0.008,+0.120]$ & $+0.039\;[+0.007,+0.072]$ \\
+出力ギャップ (HP)     & $+0.138\;[+0.047,+0.227]$ & $+0.091\;[+0.043,+0.139]$ \\
+出力ギャップ (BN)     & $+0.059\;[-0.025,+0.144]$ & $+0.032\;[-0.017,+0.081]$ \\
+労働分配率ギャップ (HP)& $-0.008\;[-0.169,+0.150]$ & --- \\
+逆マークアップ      & $+0.007\;[-0.217,+0.228]$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{report/pp_kappa_ces_vs_steady.png}
+\caption{失業ギャップにおけるフィリップス曲線の傾きの事前対事後:CES の定数傾き $\kappa$ と
+\code{hsa\_steady} の平均競争度での傾き $\kappa_0$ を,共通の事前 $\mathcal N(0.1,0.2)$ に
+対して示す.いずれもデータで鋭く更新され,ゼロのすぐ上に位置する.両モデルは傾きの水準では
+一致するので,両者を分けるのは傾きが企業数で変動するか否かである(第\ref{sec:mc}節).}
+\label{fig:kappa_pp}
+\end{figure}
+
+\paragraph{\code{hsa\_dynamic}(定数 $\kappa$ と $\theta$).} 企業数ギャップ・チャネル
+$\hat N$ を加えても,定数傾きは CES からほとんど変わらない.加わった定数 $\theta$ は弱い
+負だが四半期頻度では実質的に識別されず,その $95\%$ 区間はゼロを含む(失業
+$-0.019\;[-0.146,+0.153]$;HP $-0.017\;[-0.122,+0.123]$;BN $-0.069\;[-0.165,+0.094]$).
+$\hat N$ の四半期変動は年次から四半期への補間の人工物であり,年次(Q4)頻度では $\theta$ は
+事前へ回帰する.したがって $\hat N$ チャネルはこのデータではほとんど情報を持たない.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.66\linewidth]{prior_posterior_theta.png}
+\caption{$\theta$ の事前対事後.事後は事前から分離しない:$\theta$ は四半期頻度では
+識別されない.}
+\end{figure}
+
+\subsection{時変傾きは定数傾きより当てはまりを改善するか?}
+\label{sec:mc}
+CES(定数 $\kappa$)と \code{hsa\_steady}(傾きが企業数で変動)を,2つの基準で比較する:
+標本内当てはめスコアと,$\delta\neq 0$ に対する Savage--Dickey ベイズファクター(表\ref{tab:mc}).
+
+\paragraph{標本内プラグイン当てはめスコア.} インフレ方程式を事後平均のパラメータおよび状態で
+評価する(バーは事後平均を表す),
+\begin{equation}
+\hat\pi_t=\bar\alpha\,\pi_{t-1}+(1-\bar\alpha)\,\mathbb{E}_t\pi_{t+1}+\bar\kt\,x_t,
+\qquad \bar\kt=\bar\kappa_0+\bar\delta\,\bar N_t
+\;\;(\text{CES: }\bar\kt=\bar\kappa),
+\end{equation}
+残差 $r_t=\pi_t-\hat\pi_t$ のガウス対数尤度で当てはまりを採点する.$\bar\sigma_e^2$ は
+事後平均のショック分散:
+\begin{equation}
+S=-\frac{T}{2}\log\!\big(2\pi\bar\sigma_e^2\big)-\frac{1}{2\bar\sigma_e^2}\sum_{t=1}^{T}r_t^2 .
+\end{equation}
+これは\emph{標本内プラグイン}スコアである:推定標本と事後平均を再利用しており,標本外予測
+でも事後予測密度でもない.あくまで大まかな比較用の当てはめ診断として用いる.適切な予測比較
+(LOO,WAIC,ローリング1期先予測,または統合対数予測密度)は今後の課題である.
+
+\paragraph{ベイズファクター(Savage--Dickey),正確に.} $\delta=0$ を\emph{HSA 状態モデルの
+内部で}検定する:$M_1$ は $\delta$ 自由の \code{hsa\_steady},$M_0$ は $\delta=0$ とした
+同モデルである.Savage--Dickey 恒等式は
+\begin{equation}
+\mathrm{BF}_{10}=\frac{p(\delta=0)}{\pi(\delta=0\mid y)},\qquad
+p(\delta=0)=\frac{1}{\sigma_\delta\sqrt{2\pi}}=\frac{1}{0.02\sqrt{2\pi}}\approx 19.95
+\;\;(\delta\sim\mathcal N(0,\sigma_\delta^2)),
+\end{equation}
+を与え,事後の縦座標はドロー $\{\delta^{(s)}\}$ 上のガウス・カーネル密度
+$\hat\pi(\delta=0\mid y)=\tfrac{1}{Sh}\sum_s\phi\!\big((0-\delta^{(s)})/h\big)$ で推定する.
+3つの注意.(i) これは CES 対 HSA の周辺尤度比\emph{ではない}:CES と HSA は潜在 $N$ ブロック
+でも異なり,SDDR はそれを固定するため,比較を HSA 状態モデルの内部に留める.(ii) 理論は
+一側($\delta>0$)であり,両側の $\mathrm{BF}_{10}$ は保守的である.(iii) ゼロ点の事後密度は
+KDE 推定である.パラメータ間の順序はバンド幅に鈍感だが厳密な大きさはそうでないので,1--2
+桁の有効数字で報告する.
+
+\begin{table}[H]
+\centering
+\caption{定数対時変傾き(ベースライン,四半期,無制約).当てはめスコアは上記の標本内
+プラグイン $S$(大きいほど良い);$\mathrm{BF}_{10}$ は HSA 状態モデル内の $\delta\neq0$ に
+対する SDDR.}
+\label{tab:mc}
+\begin{tabular}{lccc}
+\toprule
+活動指標 & CES 当てはめスコア & \code{hsa\_steady} 当てはめスコア & $\mathrm{BF}_{10}(\delta\neq0)$ \\
+\midrule
+失業ギャップ     & $-119.9$ & $\mathbf{-115.3}$ & $\mathbf{20.2}$ \\
+出力ギャップ (BN)      & $-120.8$ & $-119.6$ & $1.2$ \\
+出力ギャップ (HP)      & $-114.1$ & $-114.0$ & $0.8$ \\
+労働分配率ギャップ (HP) & $-121.9$ & $-121.4$ & $0.9$ \\
+逆マークアップ       & $-121.9$ & $-121.9$ & $1.0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{判定.} 失業ギャップでは,傾きを企業数で変動させることが標本内当てはめスコアを
+約 $4.6$ 改善し,ベイズファクターは $\delta\neq0$ を約 $20$:$1$ で支持する.ヘッドラインの
+ヘッドラインCPIの出力ギャップでは改善は限界的である.補論\ref{app:output-gaps}の全モデル表は,
+コアCPIのHP仕様にのみ正の競争依存が現れ,BN仕様には現れないことを示す.労働分配率ギャップと
+逆マークアップにはインフレ信号が無いため,
+定数と時変は同等に当てはまる.これは標本内の当てはめ比較であり,標本外の予測改善の証拠では
+ないことを強調する.
+
+\paragraph{周辺尤度について.} この判定は当てはめスコアと Savage--Dickey 比に基づく.Chib
+周辺尤度は annual-Q4 ブロックで欠測 N のバグにより汚染されており(第\ref{sec:status}節),
+用いない.
+
+\subsection{Savage--Dickey 比:パラメータごと}
+表\ref{tab:sddr} は,各モデルの全スカラー係数について点帰無「$\theta=0$」に対する
+Savage--Dickey ベイズファクターを報告する(失業ギャップ,ベースライン).各セルは
+$\mathrm{BF}_{10}=p(\theta=0)/\hat\pi(\theta=0\mid y)$(Savage--Dickey 密度比の逆数)で,
+大きいほど「$\ne 0$」を,$<1$ は帰無を支持する.ドットはそのモデルに当該パラメータが
+無いことを示す.
+
+\begin{table}[H]
+\centering
+\caption{「パラメータ $=0$」に対する Savage--Dickey ベイズファクター $\mathrm{BF}_{10}$,
+モデル別(失業ギャップ,ヘッドライン CPI,ベースライン).上段:経済的に重要な係数.
+下段:補助的な動学.後者では帰無 $=0$ は機械的である(これらは明らかに非ゼロ).}
+\label{tab:sddr}
+\begin{tabular}{lccccc}
+\toprule
+パラメータ & \code{ces} & \code{hsa\_dyn} & \code{hsa\_steady} & \code{hsa\_c\_theta} & \code{hsa\_full} \\
+\midrule
+$\kappa$(定数傾き)   & $0.61$ & $0.39$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+$\kappa_0$(傾き水準)   & $\cdot$ & $\cdot$ & $1.07$ & $3.76$ & $1.95$ \\
+$\delta$(競争依存) & $\cdot$ & $\cdot$ & $\mathbf{20.2}$ & $\mathbf{13.0}$ & $\mathbf{8.9}$ \\
+$\theta$($\hat N$ チャネル)  & $\cdot$ & $0.49$ & $\cdot$ & $0.50$ & $\cdot$ \\
+$\theta_0$                 & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $0.47$ \\
+$\gamma$                   & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ & $1.35$ \\
+\midrule
+$\alpha$(慣性)      & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ \\
+$\phi_1$                   & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ \\
+$\rho_1$ (AR2)             & $\cdot$ & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ \\
+$\rho_2$ (AR2)             & $\cdot$ & $>10^4$ & $>10^4$ & $>10^4$ & $>10^4$ \\
+$n$(ドリフト)                & $\cdot$ & $0.83$ & $32.5$ & $>10^4$ & $>10^4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent 読み取りは本稿の他の部分と整合する:$\delta$ は全 HSA モデルでゼロに対する明確な
+証拠を持つ唯一の経済的に重要な係数である一方,定数傾き($\kappa,\kappa_0$)はゼロと
+ほとんど区別できず,$\hat N$ チャネルの係数($\theta,\theta_0,\gamma$)は識別されない
+($\mathrm{BF}_{10}\lesssim 1$).分散パラメータは,帰無「標準偏差 $=0$」が Savage--Dickey 比
+のもとで退化するため除外する.
+
+\fi
+\section{頑健性}
+\label{sec:robust}
+頑健性は,(i)事前分布を替えて符号・区間・大きさがどう変わるか,(ii)価格指標をPPIへ替えても
+結果が残るか,(iii)収束したランだけで同じ結論になるか,の三点で判断する.
+
+\begin{table}[H]
+\centering
+\caption{失業ギャップ仕様の全モデル・三事前感応度.$\dagger$は収束基準外で解釈しない.}
+\label{tab:current-priors}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/prior_sensitivity_compact.tex}}
+\end{table}
+
+\paragraph{HSA steady.} ヘッドラインCPIとコアCPIの$\delta$はbaseline/weak/tightで正符号を
+保ち,事後区間は正側にある.ただしweakでは区間が広く,tightではゼロ方向へ縮小するため,
+完全に事前不変ではない.コアCPIのbaselineが最も強い証拠量を持つ.PPIは三事前とも区間が
+ゼロを含み,CPI結果の外的確認にならない.
+
+\paragraph{モデル変種.} const-theta/fullの$\dagger$セルは,符号がsteadyと一致しても頑健性の
+証拠に数えない.dynamicも一部ESS不足である.複雑化による「結果の維持」を主張する前に,
+再パラメータ化または長い独立チェーンで収束を確立する必要がある.
+
+\paragraph{期間頑健性.} 状態方程式は連続四半期を仮定する.中間期間の削除で前後を圧縮する
+旧処理は使わない.現在の77ランは全標本比較であり,修正後revisionの連続サブサンプル推定を
+別途行うまでは,pre-2008やpost-1988の数値を結論に含めない.
+
+\iffalse
+2つの問いを分ける:$\delta$ は正の\emph{符号}を保つか,そしてゼロから\emph{識別される}か.
+弱・強事前のもとで失業 $\delta$ は $[+0.02,+0.04]$ にとどまり,信用区間はゼロを除外する.
+年次(Q4)頻度---N は Q4 のみ観測,Q1--Q3 は欠測として状態空間モデルで推定---では符号は不変
+である.一方,四半期での $\theta/\gamma$ の「有意性」は補間の人工物で,年次頻度では事前へ
+回帰する.利用可能な期間比較では符号は安定だが,識別は一様ではない:1980 年代を除いた
+100四半期の start-1988 標本では,平均は正のままでも区間はゼロへ広がる
+(第\ref{sec:scope}節).16四半期しかない post-2008 推定は解釈しない.ハード制約
+$\kt\ge0$(別の切断された事後,別掲)を課しても符号は保たれる.
+
+\paragraph{時間トレンド診断.} 第\ref{sec:ident}節の線形時間トレンド horse race は,
+$x_t\bar N_t$ と $x_t\times\mathrm{time}_t$ が実質的に区別できないことを示す.二次トレンド,
+構造変化ダミー,無関係なトレンド変数との placebo interaction は未検証である.したがって
+$\delta$ は因果効果ではなく関連として読むべきである(第\ref{sec:scope}節).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\linewidth]{prior_sensitivity_delta.png}
+\caption{$\delta$ の事前感応度.失業仕様では事後は事前に支配されず,データがそれを正の領域に
+固定する.}
+\end{figure}
+\fi
+
+\section{年次Q4だけを観測して四半期企業数を推定した結果}
+\label{sec:annual-q4-results}
+本節は,PCHIP補間値を毎四半期のデータとして用いるここまでの結果に対し,式
+\eqref{eq:annual-q4-observation}のmixed-frequency観測方式を適用した結果を,同じ順序で報告する.
+価格指標3種,活動指標3種,5モデル,三事前,および逆マークアップによる傾きバイアス診断は
+変えない.HSAの61セルを12,000反復・2チェーンで新たに推定した.CESは$N_t$も潜在企業数状態も
+含まないため観測頻度を替えても尤度・posteriorが変わらず,16セルの共通参照として再利用する.
+したがって以下のCES--HSA比較において,CES列は同一のベンチマーク,HSA列だけがannual-Q4推定である.
+
+\subsection{CPIとPPI:HSA steadyの主要結果}
+まず主力\code{hsa\_steady}について,価格指標と活動指標を全て並べる.失業ギャップでは,
+ヘッドラインCPIの$\delta=\AnnualHeadlineUnempDelta$
+($\mathrm{BF}_{10}=\AnnualHeadlineUnempDeltaBF$),コアCPIの
+$\delta=\AnnualCoreUnempDelta$ ($\mathrm{BF}_{10}=\AnnualCoreUnempDeltaBF$),PPIの
+$\delta=\AnnualPPIUnempDelta$ ($\mathrm{BF}_{10}=\AnnualPPIUnempDeltaBF$)である.
+PCHIP版の対応値は順に\HeadlineUnempDelta,\CoreUnempDelta,\PPIUnempDelta{}であり,
+観測頻度の変更による点推定と区間の変化を直接比較できる.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:HSA steadyの価格指標・活動指標別結果.$\delta$は事後平均[95\%信用区間],
+$\kappa$ pathは標本始点から終点への事後平均の変化.$\dagger$はrun全体の収束基準外.}
+\label{tab:annual-hsa-steady}
+\small
+\input{results/tables/cpi_ppi_report/annual_q4/hsa_steady_by_activity.tex}
+\end{table}
+
+重要なのは,「係数の周辺鎖が混ざった」ことと「潜在状態を含むjoint posteriorが収束した」ことを
+区別する点である.失業ギャップの3価格指標では,$\delta$の最大$\hat R$は全て1.000,
+最小bulk ESSは3,000超,$\kappa_0$も$\hat R\leq1.003$,ESS 1,000超である.一方,$\bar N_t$と
+$\hat N_t$の経路には$\hat R>1.01$またはESS$<400$の時点があり,HSA steady 15セルはrun全体の
+基準を満たさない.表\ref{tab:annual-parameter-state-diagnostics}はこの差を隠さず示す.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:HSA steady・失業ギャップの係数別/状態別診断.Rhatは経路内の最大値,
+ESSは経路内の最小bulk ESS.採用基準はRhat$\leq1.01$かつESS$\geq400$.}
+\label{tab:annual-parameter-state-diagnostics}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/primary_parameter_state_diagnostics.tex}}
+\end{table}
+
+したがって,annual-Q4のCPI $\delta$の正符号と大きさはPCHIP版に対する有力な\emph{暫定的}
+再現であるが,本稿の厳格な採用規則のもとでは確認済み頑健性とは呼ばない.以下の$\kappa_t$経路と
+状態分解も,pointwise posteriorの計算結果を示す診断図であり,収束済みの主結果としては扱わない.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth]{cpi_ppi_report/annual_q4/kappa_t_unemployment_by_inflation.png}
+\caption{annual-Q4版:失業ギャップ仕様の時変傾き$\kappa_t$(事後平均と95\%信用帯).
+Q1--Q3の企業数状態をFFBSで推定した不確実性を含むが,状態経路の収束警告があるため暫定図.}
+\label{fig:annual-kappa-path}
+\end{figure}
+
+コアCPI・失業ギャップで含意される傾きは
+$\AnnualCoreUnempKappaStart$から$\AnnualCoreUnempKappaEnd$へ変化する.この経路は,
+四半期PCHIP曲線を所与とした結果ではなく,31個の年次アンカーと四半期のインフレ・活動データから
+同時に抽出した$\bar N_t$を用いる.図\ref{fig:annual-state-decomposition}は,観測されない四半期も含む
+総企業数状態,トレンド,循環のposteriorを示す.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth]{cpi_ppi_report/annual_q4/competition_decomposition_hsa_steady_core_unemployment.png}
+\caption{annual-Q4版:コアCPI・失業ギャップ・HSA steadyの企業数状態分解.線は事後平均,
+帯は95\%信用区間.Q4の年次観測の間にある四半期状態も推定対象である.}
+\label{fig:annual-state-decomposition}
+\end{figure}
+
+\subsection{5モデルの比較}
+失業ギャップについて,PCHIP版と同じ5モデルを価格指標ごとに示す.定数傾きCESを共通の基準とし,
+HSA steadyは$\bar N_t$を通じた時変傾き,HSA dynamicは$\hat N_t$の参入項,const-theta/fullは
+両経路を組み合わせる.表の$\dagger$はannual-Q4版posteriorが収束基準外であることを示し,
+その係数は符号が整合しても結論に使わない.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:失業ギャップ仕様のモデル別結果.CESは企業数を使わない共通参照.}
+\label{tab:annual-models}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/unemployment_by_model.tex}}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.68\textheight,keepaspectratio]{cpi_ppi_report/annual_q4/slope_by_model_inflation.png}
+\caption{annual-Q4版:失業ギャップ仕様の平均競争度における傾き.丸は収束基準を満たすラン,
+灰色の×は要注意ラン.}
+\label{fig:annual-model-slopes}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\linewidth]{cpi_ppi_report/annual_q4/alpha_entry_by_model_inflation.png}
+\caption{annual-Q4版:インフレ慣性$\alpha$（左）と参入係数$\theta$または$\theta_0$（右）.
+企業数の四半期循環をモデル内で推定したとき,参入係数がデータで更新されるかを示す.}
+\label{fig:annual-alpha-entry}
+\end{figure}
+
+\subsection{CES--HSA傾きバイアス}
+理論に直接対応する逆マークアップ仕様では,
+\begin{align*}
+\kappa_{\mathrm{CES}}&=\AnnualBiasDirectCES,&
+\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectHSA,\\
+\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectDifference,&
+\Pr(\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0)&=\AnnualBiasDirectProbability,\\
+B_{\mathrm{HSA}}&=\AnnualBiasDirectOVB,&
+\Pr(B_{\mathrm{HSA}}<0)&=\AnnualBiasDirectOVBProbability.
+\end{align*}
+CES係数はPCHIP版と同一である一方,HSA係数と式\eqref{eq:bias-ovb}の$\hat N_t$はannual-Q4
+posteriorから計算する.これにより,補間が作る滑らかな四半期変動を欠落変数バイアス診断へ
+持ち込まない.ただしannual-Q4のHSA dynamicは逆マークアップを含めrun全体の収束基準外なので,
+以下の差とOVBは追加診断であって理論予測の正式な検定結果には数えない.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:CES--HSA dynamicの傾き差とHSAが含意する省略変数バイアス.}
+\label{tab:annual-bias}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/ces_hsa_kappa_bias.tex}}
+\end{table}
+
+\subsection{事前分布感応度と収束}
+baseline,weak,tightの比較も同じannual-Q4観測方式でそれぞれ再推定した.これはPCHIP版の
+posteriorへ別の事前を後付けした重み付けではない.企業数状態,係数,分散を各事前のもとで
+Gibbs/FFBSにより引き直している.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:失業ギャップ仕様の全モデル・三事前感応度.$\dagger$は収束基準外.}
+\label{tab:annual-priors}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/prior_sensitivity_compact.tex}}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4比較表のモデル別収束集計.CES 16セルは共通参照,HSA 61セルは新規推定.}
+\label{tab:annual-convergence}
+\small
+\input{results/tables/cpi_ppi_report/annual_q4/convergence_summary.tex}
+\end{table}
+
+annual-Q4版でも,採用する結論は表\ref{tab:annual-convergence}の基準を満たしたセルに限る.
+とくに,年次データしかない$N$から四半期循環$\hat N_t$とその係数を同時に識別するモデルは
+情報量が少ない.区間の広がりやESS低下そのものが,PCHIPを所与としたときに隠れる測定不確実性を
+示している.また,HSA steadyのtight事前ではCPI失業仕様の$\delta$区間がゼロを含むため,
+annual-Q4版は事前不変でもない.出力ギャップ別の同一比較は補論\ref{app:annual-output-gaps}に置く.
+
+\section{スコープ条件と識別の限界}
+\label{sec:scope}
+誠実さのため,主要結果が\emph{成立しない}領域と,何を主張でき何を主張できないかを述べる.
+\begin{itemize}
+\item \textbf{PPIでは識別されない.} 理論の左辺に近いPPIへ替えると$\delta$は全活動指標で
+ゼロを含む.期待PPIが存在しないという測定上の限界はあるが,CPIの関係が価格設定段階一般に
+成立するとは主張できない.
+\item \textbf{複雑モデルは未収束.} const-theta/fullは多数のセルが採用基準外であり,
+循環的参入経路や$\gamma$を実証したとは言えない.
+\item \textbf{annual-Q4版のjoint posteriorは未収束.} CPIの$\delta$周辺鎖はよく混ざり,
+PCHIP版と近い正の点推定を与えるが,AR(2)係数と潜在状態経路のESS/Rhatが基準外である.
+したがってannual-Q4結果は補間依存性を調べる重要な追加診断だが,現段階では主結果を確証する
+頑健性チェックには数えない.
+\end{itemize}
+
+\paragraph{因果効果ではない.} $\bar N_t$ はほぼ単調な低頻度トレンドなので,この設計では
+$\delta$ を,同じ数十年にトレンドした他の要因から分離できない:Volcker の金融政策レジーム
+転換,インフレ期待のアンカー化,労働市場制度と労組組織率の変化,グローバル化と輸入競争,
+価格改定頻度の変化,あるいは単なる時間トレンド/構造変化.言えるのはせいぜい,\emph{企業数の
+低頻度的な低下と,失業ギャップに対するインフレ感応度の低下が同時に起こり,その符号が HSA
+理論と整合する},までである.したがって「競争が平坦化を引き起こす」「メカニズムを識別した」
+という表現は避ける.
+
+\section{結論}
+1982--2012 年の米国において,上場企業数の低頻度的な低下と,失業ギャップに対するインフレ
+感応度の低下は同時に進行した.その関係の符号---$\delta>0$,すなわち企業数の低下がより平坦な
+傾きを含意する---は,市場集中の上昇がフィリップス曲線を平坦化させるという HSA の予測と整合し,
+コアCPIの失業仕様で$\delta=\CoreUnempDelta$となる.含意される$\kt$は
+$\CoreUnempKappaStart$から$\CoreUnempKappaEnd$へ低下し,1ポイントの失業ギャップに対する
+始点・終点の反応差は約0.126ポイントである.コアCPIへ統一するとHP出力ギャップも同じ正符号を
+示すが,BNは決着しない.
+
+理論の左辺に近いPPIはCPI結果を確認しない.失業仕様は$\delta=\PPIUnempDelta$であり,
+HP・BNとともに区間がゼロを含む.したがって「価格設定段階一般に共通するHSA効果」ではなく,
+消費者価格のフィリップス曲線に現れる時系列関係として範囲を限定する.また,const-theta/fullの
+多数が未収束で,収束したentry係数もゼロを含むため,循環的参入経路を識別したとは言わない.
+
+理論論文が予測するCES傾きの負のバイアスは,逆マークアップを用いた直接対応仕様でも支持されない.
+CES--HSA差とHSAが含意する省略変数バイアスはいずれも区間がゼロを含み,点推定はむしろ正である.
+annual-Q4版ではCPI失業仕様の$\delta$周辺事後はPCHIP版と近い正符号を保つが,潜在状態とAR(2)
+ブロックが収束基準外なので,この一致は暫定的な感度診断に留める.
+よって本発見は因果効果ではなく,
+HSAの符号予測と整合する初期的な時系列証拠として読む.本研究の価値は,理論を推定可能な
+状態空間モデルへ翻訳し,CPI/PPI,活動指標,五モデル,三事前を同じ枠で比較し,どこに証拠があり,
+どこから先はデータが語らないかを明示する点にある.
+
+\section{ステータスと未解決事項}
+\label{sec:status}
+\paragraph{現在のrevisionで確定.} HSA steadyにおけるCPI失業仕様の正の$\delta$と平坦化する
+$\kt$;補論に分離したコアCPI・HP仕様の正符号とBN仕様の非結果;PPI三活動仕様の非結果;
+三事前の感応度;CES/HSA steadyの収束;経済効果量;逆マークアップによるCES--HSA傾きバイアス
+診断;PPI--コアCPIパススルーの記述診断.ここで確定とするHSA結果はPCHIP版である.
+annual-Q4 HSA 61セルは本設定で推定済みだが,下記の収束課題が残る.
+
+\paragraph{未解決(実証/計量).}
+\begin{itemize}
+\item \textbf{因果識別.} 線形時間トレンドとの horse race では両者を区別できない.
+関連を超える主張の前に,二次トレンド,構造変化ダミー,placebo interaction を加える.
+\item \textbf{期待系列の不一致.} コア対応の期待インフレに加え,PPI予測系列をLivingston Survey
+等から接続し,期待項まで価格指標と整合させる.
+\item \textbf{予測評価.} 標本内プラグイン当てはめスコアを LOO/WAIC またはローリング標本外
+予測で置き換える.
+\item \textbf{期間頑健性.} 連続四半期だけを用いて現在のrevisionで再推定する.旧revisionの
+pre-2008/post-1988数値は本稿の結論に使わない.
+\item \textbf{ベイズファクターの頑健性.} 両側 SDDR に加え,一側($\delta>0$)評価と KDE の
+バンド幅感度を報告する.
+\item \textbf{annual-Q4状態ブロック.} $\delta,\kappa_0$の周辺鎖は良好だが,$\rho_1,\rho_2$と
+$\bar N_t,\hat N_t$の一部時点が低ESS/高Rhatである.再パラメータ化,より長い独立チェーン,
+状態方程式の弱識別を緩和する事前を検討する.
+\end{itemize}
+
+\paragraph{未解決(計算).}
+\begin{itemize}
+\item \textbf{自動周辺尤度.} Chib周辺尤度は潜在状態の積分と切断事前の正規化が未検証なので
+自動表から除外した.検証済み実装ができるまでモデル選択に使わない.
+\item \textbf{const-theta/fullの弱収束.} 要注意セルを主推論から外した.再パラメータ化,
+より長い独立チェーン,識別制約を検討する.
+\item \textbf{$\gamma$の弱識別.} $\hat N\bar N$と$\hat N$の共線性を緩和する識別戦略が必要である.
+\end{itemize}
+
+\paragraph{主要な出力ファイル.}
+\begin{itemize}
+\item 全ラン診断: \path{results/tables/cpi_ppi_report/report_run_manifest.csv}
+\item 自動生成TeX: \path{results/tables/cpi_ppi_report/}
+\item annual-Q4版の表: \path{results/tables/cpi_ppi_report/annual_q4/}
+\item 補助分析: \path{results/tables/report_additions/}
+\item 図: \path{results/figures/cpi_ppi_report/}
+\end{itemize}
+
+\appendix
+\section{補論:出力ギャップ別の推定結果}
+\label{app:output-gaps}
+本文は失業ギャップを主活動指標とし,出力ギャップの結果をここに分離する.HPとBNは潜在産出の
+推定法が異なるため,同じ「output gap」として一つの係数へまとめず,各定義について価格指標3種・
+モデル5種の全ベースライン結果を報告する.slopeはCES/HSA dynamicでは定数傾き$\kappa$,
+その他のHSAモデルでは平均競争度での傾き$\kappa_0$である.$\delta$は企業数トレンドに対する
+傾きの感応度,entryは$\theta$または$\theta_0$を表す.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{cpi_ppi_report/delta_output_gaps.png}
+\caption{HSA steadyの出力ギャップ別$\delta$(事後平均と95\%信用区間).HPとBNを分離し,
+ヘッドラインCPI・コアCPI・PPIを同じ尺度で示す.}
+\label{fig:output-gap-delta}
+\end{figure}
+
+\subsection{HP出力ギャップ}
+HSA steadyでは,ヘッドラインCPIの$\delta$はほぼゼロである一方,コアCPIは
+正となる:
+\begin{equation*}
+\delta_{\mathrm{Core,HP}}=\CoreHPDelta,
+\qquad \mathrm{BF}_{10}=\CoreHPDeltaBF.
+\end{equation*}
+PPIの$\delta=\PPIHPDelta$はゼロを含む.
+したがってHP仕様の正の競争依存はコアCPIに限定され,価格指標一般の結果ではない.
+
+\begin{table}[H]
+\centering
+\caption{HP出力ギャップ:価格指標・モデル別のベースライン推定結果.$\dagger$は収束基準外.}
+\label{tab:output-gap-hp}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/output_gap_hp_by_model.tex}}
+\end{table}
+
+\subsection{BN出力ギャップ}
+HSA steadyの$\delta$は,ヘッドラインCPIで負,コアCPIで正,PPIで負の点推定だが,三つとも
+95\%信用区間がゼロを含む(ヘッドライン$\HeadlineBNDelta$,コア$\CoreBNDelta$,
+PPI$\PPIBNDelta$).各$\mathrm{BF}_{10}$も約1であり,BN仕様から傾きの競争依存を支持する
+証拠は得られない.
+
+\begin{table}[H]
+\centering
+\caption{BN出力ギャップ:価格指標・モデル別のベースライン推定結果.$\dagger$は収束基準外.}
+\label{tab:output-gap-bn}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/output_gap_bn_by_model.tex}}
+\end{table}
+
+\paragraph{全体の読み方.} HPコアCPIは失業ギャップのCPI結果と方向が一致するが,HPヘッドライン,
+HPのPPI,BNの全価格指標は支持しない.また,const-theta/fullには収束基準外のセルが多いので,
+複雑モデルでの符号一致を頑健性の証拠に数えない.出力ギャップの結果は「活動指標を替えても常に
+成立する」という主張ではなく,どの測定法と価格指標の組合せに結果が依存するかを示す感度分析である.
+
+\section{補論:annual-Q4版の出力ギャップ別結果}
+\label{app:annual-output-gaps}
+本文第\ref{sec:annual-q4-results}節と同じmixed-frequency推定を,HPおよびBN出力ギャップに
+適用する.各表は価格指標3種・モデル5種の全ベースライン結果であり,CES行だけは企業数観測方式に
+依存しない共通参照である.まずHSA steadyの$\delta$だけを同一尺度で比較し,次にモデル別の
+全係数と診断を示す.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.82\linewidth]{cpi_ppi_report/annual_q4/delta_output_gaps.png}
+\caption{annual-Q4版:HSA steadyのHP・BN出力ギャップ別$\delta$(事後平均と95\%信用区間).}
+\label{fig:annual-output-gap-delta}
+\end{figure}
+
+\subsection{HP出力ギャップ}
+annual-Q4版のHSA steadyでは,ヘッドラインCPIが
+$\delta=\AnnualHeadlineHPDelta$ ($\mathrm{BF}_{10}=\AnnualHeadlineHPDeltaBF$),コアCPIが
+$\delta=\AnnualCoreHPDelta$ ($\mathrm{BF}_{10}=\AnnualCoreHPDeltaBF$),PPIが
+$\delta=\AnnualPPIHPDelta$ ($\mathrm{BF}_{10}=\AnnualPPIHPDeltaBF$)である.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:HP出力ギャップの価格指標・モデル別ベースライン推定結果.}
+\label{tab:annual-output-gap-hp}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/output_gap_hp_by_model.tex}}
+\end{table}
+
+\subsection{BN出力ギャップ}
+annual-Q4版のHSA steadyでは,ヘッドラインCPIが
+$\delta=\AnnualHeadlineBNDelta$ ($\mathrm{BF}_{10}=\AnnualHeadlineBNDeltaBF$),コアCPIが
+$\delta=\AnnualCoreBNDelta$ ($\mathrm{BF}_{10}=\AnnualCoreBNDeltaBF$),PPIが
+$\delta=\AnnualPPIBNDelta$ ($\mathrm{BF}_{10}=\AnnualPPIBNDeltaBF$)である.
+
+\begin{table}[H]
+\centering
+\caption{annual-Q4版:BN出力ギャップの価格指標・モデル別ベースライン推定結果.}
+\label{tab:annual-output-gap-bn}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/output_gap_bn_by_model.tex}}
+\end{table}
+
+これらはPCHIP版の補論\ref{app:output-gaps}と一対一に対応する.比較では点推定だけでなく,
+95\%信用区間,ベイズファクター,および収束フラグを同時に読む.annual-Q4化で区間が広がる場合,
+それは四半期企業数を観測済みと扱わず,補間不確実性を伝播させた結果である.
+
+\section{補論:生産者価格からコア CPI へのパススルー}
+\label{app:passthrough}
+HSA が示唆するパススルー低下を集計データで診断するため,ローリング窓ごとにコア CPI
+インフレを PPI インフレに回帰する.「当期」は当期 PPI の係数,「分布ラグ」は当期から
+4四半期ラグまでの係数和である.窓の長さを10,15,20年と変えても,標本末の係数は最初に
+推定可能な窓より小さい.
+
+\begin{table}[H]
+\centering
+\caption{PPI--コア CPI パススルーのローリングOLS診断.相関はローリング推定値と主仕様の
+事後平均 $\bar N_t$ の相関.}
+\label{tab:passthrough}
+\input{results/tables/report_additions/ppi_core_pass_through.tex}
+\end{table}
+
+\noindent パススルーの低下と企業数トレンドの正相関は HSA の方向と整合するが,この回帰は
+企業レベルの費用ショックに対する価格反応を測っていない.PPI はエネルギー・輸入価格や産業構成
+にも左右され,ローリング係数と $\bar N_t$ はともに低頻度トレンドを持つ.したがって本結果は
+メカニズムの補助的な記述証拠であり,本文の $\delta$ を独立に識別する検定ではない.
+
+\end{document}

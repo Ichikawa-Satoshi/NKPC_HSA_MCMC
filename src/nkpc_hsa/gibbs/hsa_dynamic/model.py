@@ -192,13 +192,17 @@ def _sample_Sigma_full(
     nu0: float,
     S0: np.ndarray,
     rng: np.random.Generator,
+    current_Sigma: np.ndarray,
 ) -> np.ndarray:
     """
     Sample full Sigma for:
 
         [e_t, zeta_t, u_t, epsilon_t]'
 
-    We use t >= 1 because u_t and epsilon_t are transition shocks.
+    At t=0, u_t and epsilon_t are not state-transition shocks.  Treating them
+    as missing components of the Gaussian shock vector and drawing them from
+    their conditional distribution gives a valid data-augmentation update;
+    simply dropping the first e/zeta observation would not.
     """
     e = _as_1d(e)
     zeta = _as_1d(zeta)
@@ -208,7 +212,16 @@ def _sample_Sigma_full(
     if not (e.size == zeta.size == u.size == eps.size):
         raise ValueError("Residual arrays must have the same length.")
 
-    resid = np.column_stack([e[1:], zeta[1:], u[1:], eps[1:]])
+    Sigma = _force_pd(current_Sigma)
+    observed = np.array([e[0], zeta[0]], dtype=float)
+    S_oo = Sigma[:2, :2]
+    S_mo = Sigma[2:, :2]
+    conditional_mean = S_mo @ np.linalg.solve(S_oo, observed)
+    conditional_cov = _force_pd(Sigma[2:, 2:] - S_mo @ np.linalg.solve(S_oo, S_mo.T))
+    missing_t0 = _mvnrnd(conditional_mean, conditional_cov, rng)
+
+    resid = np.column_stack([e, zeta, u, eps])
+    resid[0, 2:] = missing_t0
     resid = resid[np.all(np.isfinite(resid), axis=1)]
 
     if resid.shape[0] == 0:
@@ -218,6 +231,87 @@ def _sample_Sigma_full(
     nu_post = float(nu0) + resid.shape[0]
 
     return _sample_invwishart(nu_post, S_post, rng)
+
+
+def _sample_sigma_restricted(
+    e: np.ndarray,
+    zeta: np.ndarray,
+    u: np.ndarray,
+    eps: np.ndarray,
+    nu0: float,
+    S0: np.ndarray,
+    structure: str,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Exact conjugate update under a block-diagonal covariance restriction.
+
+    The prior is the corresponding marginal of the configured four-dimensional
+    inverse-Wishart prior.  Under ``e_zeta_only`` the (e,zeta) block is IW and
+    the two transition variances are inverse-gamma.  Under ``diagonal`` all
+    four variances are inverse-gamma.  This samples on the restricted parameter
+    space instead of drawing an unrestricted matrix and zeroing entries later.
+    """
+    arrays = [_as_1d(value) for value in (e, zeta, u, eps)]
+    if len({value.size for value in arrays}) != 1:
+        raise ValueError("Residual arrays must have the same length.")
+    e, zeta, u, eps = arrays
+    S0 = np.asarray(S0, dtype=float)
+    if S0.shape != (4, 4):
+        raise ValueError("S0 must be a 4x4 matrix.")
+
+    # Principal marginals of IW_4(nu0, S0): IW_k(nu0 - 4 + k, S0_k).
+    scalar_df = float(nu0) - 3.0
+    if scalar_df <= 0.0:
+        raise ValueError("nu_Sigma must exceed 3 for restricted covariance priors.")
+
+    out = np.zeros((4, 4), dtype=float)
+
+    def draw_variance(values: np.ndarray, index: int, *, include_t0: bool) -> float:
+        sample = values if include_t0 else values[1:]
+        sample = sample[np.isfinite(sample)]
+        return _sample_invgamma(
+            0.5 * (scalar_df + sample.size),
+            0.5 * (float(S0[index, index]) + float(sample @ sample)),
+            rng,
+        )
+
+    if structure == "e_zeta_only":
+        resid_ez = np.column_stack([e, zeta])
+        resid_ez = resid_ez[np.all(np.isfinite(resid_ez), axis=1)]
+        block_df = float(nu0) - 2.0
+        if block_df <= 1.0:
+            raise ValueError("nu_Sigma must exceed 3 for the (e,zeta) covariance prior.")
+        block = _sample_invwishart(
+            block_df + resid_ez.shape[0],
+            S0[:2, :2] + resid_ez.T @ resid_ez,
+            rng,
+        )
+        out[:2, :2] = block
+    elif structure == "diagonal":
+        out[0, 0] = draw_variance(e, 0, include_t0=True)
+        out[1, 1] = draw_variance(zeta, 1, include_t0=True)
+    else:
+        raise ValueError("Restricted covariance structure must be e_zeta_only or diagonal.")
+
+    out[2, 2] = draw_variance(u, 2, include_t0=False)
+    out[3, 3] = draw_variance(eps, 3, include_t0=False)
+    return out
+
+
+def _sample_Sigma(
+    e: np.ndarray,
+    zeta: np.ndarray,
+    u: np.ndarray,
+    eps: np.ndarray,
+    nu0: float,
+    S0: np.ndarray,
+    structure: str,
+    rng: np.random.Generator,
+    current_Sigma: np.ndarray,
+) -> np.ndarray:
+    if structure == "full":
+        return _sample_Sigma_full(e, zeta, u, eps, nu0, S0, rng, current_Sigma)
+    return _sample_sigma_restricted(e, zeta, u, eps, nu0, S0, structure, rng)
 
 
 # ============================================================
@@ -1058,8 +1152,6 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         raise ValueError("No draws would be stored. Use n_keep >= store_every.")
 
     Nbar, Nhat, states = _init_states(N_obs)
-    N_init = initial_competition_path(N_obs)
-
     a_t = pi_tm1 - pi_expect
     y = pi_t - pi_expect
 
@@ -1067,7 +1159,7 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         [
             float(_getd(opts, "m0_Nhat", pri["m0_Nhat"])),
             float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"])),
-            float(_getd(opts, "m0_Nbar", N_init[0])),
+            float(_getd(opts, "m0_Nbar", pri["m0_Nbar"])),
         ],
         dtype=float,
     )
@@ -1193,18 +1285,19 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
         u, eps = _compute_state_residuals(states, rho1, rho2, n_drift)
 
         # ------------------------------------------------------------
-        # 5. Draw full Sigma
+        # 5. Draw Sigma on the configured covariance parameter space
         # ------------------------------------------------------------
-        Sigma = _sample_Sigma_full(
+        Sigma = _sample_Sigma(
             e=e,
             zeta=zeta,
             u=u,
             eps=eps,
             nu0=pri["nu_Sigma"],
             S0=S_Sigma,
+            structure=covariance_structure,
             rng=rng,
+            current_Sigma=Sigma,
         )
-        Sigma = _restrict_sigma_structure(Sigma, covariance_structure)
 
         # ------------------------------------------------------------
         # 6. Draw measurement error variance sigma_N2
@@ -1320,6 +1413,11 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
             "trend": "Nbar_t = n + Nbar_{t-1} + epsilon_t",
             "Sigma_order": "[e_t, zeta_t, u_t, epsilon_t]",
             "covariance_structure": covariance_structure,
+            "covariance_update": (
+                "restricted_conjugate"
+                if covariance_structure != "full"
+                else "iw_missing_shock_augmentation"
+            ),
             "nu_independent": True,
             "state_vector": "[Nhat_t, Nhat_{t-1}, Nbar_t]'",
             "kappa_scale": KAPPA_SCALE,

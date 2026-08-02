@@ -101,6 +101,8 @@ def _sample_ar2_states_ffbs(
     kappa: float | None = None,
     kappa_t: np.ndarray | None = None,
     obs_offset: np.ndarray | None = None,
+    initial_mean: tuple[float, float] = (0.0, 0.0),
+    initial_var: tuple[float, float] = (10.0, 10.0),
 ) -> np.ndarray:
     y_target = _as_1d(y_target)
     pi_t = _as_1d(pi_t)
@@ -110,8 +112,8 @@ def _sample_ar2_states_ffbs(
     T = y_target.size
     obs_offset_arr = np.zeros(T, dtype=float) if obs_offset is None else _as_1d(obs_offset)
 
-    if T < 3:
-        return y_target.copy()
+    if T == 0:
+        return np.empty((2, 0), dtype=float)
 
     kappa_series = _coerce_kappa_series(T, kappa=kappa, kappa_t=kappa_t)
 
@@ -123,13 +125,13 @@ def _sample_ar2_states_ffbs(
     m_pred = np.zeros((2, T), dtype=float)
     P_pred = np.zeros((2, 2, T), dtype=float)
 
-    y_init = initial_competition_path(y_target)
-    m[:, 0] = np.array([y_init[0], 0.0], dtype=float)
-    P[:, :, 0] = np.eye(2) * 10.0
+    m_pred[:, 0] = np.asarray(initial_mean, dtype=float)
+    P_pred[:, :, 0] = np.diag(np.asarray(initial_var, dtype=float))
 
-    for t in range(1, T):
-        m_pred[:, t] = F @ m[:, t - 1]
-        P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
+    for t in range(T):
+        if t > 0:
+            m_pred[:, t] = F @ m[:, t - 1]
+            P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
 
         y_pi = (
             alpha * pi_tm1[t]
@@ -157,9 +159,9 @@ def _sample_ar2_states_ffbs(
     states[:, -1] = _mvnrnd(m[:, -1], P[:, :, -1], rng)
 
     for t in range(T - 2, -1, -1):
-        Ptp1_pred = F @ P[:, :, t] @ F.T + Q
+        Ptp1_pred = P_pred[:, :, t + 1]
         A = P[:, :, t] @ F.T @ inv(Ptp1_pred)
-        m_s = m[:, t] + A @ (states[:, t + 1] - F @ m[:, t])
+        m_s = m[:, t] + A @ (states[:, t + 1] - m_pred[:, t + 1])
         P_s = _force_pd(P[:, :, t] - A @ Ptp1_pred @ A.T)
         states[:, t] = _mvnrnd(m_s, P_s, rng)
 
@@ -185,6 +187,8 @@ def _sample_ar2_states_ffbs_tv_theta(
     theta: float | None = None,
     theta_t: np.ndarray | None = None,
     obs_offset: np.ndarray | None = None,
+    initial_mean: tuple[float, float] = (0.0, 0.0),
+    initial_var: tuple[float, float] = (10.0, 10.0),
 ) -> np.ndarray:
     y_target = _as_1d(y_target)
     pi_t = _as_1d(pi_t)
@@ -194,8 +198,8 @@ def _sample_ar2_states_ffbs_tv_theta(
     T = y_target.size
     obs_offset_arr = np.zeros(T, dtype=float) if obs_offset is None else _as_1d(obs_offset)
 
-    if T < 3:
-        return y_target.copy()
+    if T == 0:
+        return np.empty((2, 0), dtype=float)
 
     kappa_series = _coerce_kappa_series(T, kappa=kappa, kappa_t=kappa_t)
     if theta_t is None:
@@ -215,13 +219,13 @@ def _sample_ar2_states_ffbs_tv_theta(
     m_pred = np.zeros((2, T), dtype=float)
     P_pred = np.zeros((2, 2, T), dtype=float)
 
-    y_init = initial_competition_path(y_target)
-    m[:, 0] = np.array([y_init[0], 0.0], dtype=float)
-    P[:, :, 0] = np.eye(2) * 10.0
+    m_pred[:, 0] = np.asarray(initial_mean, dtype=float)
+    P_pred[:, :, 0] = np.diag(np.asarray(initial_var, dtype=float))
 
-    for t in range(1, T):
-        m_pred[:, t] = F @ m[:, t - 1]
-        P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
+    for t in range(T):
+        if t > 0:
+            m_pred[:, t] = F @ m[:, t - 1]
+            P_pred[:, :, t] = F @ P[:, :, t - 1] @ F.T + Q
 
         y_pi = (
             alpha * pi_tm1[t]
@@ -249,9 +253,9 @@ def _sample_ar2_states_ffbs_tv_theta(
     states[:, -1] = _mvnrnd(m[:, -1], P[:, :, -1], rng)
 
     for t in range(T - 2, -1, -1):
-        Ptp1_pred = F @ P[:, :, t] @ F.T + Q
+        Ptp1_pred = P_pred[:, :, t + 1]
         A = P[:, :, t] @ F.T @ inv(Ptp1_pred)
-        m_s = m[:, t] + A @ (states[:, t + 1] - F @ m[:, t])
+        m_s = m[:, t] + A @ (states[:, t + 1] - m_pred[:, t + 1])
         P_s = _force_pd(P[:, :, t] - A @ Ptp1_pred @ A.T)
         states[:, t] = _mvnrnd(m_s, P_s, rng)
 
@@ -264,25 +268,28 @@ def _sample_rw_states_ffbs(
     sigma_state2: float,
     sigma_target2: float,
     rng: np.random.Generator,
+    *,
+    initial_mean: float = 0.0,
+    initial_var: float = 10.0,
 ) -> np.ndarray:
     y_target = _as_1d(y_target)
     T = y_target.size
 
-    if T < 2:
-        return y_target.copy()
+    if T == 0:
+        return np.empty(0, dtype=float)
 
     m = np.zeros(T, dtype=float)
     P = np.zeros(T, dtype=float)
     m_pred = np.zeros(T, dtype=float)
     P_pred = np.zeros(T, dtype=float)
 
-    y_init = initial_competition_path(y_target)
-    m[0] = y_init[0]
-    P[0] = 10.0
+    m_pred[0] = float(initial_mean)
+    P_pred[0] = float(initial_var)
 
-    for t in range(1, T):
-        m_pred[t] = n_drift + m[t - 1]
-        P_pred[t] = P[t - 1] + sigma_state2
+    for t in range(T):
+        if t > 0:
+            m_pred[t] = n_drift + m[t - 1]
+            P_pred[t] = P[t - 1] + sigma_state2
         if np.isfinite(y_target[t]):
             R = max(sigma_target2, 1e-10)
             K = P_pred[t] / (P_pred[t] + R)
@@ -296,9 +303,9 @@ def _sample_rw_states_ffbs(
     states[-1] = m[-1] + np.sqrt(max(P[-1], 1e-8)) * rng.standard_normal()
 
     for t in range(T - 2, -1, -1):
-        Ptp1_pred = P[t] + sigma_state2
+        Ptp1_pred = P_pred[t + 1]
         A = P[t] / Ptp1_pred
-        m_s = m[t] + A * (states[t + 1] - (n_drift + m[t]))
+        m_s = m[t] + A * (states[t + 1] - m_pred[t + 1])
         P_s = max(P[t] - A * Ptp1_pred * A, 1e-10)
         states[t] = m_s + np.sqrt(P_s) * rng.standard_normal()
 
@@ -323,6 +330,9 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
     sigma_obs2: float,
     obs_offset: np.ndarray,
     rng: np.random.Generator,
+    *,
+    initial_mean: float = 0.0,
+    initial_var: float = 10.0,
 ) -> np.ndarray:
     y_target = _as_1d(y_target)
     pi_t = _as_1d(pi_t)
@@ -336,21 +346,21 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
     if not (pi_t.size == pi_tm1.size == pi_expect.size == x_t.size == Nhat.size == obs_offset.size == T):
         raise ValueError("All input series must have the same length.")
 
-    if T < 2:
-        return y_target.copy()
+    if T == 0:
+        return np.empty(0, dtype=float)
 
     m = np.zeros(T, dtype=float)
     P = np.zeros(T, dtype=float)
     m_pred = np.zeros(T, dtype=float)
     P_pred = np.zeros(T, dtype=float)
 
-    y_init = initial_competition_path(y_target)
-    m[0] = y_init[0]
-    P[0] = 10.0
+    m_pred[0] = float(initial_mean)
+    P_pred[0] = float(initial_var)
 
-    for t in range(1, T):
-        m_pred[t] = n_drift + m[t - 1]
-        P_pred[t] = P[t - 1] + sigma_state2
+    for t in range(T):
+        if t > 0:
+            m_pred[t] = n_drift + m[t - 1]
+            P_pred[t] = P[t - 1] + sigma_state2
 
         y2 = (
             pi_t[t]
@@ -385,10 +395,10 @@ def _sample_rw_states_ffbs_tv_theta_kappa(
     states[-1] = m[-1] + np.sqrt(max(P[-1], 1e-8)) * rng.standard_normal()
 
     for t in range(T - 2, -1, -1):
-        Ptp1_pred = P[t] + sigma_state2
+        Ptp1_pred = P_pred[t + 1]
         A = P[t] / Ptp1_pred
 
-        m_s = m[t] + A * (states[t + 1] - (n_drift + m[t]))
+        m_s = m[t] + A * (states[t + 1] - m_pred[t + 1])
         P_s = max(P[t] - A * Ptp1_pred * A, 1e-10)
 
         states[t] = m_s + np.sqrt(P_s) * rng.standard_normal()
@@ -432,9 +442,15 @@ def _sample_ar2_coeffs(
     max_tries: int = 2000,
     current: tuple[float, float] | None = None,
     stats: dict[str, int] | None = None,
+    initial_lag: float | None = None,
 ) -> tuple[float, float]:
-    y = Nhat[2:]
-    X = np.column_stack([Nhat[1:-1], Nhat[:-2]])
+    if initial_lag is None:
+        y = Nhat[2:]
+        X = np.column_stack([Nhat[1:-1], Nhat[:-2]])
+    else:
+        y = Nhat[1:]
+        second_lag = np.concatenate([[float(initial_lag)], Nhat[:-2]])
+        X = np.column_stack([Nhat[:-1], second_lag])
     prior_prec = np.diag([1.0 / sigma_rho1**2, 1.0 / sigma_rho2**2])
     post_cov = inv(X.T @ X / sigma_state2 + prior_prec)
     post_mean = post_cov @ (
@@ -508,8 +524,8 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
     return {
         "mu_alpha": _getd(priors, "mu_alpha", 0.5),
         "sigma_alpha": _getd(priors, "sigma_alpha", 0.2),
-        "mu_kappa0": _getd(priors, "mu_kappa", _getd(priors, "mu_kappa_0", 10.0)),
-        "sigma_kappa0": _getd(priors, "sigma_kappa", _getd(priors, "sigma_kappa_0", 20.0)),
+        "mu_kappa0": _getd(priors, "mu_kappa_0", _getd(priors, "mu_kappa", 10.0)),
+        "sigma_kappa0": _getd(priors, "sigma_kappa_0", _getd(priors, "sigma_kappa", 20.0)),
         "mu_delta": _getd(priors, "mu_delta", 10.0),
         "sigma_delta": _getd(priors, "sigma_delta", 20.0),
         "mu_theta": _getd(priors, "mu_theta", 0.1),
@@ -538,6 +554,12 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         #   N_obs_t = Nhat_t + Nbar_t + nu_t
         "a_N": _getd(priors, "a_N", _getd(priors, "a_m", 2.0)),
         "b_N": _getd(priors, "b_N", _getd(priors, "b_m", 2.0)),
+        "m0_Nhat": _getd(priors, "m0_Nhat", 0.0),
+        "m0_Nhat_lag": _getd(priors, "m0_Nhat_lag", 0.0),
+        "m0_Nbar": _getd(priors, "m0_Nbar", 0.0),
+        "P0_Nhat": _getd(priors, "P0_Nhat", 10.0),
+        "P0_Nhat_lag": _getd(priors, "P0_Nhat_lag", 10.0),
+        "P0_Nbar": _getd(priors, "P0_Nbar", 10.0),
     }
 
 
@@ -648,6 +670,7 @@ def func_nkpc_hsa_full(
     rng = np.random.default_rng(_getd(opts, "seed", None))
 
     Nbar, Nhat = _init_states(N_obs)
+    Nhat_initial_lag = float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"]))
     a_t = pi_tm1 - pi_expect
     lambda_prec0 = 0.0 if orth else 1.0 / pri["sigma_lambda"]**2
 
@@ -763,7 +786,7 @@ def func_nkpc_hsa_full(
         sigma_zeta2 = _sample_invgamma(pri["a_z"] + 0.5 * T, pri["b_z"] + 0.5 * float(np.sum(zeta**2)), rng)
         sigma_eta2 = _sample_invgamma(pri["a_e"] + 0.5 * T, pri["b_e"] + 0.5 * float(np.sum(eta**2)), rng)
 
-        if T >= 3:
+        if T >= 2:
             rho1, rho2 = _sample_ar2_coeffs(
                 Nhat,
                 sigma_u2,
@@ -776,8 +799,10 @@ def func_nkpc_hsa_full(
                 max_tries=ar2_max_tries,
                 current=(rho1, rho2),
                 stats=ar2_stats,
+                initial_lag=Nhat_initial_lag,
             )
-            resid_u = Nhat[2:] - rho1 * Nhat[1:-1] - rho2 * Nhat[:-2]
+            second_lag = np.concatenate([[Nhat_initial_lag], Nhat[:-2]])
+            resid_u = Nhat[1:] - rho1 * Nhat[:-1] - rho2 * second_lag
             sigma_u2 = _sample_invgamma(pri["a_u"] + 0.5 * resid_u.size, pri["b_u"] + 0.5 * float(np.sum(resid_u**2)), rng)
 
         if T >= 2:
@@ -812,8 +837,17 @@ def func_nkpc_hsa_full(
             kappa_t=kappa_t_eff,
             theta_t=theta_t,
             obs_offset=obs_offset,
+            initial_mean=(
+                float(_getd(opts, "m0_Nhat", pri["m0_Nhat"])),
+                float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"])),
+            ),
+            initial_var=(
+                float(_getd(opts, "P0_Nhat", pri["P0_Nhat"])),
+                float(_getd(opts, "P0_Nhat_lag", pri["P0_Nhat_lag"])),
+            ),
         )
         Nhat = Nhat_states[0]
+        Nhat_initial_lag = float(Nhat_states[1, 0])
         Nbar = _sample_rw_states_ffbs_tv_theta_kappa(
             y_target=N_obs - Nhat,
             n_drift=n_drift,
@@ -832,6 +866,8 @@ def func_nkpc_hsa_full(
             sigma_obs2=sigma_eta2,
             obs_offset=obs_offset,
             rng=rng,
+            initial_mean=float(_getd(opts, "m0_Nbar", pri["m0_Nbar"])),
+            initial_var=float(_getd(opts, "P0_Nbar", pri["P0_Nbar"])),
         )
         kappa_t = kappa0 + delta * Nbar
         kappa_t_eff = kappa_t / KAPPA_SCALE

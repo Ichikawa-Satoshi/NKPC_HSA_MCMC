@@ -213,6 +213,7 @@ def time_varying_coefficients_table(idata_by_run: dict[str, object], *, max_rows
 
 def sddr_summary_table(idata_by_run: dict[str, object], priors: dict[str, object]) -> pd.DataFrame:
     from nkpc_hsa.inference.model_comparison import sddr_bf01_normal
+    from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 
     rows = []
     prior_names = {
@@ -230,10 +231,17 @@ def sddr_summary_table(idata_by_run: dict[str, object], priors: dict[str, object
         attrs = getattr(idata, "attrs", {})
         model = attrs.get("model", "")
         constraint_spec = attrs.get("constraint_spec", "unrestricted")
+        if str(constraint_spec) not in {"", "unrestricted", "None"}:
+            continue
+        if str(attrs.get("estimation_revision", "")) != ESTIMATION_REVISION:
+            continue
         data_spec = attrs.get("data_spec", "")
         prior_spec = attrs.get("prior_spec", "")
         competition_frequency = attrs.get("competition_measurement_frequency", "quarterly_interpolated")
-        run_priors = attrs.get("run_priors") if isinstance(attrs.get("run_priors"), Mapping) else priors
+        if isinstance(attrs.get("run_priors"), Mapping):
+            run_priors = attrs["run_priors"]
+        else:
+            run_priors = priors
         for var, prior_key in prior_names.items():
             if var not in posterior or prior_key not in run_priors:
                 continue

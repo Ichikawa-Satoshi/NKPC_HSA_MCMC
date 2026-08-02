@@ -120,14 +120,21 @@ def _sample_ar2_coeffs(
     max_tries: int = 2000,
     current: tuple[float, float] | None = None,
     stats: dict[str, int] | None = None,
+    initial_lag: float | None = None,
 ) -> tuple[float, float]:
     Nhat = _as_1d(Nhat)
 
-    if Nhat.size < 3:
-        raise ValueError("Need T >= 3 to sample AR(2) coefficients.")
-
-    y = Nhat[2:]
-    X = np.column_stack([Nhat[1:-1], Nhat[:-2]])
+    if initial_lag is None:
+        if Nhat.size < 3:
+            raise ValueError("Need T >= 3 to sample AR(2) coefficients.")
+        y = Nhat[2:]
+        X = np.column_stack([Nhat[1:-1], Nhat[:-2]])
+    else:
+        if Nhat.size < 2:
+            raise ValueError("Need T >= 2 when the sampled initial lag is supplied.")
+        y = Nhat[1:]
+        second_lag = np.concatenate([[float(initial_lag)], Nhat[:-2]])
+        X = np.column_stack([Nhat[:-1], second_lag])
 
     prior_prec = np.diag([1.0 / sigma_rho1**2, 1.0 / sigma_rho2**2])
 
@@ -206,8 +213,8 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         "mu_alpha": _getd(priors, "mu_alpha", 0.5),
         "sigma_alpha": _getd(priors, "sigma_alpha", 0.2),
 
-        "mu_kappa0": _getd(priors, "mu_kappa", _getd(priors, "mu_kappa_0", 10.0)),
-        "sigma_kappa0": _getd(priors, "sigma_kappa", _getd(priors, "sigma_kappa_0", 20.0)),
+        "mu_kappa0": _getd(priors, "mu_kappa_0", _getd(priors, "mu_kappa", 10.0)),
+        "sigma_kappa0": _getd(priors, "sigma_kappa_0", _getd(priors, "sigma_kappa", 20.0)),
 
         "mu_delta": _getd(priors, "mu_delta", 10.0),
         "sigma_delta": _getd(priors, "sigma_delta", 20.0),
@@ -571,8 +578,6 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         raise ValueError("No draws would be stored. Use n_keep >= store_every.")
 
     Nbar, Nhat = _init_states(N_obs)
-    N_init = initial_competition_path(N_obs)
-
     a_t = pi_tm1 - pi_expect
     y = pi_t - pi_expect
 
@@ -580,13 +585,11 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
 
     # Initial state prior for Kalman filter:
     #   s_0 = [Nhat_0, Nhat_{-1}, Nbar_0]'
-    #
-    # By default, Nbar_0 mean is initialized near N_obs[0].
     m0 = np.array(
         [
             float(_getd(opts, "m0_Nhat", pri["m0_Nhat"])),
             float(_getd(opts, "m0_Nhat_lag", pri["m0_Nhat_lag"])),
-            float(_getd(opts, "m0_Nbar", _getd(priors or {}, "m0_Nbar", N_init[0]))),
+            float(_getd(opts, "m0_Nbar", pri["m0_Nbar"])),
         ],
         dtype=float,
     )
@@ -598,6 +601,13 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             float(_getd(opts, "P0_Nbar", pri["P0_Nbar"])),
         ]
     )
+
+    states = np.zeros((T, 3), dtype=float)
+    states[:, 0] = Nhat
+    states[:, 2] = Nbar
+    states[0, 1] = m0[1]
+    if T > 1:
+        states[1:, 1] = Nhat[:-1]
 
     alpha_draws = np.zeros(n_store)
     kappa0_draws = np.zeros(n_store)
@@ -758,13 +768,10 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             max_tries=ar2_max_tries,
             current=(rho1, rho2),
             stats=ar2_stats,
+            initial_lag=float(states[0, 1]),
         )
 
-        resid_u = (
-            Nhat[2:]
-            - rho1 * Nhat[1:-1]
-            - rho2 * Nhat[:-2]
-        )
+        resid_u = states[1:, 0] - rho1 * states[:-1, 0] - rho2 * states[:-1, 1]
 
         sigma_u2 = _sample_invgamma(
             pri["a_u"] + 0.5 * resid_u.size,
@@ -816,7 +823,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         # ------------------------------------------------------------
         obs_offset = lambda_ez * zeta
 
-        Nbar, Nhat, _states = _sample_states_kalman_ffbs(
+        Nbar, Nhat, states = _sample_states_kalman_ffbs(
             N_obs=N_obs,
             pi_t=pi_t,
             pi_tm1=pi_tm1,

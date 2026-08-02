@@ -81,7 +81,8 @@ def load_block(bdir, spec):
         if "n_transform" in m:
             m = m[m["n_transform"] == "log100_centered10"]
         if len(m):
-            m = m.assign(ts=m["run"].map(ts), has=m["predictive_score"].notna().astype(int))
+            score_col = "in_sample_conditional_lppd" if "in_sample_conditional_lppd" in m else "predictive_score"
+            m = m.assign(ts=m["run"].map(ts), has=m[score_col].notna().astype(int))
             m = m.sort_values(["has", "ts"]).drop_duplicates(["model"], keep="last")
             order = {"ces": 0, "hsa_steady": 1, "hsa_dynamic": 2, "hsa_const_theta": 3, "hsa_full": 4}
             m = m.assign(o=m["model"].map(order)).sort_values("o")
@@ -90,7 +91,7 @@ def load_block(bdir, spec):
                 def g(k):
                     v = r.get(k)
                     return None if pd.isna(v) else float(v)
-                rows.append([r["model"], g("predictive_score"), g("log_marginal_likelihood"), g("bayes_factor_vs_baseline")])
+                rows.append([r["model"], g(score_col), g("log_marginal_likelihood"), g("bayes_factor_vs_baseline")])
             out["mc"] = rows
     return out
 

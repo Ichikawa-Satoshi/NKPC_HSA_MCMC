@@ -22,9 +22,12 @@ run_data_specs:
   - output_gap_bn_core
   - output_gap_hp
   - output_gap_hp_core
+  - output_gap_bn_ppi
+  - output_gap_hp_ppi
   - labor_share_gap_hp
   - unemployment_gap
   - unemployment_gap_core
+  - unemployment_gap_ppi
 data_specs:
   inv_markup:
     label: Inverse markup gap
@@ -58,6 +61,26 @@ data_specs:
     x_col: output_gap_HP
     x_prev_col: output_gap_HP_prev
     n_col: N_Gustavo
+  output_gap_bn_ppi:
+    label: Output gap BN, PPI
+    pi_col: pi_ppi
+    pi_prev_col: pi_ppi_prev
+    # The SPF does not publish a PPI expectation.  Keep the same external
+    # expectation series as in the CPI specifications so that CPI/PPI changes
+    # only the observed inflation measure.  The report treats this as a
+    # measurement comparison, not as a fully matched structural PPI equation.
+    pi_expect_col: Epi
+    x_col: output_gap_BN
+    x_prev_col: output_gap_BN_prev
+    n_col: N_Gustavo
+  output_gap_hp_ppi:
+    label: Output gap HP, PPI
+    pi_col: pi_ppi
+    pi_prev_col: pi_ppi_prev
+    pi_expect_col: Epi
+    x_col: output_gap_HP
+    x_prev_col: output_gap_HP_prev
+    n_col: N_Gustavo
   labor_share_gap_hp:
     label: Labor share gap, HP filter
     pi_col: pi_cpi
@@ -82,6 +105,30 @@ data_specs:
     x_col: unemp_gap
     x_prev_col: unemp_gap_prev
     n_col: N_Gustavo
+  unemployment_gap_ppi:
+    label: Unemployment gap, PPI
+    pi_col: pi_ppi
+    pi_prev_col: pi_ppi_prev
+    pi_expect_col: Epi
+    x_col: unemp_gap
+    x_prev_col: unemp_gap_prev
+    n_col: N_Gustavo
+  unemployment_gap_tnic:
+    label: Unemployment gap, TNIC competition
+    pi_col: pi_cpi
+    pi_prev_col: pi_cpi_prev
+    pi_expect_col: Epi
+    x_col: unemp_gap
+    x_prev_col: unemp_gap_prev
+    n_col: N_TNIC
+  unemployment_gap_core_tnic:
+    label: Unemployment gap, core CPI, TNIC competition
+    pi_col: pi_cpi_core
+    pi_prev_col: pi_cpi_core_prev
+    pi_expect_col: Epi
+    x_col: unemp_gap
+    x_prev_col: unemp_gap_prev
+    n_col: N_TNIC
   output_gap_bn_core:
     label: Output gap BN, core CPI
     pi_col: pi_cpi_core

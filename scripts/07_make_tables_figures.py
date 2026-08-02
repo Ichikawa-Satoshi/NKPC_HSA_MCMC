@@ -13,6 +13,7 @@ from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
 from nkpc_hsa.inference.period_robustness import apply_period, load_periods
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 from nkpc_hsa.report.figures import (
     save_coefficient_interval_plot,
     save_kappa_model_comparison,
@@ -112,6 +113,8 @@ def _load_idata_by_run(runs_dir: str | Path) -> dict[str, object]:
     idata_by_run = {}
     for posterior in sorted(Path(runs_dir).glob("*/posterior.nc")):
         idata = az.from_netcdf(posterior)
+        if str(idata.attrs.get("estimation_revision", "")) != ESTIMATION_REVISION:
+            continue
         priors_path = posterior.parent / "priors.json"
         if priors_path.exists():
             idata.attrs["run_priors"] = json.loads(priors_path.read_text(encoding="utf-8"))
@@ -626,7 +629,7 @@ def _write_result_blocks(
             comparison,
             block_table_dir / "model_comparison.csv",
             block_table_dir / "model_comparison.tex",
-            ["model", "predictive_score", "posterior_predictive_rmse", "log_marginal_likelihood", "bayes_factor_vs_baseline", "sddr_delta_bf01", "sddr_theta_bf01", "sddr_gamma_bf01"],
+            ["model", "in_sample_conditional_lppd", "in_sample_posterior_mean_rmse", "log_marginal_likelihood", "bayes_factor_vs_baseline", "sddr_delta_bf01", "sddr_theta_bf01", "sddr_gamma_bf01"],
         )
         prior_opts = {v: _overlay_options(v) for v in PRIOR_POSTERIOR_PARAMETERS}
         per_model_figs = save_prior_posterior_per_model(

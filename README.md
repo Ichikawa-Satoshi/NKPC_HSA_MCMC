@@ -77,6 +77,16 @@ python scripts/09_identification_diagnostics.py
 
 # 10. Browsable HTML report (-> results/report.html)
 python scripts/10_build_html_report.py
+
+# 11. Integrate CPI/PPI, model, prior, and diagnostic results into the main report
+python scripts/12_build_cpi_ppi_report.py --compile
+
+# Re-estimate all 77 PCHIP report cells, generate TeX inputs, and compile the main report
+python scripts/13_estimate_cpi_ppi_report.py --jobs 4
+
+# Re-estimate the 61 HSA cells with annual N observed only in Q4
+# (the 16 CES cells contain no N state and are shared with the PCHIP comparison)
+python scripts/13_estimate_cpi_ppi_report.py --competition-frequency annual_q4 --jobs 8
 ```
 
 Estimation output is saved under
@@ -93,6 +103,9 @@ python scripts/02_estimate_models.py --data-spec output_gap_hp_core    # HP outp
 python scripts/02_estimate_models.py --data-spec labor_share_gap_hp    # HP labor-share gap only
 python scripts/02_estimate_models.py --data-spec unemployment_gap      # unemployment gap only
 python scripts/02_estimate_models.py --data-spec unemployment_gap_core # unemployment gap (core CPI)
+python scripts/02_estimate_models.py --data-spec unemployment_gap_ppi  # unemployment gap (PPI)
+python scripts/02_estimate_models.py --data-spec output_gap_hp_ppi     # HP output gap (PPI)
+python scripts/02_estimate_models.py --data-spec output_gap_bn_ppi     # BN output gap (PPI)
 ```
 
 ---
@@ -251,8 +264,16 @@ data-spec-specific table folders.
 
 The default HSA dynamic covariance convention is `e_zeta_only`: the sampler
 allows correlation between the NKPC shock `e_t` and output-gap shock `zeta_t`
-only. Set `covariance_structure: diagonal` or `covariance_structure: full` in
+only. The covariance is sampled directly on that restricted block-diagonal
+space; it is not obtained by zeroing entries of an unrestricted inverse-Wishart
+draw. Set `covariance_structure: diagonal` or `covariance_structure: full` in
 `configs/models.yaml` only when that alternative is intentional and documented.
+
+Runs produced after the state-initialization and covariance corrections carry
+`estimation_revision=2026-08-state-initial-covariance-v2`. Report builders ignore
+older runs so that pre-correction posterior draws cannot be mixed into current
+tables. Existing result files are retained for auditability but must be rerun
+before they are used for conclusions.
 
 Reported `delta`, `theta`, `theta_0`, and `gamma` are already in the same
 ten-log-point units used during estimation. Do not multiply them by 10 again.

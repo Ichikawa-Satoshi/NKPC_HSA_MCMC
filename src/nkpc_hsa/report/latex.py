@@ -122,12 +122,12 @@ corresponding CSV artifact.
 \end{figure}
 
 \section{Notes}
-WAIC and LOO are not used as primary criteria because the models contain
-latent states. Chib marginal likelihoods are reported only when the legacy
-ordinate calculation can be matched to the sampler units and supplied data.
-For the full HSA model, the reported Chib quantity is conditional on posterior
-mean latent states because the observation equation is nonlinear in
-\(\hat N_t\) and \(\bar N_t\).
+The reported log predictive density is an in-sample diagnostic conditional on
+smoothed latent-state draws; it is not an out-of-sample forecast comparison.
+Automated Chib marginal likelihoods are withheld because the current ordinate
+calculation does not integrate the latent states or normalize all stationarity
+and coefficient truncations consistently. Savage--Dickey ratios are used only
+for nested point restrictions with the same latent-state specification.
 
 \end{document}
 """

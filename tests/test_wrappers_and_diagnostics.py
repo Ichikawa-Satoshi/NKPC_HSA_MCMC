@@ -109,6 +109,7 @@ def test_hsa_full_uses_sigma_N_measurement_error(tmp_path) -> None:
     )
     assert "sigma_N" in idata.posterior
     assert np.all(idata.posterior["sigma_N"].values > 0.0)
+    assert (run_dir / "tables" / "posterior_summary.tex").exists()
 
 
 def test_chib_priors_are_threaded() -> None:

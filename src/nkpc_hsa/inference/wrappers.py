@@ -31,6 +31,9 @@ from nkpc_hsa.models.common import (
 from nkpc_hsa.paths import project_path
 
 
+ESTIMATION_REVISION = "2026-08-state-initial-covariance-v2"
+
+
 @dataclass(frozen=True)
 class RunMetadata:
     model: str
@@ -51,6 +54,7 @@ class RunMetadata:
     coefficient_constraints: Mapping[str, Any] | None = None
     kappa_scale: float = KAPPA_SCALE
     kappa_units: str = "physical"
+    estimation_revision: str = ESTIMATION_REVISION
 
 
 def _load_yaml(path: str | Path) -> dict[str, Any]:
@@ -121,7 +125,8 @@ def _coerce_model_data(
     return {k: np.asarray(v, dtype=float).reshape(-1) for k, v in data.items()}
 
 
-def _model_sample_index(data: pd.DataFrame | Mapping[str, Any] | None, data_spec: Mapping[str, Any]) -> pd.Index | None:
+def model_sample_index(data: pd.DataFrame | Mapping[str, Any] | None, data_spec: Mapping[str, Any]) -> pd.Index | None:
+    """Return the complete-case index used by the sampler for a data specification."""
     if not isinstance(data, pd.DataFrame):
         return None
     cols = {
@@ -579,7 +584,7 @@ def run_model(
     model_data = _coerce_model_data(data, data_spec=data_spec_dict)
     sample_start = ""
     sample_end = ""
-    sample_index = _model_sample_index(data, data_spec_dict)
+    sample_index = model_sample_index(data, data_spec_dict)
     if isinstance(sample_index, pd.DatetimeIndex) and len(sample_index):
         sample_start = sample_index.min().date().isoformat()
         sample_end = sample_index.max().date().isoformat()
@@ -647,6 +652,7 @@ def run_model(
         "kappa_unit_note": KAPPA_UNIT_NOTE,
         "n_transform_note": competition_transform_note(n_transform),
         "coefficient_constraints": dict(coefficient_constraints or {}),
+        "run_priors_json": json.dumps(prior_dict, sort_keys=True),
         "enforce_stationary": enforce_stationary,
         "ar2_max_tries": ar2_max_tries,
         "extra": extra_meta,
