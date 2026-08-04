@@ -1,14 +1,22 @@
-"""Build the headline coefficient tables that open the Main-results and PPI sections.
+"""Build the headline coefficient tables for both firm-count observation designs.
 
-Both tables report the MAIN model (HSA steady, baseline priors, PCHIP) so the reader
-sees, per specification (price index x activity measure), the slope level kappa_0, the
-competition dependence delta, its Savage-Dickey BF10, the implied kappa_t path, and the
-convergence status. The main specification (core CPI x negative unemployment gap) is
-bold. Reuses the production row helpers in scripts/12_build_cpi_ppi_report.py.
+Each table reports the MAIN model (HSA steady, baseline priors) so the reader sees, per
+specification (price index x activity measure), the slope level kappa_0, the competition
+dependence delta, its Savage-Dickey BF10, the implied kappa_t path, and the convergence
+status. The main specification (core CPI x negative unemployment gap) is bold.
 
-Outputs (English report only):
-  results/tables/cpi_ppi_report_en/headline_results.tex   (all 9 specs)
-  results/tables/cpi_ppi_report_en/ppi_results.tex        (3 PPI specs)
+The tables also carry delta's OWN Rhat/ESS. That column exists because the blanket
+convergence flag is driven by whichever scalar mixes worst, and under the mixed-frequency
+design that is almost always the AR(2) block -- a nuisance object for HSA steady, where
+theta = 0 keeps Nhat out of the inflation equation entirely. The reader should be able to
+see the diagnostics for the parameter the conclusions actually rest on, rather than infer
+them from a single aggregated dagger.
+
+Outputs, for each design:
+  .../headline_results.tex          (all 9 specs)
+  .../ppi_results.tex               (3 PPI specs)
+  .../model_comparison_unemp.tex    (5 models x 3 price indices)
+where the mixed-frequency (annual-Q4) versions go in the annual_q4/ subdirectory.
 """
 from __future__ import annotations
 
@@ -19,7 +27,7 @@ from pathlib import Path
 import _bootstrap  # noqa: F401
 from _bootstrap import ROOT
 
-EN = ROOT / "results" / "tables" / "cpi_ppi_report_en"
+EN_ROOT = ROOT / "results" / "tables" / "cpi_ppi_report"
 
 
 def _load12():
@@ -31,12 +39,10 @@ def _load12():
     return m
 
 
-def main():
-    m = _load12()
-    # Use the shared report run-set loader so hsa_full here is the SAME sampler
-    # as in every other report table (Particle Gibbs for the PCHIP cells).
-    runs = m.load_report_runs(min_iter=1, competition_frequency="quarterly_interpolated",
-                              verbose=True)
+def build(m, *, frequency: str, out_dir: Path, design: str, label_suffix: str):
+    """Write the three headline tables for one firm-count observation design."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    runs = m.load_report_runs(min_iter=1, competition_frequency=frequency, verbose=True)
     m.assert_single_sampler_per_cell(runs)
     full_sampler = " / ".join(sorted(
         {m._sampler_label(idata) for (mod, _, _), (_, idata) in runs.items() if mod == "hsa_full"}
@@ -45,6 +51,7 @@ def main():
         {m._sampler_label(idata) for (mod, _, _), (_, idata) in runs.items() if mod == "hsa_const_theta"}
     )) or "n/a"
 
+    EN = out_dir  # local alias so the writer lines below stay unchanged
     ACT = [("Negative unemployment gap", "Unemployment gap"),
            ("HP output gap", "HP output gap"),
            ("BN output gap", "BN output gap")]
@@ -60,7 +67,9 @@ def main():
         kappa0 = m._fmt(m._summary(idata, "kappa_0"))
         path = m._path_summary(idata, "kappa_t")
         kpath = "--" if path is None else f"{path['start']:+.3f} $\\rightarrow$ {path['end']:+.3f}"
-        return delta, bf, kappa0, kpath, m._conv_status(diagnostics, japanese=False)
+        dr, de = m._group_diagnostics(idata, ["delta"])["max_rhat"], m._group_diagnostics(idata, ["delta"])["min_ess"]
+        ddiag = f"{dr:.3f} / {de:.0f}"
+        return delta, bf, kappa0, kpath, ddiag, m._conv_status(diagnostics, japanese=False)
 
     def bold(x):
         return r"\textbf{" + x + "}"
@@ -68,8 +77,8 @@ def main():
     # ---- headline table: all 9 specs ----
     lines = [
         r"\begin{table}[H]", r"\centering",
-        (r"\caption{Headline results (main model: HSA steady, baseline priors, PCHIP, "
-         r"$T=124$), by price index and activity measure. $\delta$ is the competition "
+        (r"\caption{Headline results (main model: HSA steady, baseline priors, " + design +
+         r", $T=124$), by price index and activity measure. $\delta$ is the competition "
          r"dependence of the slope (a positive $\delta$ means the slope flattens as the "
          r"firm count falls); $\mathrm{BF}_{10}$ is the Savage--Dickey Bayes factor "
          r"against $\delta=0$; $\kappa_0$ is the slope at average competition; the last "
@@ -80,11 +89,13 @@ def main():
          r"including the trend drift $n$ and all variances). ``OK (coef)'' marks a "
          r"cell that passes on the coefficients but not on the latent-state paths; "
          r"the group-by-group diagnostics are in "
-         r"Table~\ref{tab:group-convergence}.}"),
-        r"\label{tab:headline}", r"\small",
-        r"\begin{tabular}{llccccc}", r"\toprule",
+         r"Table~\ref{tab:group-convergence" + label_suffix + r"}. The "
+         r"$\delta$ $\hat R$/ESS column is that coefficient's own mixing, which the "
+         r"blanket flag does not show.}"),
+        r"\label{tab:headline" + label_suffix + r"}", r"\small",
+        r"\begin{tabular}{llcccccc}", r"\toprule",
         (r"Activity measure & Price & $\delta$ [95\% CI] & $\mathrm{BF}_{10}$ & "
-         r"$\kappa_0$ [95\% CI] & $\kappa_t$ start$\to$end & Conv. \\"),
+         r"$\kappa_0$ [95\% CI] & $\kappa_t$ start$\to$end & $\delta$ $\hat R$/ESS & Conv. \\"),
         r"\midrule",
     ]
     for disp_act, key_act in ACT:
@@ -93,10 +104,10 @@ def main():
             item = runs.get(("hsa_steady", spec, "baseline"))
             if item is None:
                 continue
-            d, bf, k0, kp, conv = cells(item[1])
+            d, bf, k0, kp, ddiag, conv = cells(item[1])
             act_label = disp_act if i == 0 else ""
             is_main = (key_act, price) == MAIN
-            row = [act_label, price, d, bf, k0, kp, conv]
+            row = [act_label, price, d, bf, k0, kp, ddiag, conv]
             if is_main:
                 row = [bold(c) if c else c for c in row]
             lines.append(" & ".join(row) + r" \\")
@@ -108,14 +119,15 @@ def main():
     # ---- PPI table: 3 PPI specs ----
     plines = [
         r"\begin{table}[H]", r"\centering",
-        (r"\caption{PPI results (HSA steady, baseline priors, PCHIP), by activity measure. "
-         r"Columns as in Table~\ref{tab:headline}. Every $\delta$ interval includes zero, "
+        (r"\caption{PPI results (HSA steady, baseline priors, " + design + r"), by activity "
+         r"measure. Columns as in Table~\ref{tab:headline" + label_suffix + r"}. "
+         r"Every $\delta$ interval includes zero, "
          r"so the CPI relationship is not confirmed at the producer-price stage. "
          r"$\dagger$: outside the convergence criteria.}"),
-        r"\label{tab:ppi-results}", r"\small",
-        r"\begin{tabular}{lccccc}", r"\toprule",
+        r"\label{tab:ppi-results" + label_suffix + r"}", r"\small",
+        r"\begin{tabular}{lcccccc}", r"\toprule",
         (r"Activity measure & $\delta$ [95\% CI] & $\mathrm{BF}_{10}$ & "
-         r"$\kappa_0$ [95\% CI] & $\kappa_t$ start$\to$end & Conv. \\"),
+         r"$\kappa_0$ [95\% CI] & $\kappa_t$ start$\to$end & $\delta$ $\hat R$/ESS & Conv. \\"),
         r"\midrule",
     ]
     for disp_act, key_act in ACT:
@@ -123,8 +135,8 @@ def main():
         item = runs.get(("hsa_steady", spec, "baseline"))
         if item is None:
             continue
-        d, bf, k0, kp, conv = cells(item[1])
-        plines.append(" & ".join([disp_act, d, bf, k0, kp, conv]) + r" \\")
+        d, bf, k0, kp, ddiag, conv = cells(item[1])
+        plines.append(" & ".join([disp_act, d, bf, k0, kp, ddiag, conv]) + r" \\")
     plines += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
     (EN / "ppi_results.tex").write_text("\n".join(plines), encoding="utf-8")
 
@@ -135,7 +147,7 @@ def main():
     clines = [
         r"\begin{table}[H]", r"\centering",
         (r"\caption{Model comparison for the negative unemployment gap (baseline priors, "
-         r"PCHIP), by price index. Slope is $\kappa$ for CES / HSA dynamic and $\kappa_0$ "
+         + design + r"), by price index. Slope is $\kappa$ for CES / HSA dynamic and $\kappa_0$ "
          r"otherwise; the competition dependence $\delta$ (and its $\mathrm{BF}_{10}$) is "
          r"defined only for the HSA models with a firm-count-dependent slope. The main "
          r"model, \textbf{HSA steady}, is in bold; full coefficients ($\theta$, $\gamma$, "
@@ -144,7 +156,7 @@ def main():
          r"HSA dynamic exact joint FFBS; HSA const-theta " + const_sampler + r"; HSA full "
          + full_sampler + r". $\dagger$: fails the coefficient convergence rule; "
          r"``OK (coef)'' passes on coefficients but not on the latent-state paths.}"),
-        r"\label{tab:model-comp}", r"\small",
+        r"\label{tab:model-comp" + label_suffix + r"}", r"\small",
         r"\begin{tabular}{llcccc}", r"\toprule",
         (r"Model & Price & slope [95\% CI] & $\delta$ [95\% CI] & $\mathrm{BF}_{10}(\delta)$ "
          r"& Conv. \\"),
@@ -174,11 +186,22 @@ def main():
     clines += [r"\end{tabular}", r"\end{table}", ""]
     (EN / "model_comparison_unemp.tex").write_text("\n".join(clines), encoding="utf-8")
 
-    print("wrote headline_results.tex, ppi_results.tex, model_comparison_unemp.tex")
-    # visibility
+    print(f"  [{design}] wrote headline_results.tex, ppi_results.tex, model_comparison_unemp.tex "
+          f"-> {out_dir.relative_to(ROOT)}")
     for line in (EN / "headline_results.tex").read_text().splitlines():
-        if "&" in line and ("gap" in line or "textbf" in line):
-            print("  " + line.strip()[:150])
+        if "&" in line and "textbf" in line:
+            print("     " + line.strip()[:150])
+
+
+def main():
+    m = _load12()
+    # Mixed-frequency (annual-Q4) is the main design: the firm count is annual, so the
+    # 31 Q4 observations are the data and the 93 intervening quarters are inferred.
+    # PCHIP is reported alongside it as the interpolate-then-estimate comparison.
+    build(m, frequency="annual_q4", out_dir=EN_ROOT / "annual_q4",
+          design="mixed-frequency annual-Q4", label_suffix="")
+    build(m, frequency="quarterly_interpolated", out_dir=EN_ROOT,
+          design="PCHIP-interpolated", label_suffix="-pchip")
 
 
 if __name__ == "__main__":

@@ -141,14 +141,29 @@ any configured spec.
 | **Raw range in sample** | 5.96 – 9.68 (after PCHIP; declining over the sample) |
 | **Used in** | every HSA model. **Not** used by CES. |
 
-Two observation schemes, selected by `configs/models.yaml → defaults.competition_measurement.frequency`:
+Two observation schemes, selected by `configs/models.yaml → defaults.competition_measurement.frequency`.
 
-**1. `quarterly_interpolated` (PCHIP) — the production default.**
+**`configs/models.yaml` declares `frequency: annual_q4`**, and the library default
+(`DEFAULT_COMPETITION_MEASUREMENT`) and `scripts/13_estimate_cpi_ppi_report.py` resolve to
+the same value, so a caller that omits the argument gets the main design.
+`tests/test_observation_design_default.py` pins that agreement.
+
+⚠️ Code that *reads* a saved run's metadata still falls back to `quarterly_interpolated`
+when the field is absent, because runs written before the field existed were interpolated.
+That asymmetry is deliberate and is also pinned by the test.
+
+Both designs are estimated. The report presents the mixed-frequency one as primary
+(paper §4) and the interpolated one as a comparison (paper §7), because the interpolation
+is not innocuous: it drives σ_N to a third of its mixed-frequency value, forces the AR(2)
+cycle to a near-unit root, and thereby opens a near-exact ridge between `Nbar` and `Nhat`
+(posterior correlation −0.9996 versus +0.13). See `docs/estimation_specification.md` §N.
+
+**1. `quarterly_interpolated` (PCHIP) — reported as the comparison.**
 `annual_to_quarterly_pchip` (`func_data_build.py:41-70`) fits a `scipy` `PchipInterpolator` to the
 annual levels and evaluates it at quarter-ends. The result is treated as **observed every
 quarter**: `N^obs_t` is finite for all 124 quarters.
 
-**2. `annual_q4` — the mixed-frequency scheme.**
+**2. `annual_q4` — the mixed-frequency scheme, and the report's main design.**
 `build_competition_observation` (`competition.py:131-141`) places the annual value in that year's
 Q4 and leaves Q1–Q3 as `np.nan`:
 

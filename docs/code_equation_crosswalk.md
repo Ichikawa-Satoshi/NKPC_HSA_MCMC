@@ -117,7 +117,10 @@ Paths are relative to the repository root. Line numbers are post-August-2026.
 
 ---
 
-## 7. Alternating FFBS (HSA full, `run_model` path)
+## 7. Alternating FFBS (HSA full) — SUPERSEDED, validation only
+
+Production is Particle Gibbs (§6). These rows document the retained
+`func_nkpc_hsa_full_alternating_ffbs` implementation.
 
 | Mathematical object | Code expression | File:line |
 |---|---|---|
@@ -161,17 +164,30 @@ Paths are relative to the repository root. Line numbers are post-August-2026.
 
 ---
 
+## 9b. Predictive fit scores
+
+| Mathematical object | Code expression | File | Meaning |
+|---|---|---|---|
+| plug-in score `S` | `-0.5*T*np.log(2*np.pi*sigma2) - 0.5*np.sum(resid**2)/sigma2` | `scripts/predictive_comparison.py` `plugin_score()` | in-sample, posterior-mean parameters **and** states |
+| `LPD₁ = Σ_t log p(π_t \| π_{1:t−1}, x, N)` | `scores(ll)` → `logsumexp` over draws, summed over t | `predictive_comparison.py` `prequential_ces` / `prequential_hsa` | one-step-ahead, integrated over the posterior |
+| WAIC, PSIS-LOO | `arviz` on the pointwise log-likelihood `ll` (S×T) | `predictive_comparison.py` `scores()` | max Pareto k̂ returned alongside |
+| CES shared across designs | `find_run(model, spec, "quarterly_interpolated" if model == "ces" else freq)` | `predictive_comparison.py` | CES has no latent firm-count state |
+
+⚠️ All four are computed on the estimation sample; none is a genuine out-of-sample score.
+
+---
+
 ## 10. Diagnostics
 
 | Mathematical object | Code expression | File:line |
 |---|---|---|
-| scalar group | `SCALAR_PARAMETERS = ["alpha","kappa",…,"sigma_N"]` | `scripts/12_build_cpi_ppi_report.py:54-73` |
-| state group | `STATE_PATH_PARAMETERS = ["Nbar", "Nhat"]` | `scripts/12_build_cpi_ppi_report.py:74` |
-| derived group | `DERIVED_PATH_PARAMETERS = ["kappa_t", "theta_t"]` | `scripts/12_build_cpi_ppi_report.py:75` |
+| scalar group | `SCALAR_PARAMETERS = ["alpha","kappa",…,"sigma_N"]` | `scripts/12_build_cpi_ppi_report.py:53-72` |
+| state group | `STATE_PATH_PARAMETERS = ["Nbar", "Nhat"]` | `scripts/12_build_cpi_ppi_report.py:73` |
+| derived group | `DERIVED_PATH_PARAMETERS = ["kappa_t", "theta_t"]` | `scripts/12_build_cpi_ppi_report.py:74` |
 | max R̂ over a group | `np.nanmax(np.asarray(az.rhat(idata.posterior[name])))` | `scripts/12_build_cpi_ppi_report.py:319` |
 | min bulk ESS over a group | `np.nanmin(np.asarray(az.ess(idata.posterior[name], method="bulk")))` | `scripts/12_build_cpi_ppi_report.py:320` |
 | skip constant variables | `if not np.isfinite(values).any() or float(np.nanstd(values)) <= 0.0: continue` | `scripts/12_build_cpi_ppi_report.py:317-318` |
-| thresholds | `RHAT_LIMIT = 1.01; ESS_LIMIT = 400.0` | `scripts/12_build_cpi_ppi_report.py:33-34` |
+| thresholds | `RHAT_LIMIT = 1.01; ESS_LIMIT = 400.0` | `scripts/12_build_cpi_ppi_report.py:32-33` |
 | `†` mark | `value if converged else value + r"\textsuperscript{$\dagger$}"` | `scripts/12_build_cpi_ppi_report.py:388-391` |
 | status string | `_conv_status(diagnostics, japanese=…)` | `scripts/12_build_cpi_ppi_report.py:394-400` |
 
@@ -181,15 +197,21 @@ Paths are relative to the repository root. Line numbers are post-August-2026.
 
 Run selection for **every** report artifact:
 ```python
-runs = load_report_runs(min_iter=…, competition_frequency=…, use_pg=True)
+runs = load_report_runs(min_iter=…, competition_frequency=…)
 ```
-`scripts/12_build_cpi_ppi_report.py:188-216`. This loads `results/runs/`, filters on
+`scripts/12_build_cpi_ppi_report.py:188`. Loads `results/runs/`, filters on
 `estimation_revision == "2026-08-state-initial-covariance-v2"`, `period == "full"`,
 `constraint_spec == "unrestricted"`, `n_transform == "log100_centered10"` and the requested
-frequency, keeps the **newest `run_id`** per `(model, data_spec, prior)` key
-(`:151-154`), then substitutes `hsa_full` cells from `results/appendix_particle_gibbs/runs/`.
-`assert_single_sampler_per_cell` (`:219-233`) fails the build if any cell would be reported under
-two samplers.
+frequency, then keeps the **newest `run_id`** per `(model, data_spec, prior)` key
+(`:151-154`). Two build-time guards then run:
+
+```python
+        assert_expected_sampler(run_set, model="hsa_full", expected="particle_gibbs", label=label)
+        assert_expected_sampler(run_set, model="hsa_const_theta", expected="joint_ffbs", label=label)
+```
+
+plus `assert_single_sampler_per_cell`, so a cell cannot be reported under two samplers and a
+model cannot silently fall back to a superseded one.
 
 | Report value | Posterior variable | Run key | Summary | Builder | Output file |
 |---|---|---|---|---|---|
@@ -204,17 +226,24 @@ two samplers.
 | `\HsaFullSampler` | `attrs["state_sampler"]` | `hsa_full` cells | joined label set | `write_result_macros:796-801` | same |
 | θ / γ columns | `posterior["theta"]` / `["theta_0"]` / `["gamma"]` | model × price cells | `_fmt(_summary(...))` + `†` | `build_model_table` `:455-490`, `build_output_gap_model_tables` `:492-526` | `unemployment_by_model.tex`, `output_gap_*_by_model.tex` |
 | convergence flags | all three groups | every cell | `_conv_status` | all table builders | every coefficient table |
-| `tab:group-convergence` | scalar / `n` / state / derived | baseline unemployment cells | per-group max R̂, min ESS, worst scalar name | `build_group_convergence_diagnostics` `:879-925` | `group_convergence_diagnostics.tex` |
+| `tab:group-convergence` | scalar / `n` / state / derived | baseline unemployment cells | per-group max R̂, min ESS, worst scalar name | `build_group_convergence_diagnostics` | `annual_q4/group_convergence_diagnostics.tex` |
+| `tab:fit-comparison` | plug-in score, LPD₁, WAIC, PSIS-LOO, max Pareto k̂ | 4 models × 3 prices, **annual-Q4** | `scripts/predictive_comparison.py` writes the scores; the plug-in score is `plugin_score()` in that file | `scripts/make_fit_comparison_table.py` | `annual_q4/fit_comparison.tex` |
 | `tab:main-convergence` | — | all cells | per-model run/warning tallies + sampler | `build_run_manifest` `:679-757` | `convergence_summary.tex` |
-| `tab:headline` | δ, BF, κ₀, κ_t path | `hsa_steady` × 9 specs | as above | `scripts/make_headline_results_table.py:58-92` | `cpi_ppi_report_en/headline_results.tex` |
-| `tab:model-comp` | slope, δ, BF | 5 models × 3 prices | as above | `make_headline_results_table.py:108-175` | `cpi_ppi_report_en/model_comparison_unemp.tex` |
+| `tab:headline` | δ, BF, κ₀, κ_t path, **δ's own R̂/ESS** | `hsa_steady` × 9 specs, **annual-Q4** | as above | `scripts/make_headline_results_table.py` `build()` | `cpi_ppi_report/annual_q4/headline_results.tex` |
+| `tab:model-comp` | slope, δ, BF | 5 models × 3 prices, **annual-Q4** | as above | `make_headline_results_table.py` `build()` | `cpi_ppi_report/annual_q4/model_comparison_unemp.tex` |
+| `tab:headline-pchip`, `tab:model-comp-pchip` | same, interpolated design | PCHIP | as above | same, second `build()` call | `cpi_ppi_report/*.tex` |
 | `\BiasDirect*` | `ces["kappa"]`, `hsa_dynamic["kappa"]`, `Nhat`, `theta`, `phi_1` | `inv_markup` cells | `_paired_difference` `:528-533`, `_hsa_implied_ovb` `:546-576` | `build_ces_hsa_bias_table` `:577-641` | `bias_macros.tex`, `ces_hsa_kappa_bias.tex` |
 | economic magnitude "0.126" | — | — | ⚠️ **hard-coded literal** in `paper/nkpc_hsa_report.tex`, not a macro. `\CoreUnempKappaStart − \CoreUnempKappaEnd` = 0.125 | — | — |
 
-**English tables**: `scripts/build_english_tables.py` mirrors
-`results/tables/cpi_ppi_report/**.tex` → `…_en/**.tex`, replacing only a fixed list of Japanese
-label strings (`REPLACEMENTS`, `:47-62`). **Numeric content is never touched**, so the two language
-versions cannot diverge numerically.
+**No translation pass.** The report is English-only. The table builders write English
+directly and `_write_latex` raises if a table would contain CJK text, so the former
+`cpi_ppi_report_en/` mirror and `scripts/build_english_tables.py` are retired.
+
+**Two observation designs.** `load_report_runs` is called once per design.
+`competition_frequency="annual_q4"` produces the **main** tables into
+`results/tables/cpi_ppi_report/annual_q4/`; `"quarterly_interpolated"` produces the
+comparison tables into the base directory. Report sections §4–§6, §9–§10 and
+Appendices A and C read the former; §7 and Appendix B read the latter.
 
 **Model comparison not in the report**: `results/appendix_particle_gibbs/tables/conditional_ml_corrected.csv`
 (from `scripts/chib_marginal_likelihood.py` → `gibbs/conditional_ml.py`) holds components of

@@ -29,9 +29,11 @@ from nkpc_hsa.report.cpi_ppi_spec import (
 
 OUT_TABLES = ROOT / "results" / "tables" / "cpi_ppi_report"
 OUT_FIGURES = ROOT / "results" / "figures" / "cpi_ppi_report"
-PG_RUNS_DIR = ROOT / "results" / "appendix_particle_gibbs" / "runs"
 RHAT_LIMIT = 1.01
 ESS_LIMIT = 400.0
+# Minimum effective number of draws contributing to the Rao-Blackwellised
+# Savage-Dickey ordinate before it is preferred over the kernel estimate.
+RB_MIN_EFFECTIVE_DRAWS = 50.0
 
 # ---------------------------------------------------------------------------
 # Convergence diagnostics groups.
@@ -148,6 +150,9 @@ def _load_runs(
         if priors_path.exists():
             idata.attrs["run_priors"] = json.loads(priors_path.read_text(encoding="utf-8"))
         idata.attrs["state_sampler"] = _resolve_state_sampler(posterior.parent, model)
+        spec_path = posterior.parent / "data_spec.json"
+        if spec_path.exists():
+            idata.attrs["run_data_spec"] = json.loads(spec_path.read_text(encoding="utf-8"))
         key = (model, data_spec, prior)
         current = selected.get(key)
         if current is None or _run_key(posterior, idata) >= _run_key(current[0], current[1]):
@@ -160,60 +165,48 @@ def _sampler_label(idata) -> str:
     return SAMPLER_LABELS.get(sampler, sampler)
 
 
-def merge_preferred_runs(
-    base_runs: dict[tuple[str, str, str], tuple[Path, object]],
-    override_runs: dict[tuple[str, str, str], tuple[Path, object]],
-    *,
-    models: set[str],
-) -> tuple[dict[tuple[str, str, str], tuple[Path, object]], list[tuple[str, str, str]]]:
-    """Replace ``models``' cells in ``base_runs`` with ``override_runs`` where available.
-
-    Used to route the PCHIP ``hsa_full`` cells through the Particle-Gibbs runs.
-    Cells with no override run are left untouched, so a partially-populated
-    override directory can never produce a half-substituted table: the merge is
-    reported and validated by the caller.
-    """
-    merged = dict(base_runs)
-    replaced: list[tuple[str, str, str]] = []
-    for key, value in override_runs.items():
-        if key[0] not in models:
-            continue
-        if key not in merged:
-            continue
-        merged[key] = value
-        replaced.append(key)
-    return merged, sorted(replaced)
-
-
 def load_report_runs(
     *,
     runs_dir: Path | None = None,
-    pg_runs_dir: Path | None = None,
     min_iter: int = 1,
     competition_frequency: str = "quarterly_interpolated",
-    use_pg: bool = True,
     verbose: bool = False,
 ) -> dict[tuple[str, str, str], tuple[Path, object]]:
     """The single entry point every report artifact must use to obtain its runs.
 
-    Assembles the authoritative run-set for one observation design: production
-    runs for every model, with the ``hsa_full`` cells routed through the
-    Particle-Gibbs directory when runs for that design exist there. Any script
-    that builds a report table calls this rather than ``_load_runs`` directly,
-    so a cell cannot be reported under one sampler in one table and a different
-    sampler in another.
+    Assembles the authoritative run-set for one observation design from the
+    production run directory. ``hsa_full`` is estimated by Particle Gibbs in that
+    directory (``run_model`` dispatches to the Particle-Gibbs sampler), so no
+    out-of-band merge is needed: an earlier revision routed the PCHIP
+    ``hsa_full`` cells through ``results/appendix_particle_gibbs/runs`` because
+    Particle Gibbs was only reachable via a monkeypatch. Any script that builds a
+    report table calls this rather than ``_load_runs`` directly.
     """
     runs_dir = ROOT / "results" / "runs" if runs_dir is None else runs_dir
-    pg_runs_dir = PG_RUNS_DIR if pg_runs_dir is None else pg_runs_dir
     runs = _load_runs(runs_dir, min_iter=min_iter, competition_frequency=competition_frequency)
-    if use_pg and pg_runs_dir.exists():
-        override = _load_runs(
-            pg_runs_dir, min_iter=min_iter, competition_frequency=competition_frequency
-        )
-        runs, replaced = merge_preferred_runs(runs, override, models={"hsa_full"})
-        if verbose:
-            print(f"  {competition_frequency}: merged {len(replaced)} Particle-Gibbs hsa_full cells")
+    if verbose:
+        samplers = sorted({_sampler_label(d) for (m, _, _), (_, d) in runs.items() if m == "hsa_full"})
+        print(f"  {competition_frequency}: hsa_full sampler = {' / '.join(samplers) or 'n/a'}")
     return runs
+
+
+def assert_expected_sampler(runs, *, model: str, expected: str, label: str) -> None:
+    """Fail the build if a model's cells were not drawn by the intended sampler.
+
+    ``hsa_full`` is non-linear-Gaussian in the joint state, so it must be
+    Particle Gibbs; a cell silently falling back to the superseded alternating
+    FFBS would make the reported numbers incomparable across the table.
+    """
+    offenders = sorted(
+        "/".join(key)
+        for key, (_, idata) in runs.items()
+        if key[0] == model and str(idata.attrs.get("state_sampler", "")) != expected
+    )
+    if offenders:
+        raise SystemExit(
+            f"{label}: {len(offenders)} {model} cell(s) are not {expected} "
+            f"({', '.join(offenders[:6])}). Re-run scripts/rerun_hsa_full_particle_gibbs.py."
+        )
 
 
 def assert_single_sampler_per_cell(*run_sets: dict[tuple[str, str, str], tuple[Path, object]]) -> None:
@@ -266,7 +259,156 @@ def _path_summary(idata, parameter: str) -> dict[str, float] | None:
     }
 
 
+_MODEL_READY: pd.DataFrame | None = None
+
+# Coefficient-block layout of each model's Gaussian Gibbs update. The tuple is the
+# ordered regressor names; `_design_columns` turns them into the actual X matrix.
+_BETA_BLOCK: dict[str, tuple[str, ...]] = {
+    "hsa_steady": ("a", "x", "x_Nbar"),
+    "hsa_const_theta": ("a", "x", "x_Nbar", "neg_Nhat"),
+    "hsa_full": ("a", "x", "x_Nbar", "neg_Nhat", "neg_Nhat_Nbar"),
+}
+_BETA_PRIOR_KEYS: dict[str, tuple[str, ...]] = {
+    "hsa_steady": ("alpha", "kappa_0", "delta"),
+    "hsa_const_theta": ("alpha", "kappa_0", "delta", "theta"),
+    "hsa_full": ("alpha", "kappa_0", "delta", "theta_0", "gamma"),
+}
+
+
+def _model_ready() -> pd.DataFrame:
+    global _MODEL_READY
+    if _MODEL_READY is None:
+        _MODEL_READY = pd.read_csv(
+            ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+        ).set_index("DATE")
+    return _MODEL_READY
+
+
+def _run_series(idata) -> dict[str, np.ndarray] | None:
+    """The estimation sample for this run, rebuilt from its saved data spec."""
+    spec = getattr(idata, "attrs", {}).get("run_data_spec")
+    if not isinstance(spec, dict):
+        return None
+    cols = {
+        "pi": spec.get("pi_col"), "pi_prev": spec.get("pi_prev_col"),
+        "pi_expect": spec.get("pi_expect_col"), "x": spec.get("x_col"),
+        "x_prev": spec.get("x_prev_col"), "N": spec.get("n_col"),
+    }
+    if any(c is None for c in cols.values()):
+        return None
+    data = _model_ready()
+    needed = [c for c in cols.values() if c in data.columns]
+    if len(needed) < 6:
+        return None
+    sample = data[needed].dropna()
+    return {
+        "y": (sample[cols["pi"]] - sample[cols["pi_expect"]]).to_numpy(float),
+        "a": (sample[cols["pi_prev"]] - sample[cols["pi_expect"]]).to_numpy(float),
+        "x": sample[cols["x"]].to_numpy(float),
+        "x_prev": sample[cols["x_prev"]].to_numpy(float),
+    }
+
+
+def _sigma_eta2_draws(idata) -> np.ndarray | None:
+    """Inflation-equation residual variance, however the model stored it."""
+    if "sigma_eta" in idata.posterior:
+        return np.asarray(idata.posterior["sigma_eta"], dtype=float).reshape(-1) ** 2
+    if "sigma_e" in idata.posterior and "sigma_zeta" in idata.posterior and "lambda_ez" in idata.posterior:
+        se = np.asarray(idata.posterior["sigma_e"], dtype=float).reshape(-1) ** 2
+        sz = np.asarray(idata.posterior["sigma_zeta"], dtype=float).reshape(-1) ** 2
+        lam = np.asarray(idata.posterior["lambda_ez"], dtype=float).reshape(-1)
+        return np.maximum(se - lam**2 * sz, 1e-12)
+    return None
+
+
+def _rao_blackwell_ordinate(idata, parameter: str) -> float | None:
+    """Posterior density of ``parameter`` at zero, without density estimation.
+
+    The Gibbs update for the inflation coefficients is an exact Gaussian
+    conditional, so the marginal posterior ordinate is the Rao-Blackwellised
+    average of that conditional over the retained draws of everything else:
+
+        p(delta = 0 | y) = E[ p(delta = 0 | psi, y) ],   psi ~ p(psi | y)
+
+    Each term is an exact normal density, so the estimator stays accurate where a
+    kernel density estimate does not: zero sits several posterior standard
+    deviations outside the sampled range of delta, and a Gaussian KDE there is
+    extrapolating its own tail rather than measuring the posterior.
+    """
+    model = str(getattr(idata, "attrs", {}).get("model", ""))
+    block = _BETA_BLOCK.get(model)
+    names = _BETA_PRIOR_KEYS.get(model)
+    if block is None or names is None or parameter not in names:
+        return None
+    series = _run_series(idata)
+    if series is None:
+        return None
+    priors = getattr(idata, "attrs", {}).get("run_priors", {})
+    if not isinstance(priors, dict):
+        return None
+
+    prior_mean, prior_var = [], []
+    for name in names:
+        spec = priors.get(name)
+        if spec is None and name == "theta":
+            spec = priors.get("theta_0")
+        if spec is None:
+            return None
+        mean, sd = (float(spec["mean"]), float(spec["sd"])) if isinstance(spec, dict) else (float(spec[0]), float(spec[1]))
+        prior_mean.append(mean)
+        prior_var.append(sd**2)
+    prior_mean = np.asarray(prior_mean)
+    V0_inv = np.diag(1.0 / np.asarray(prior_var))
+    index = names.index(parameter)
+
+    post = idata.posterior
+    need = {"Nbar", "Nhat", "lambda_ez", "phi_1"}
+    if not need.issubset(set(post.data_vars)):
+        return None
+    T = series["y"].size
+    Nbar = np.asarray(post["Nbar"], dtype=float).reshape(-1, T)
+    Nhat = np.asarray(post["Nhat"], dtype=float).reshape(-1, T)
+    lam = np.asarray(post["lambda_ez"], dtype=float).reshape(-1)
+    phi = np.asarray(post["phi_1"], dtype=float).reshape(-1)
+    sigma_eta2 = _sigma_eta2_draws(idata)
+    if sigma_eta2 is None or len(sigma_eta2) != len(lam):
+        return None
+
+    y, a, x, x_prev = series["y"], series["a"], series["x"], series["x_prev"]
+    terms = np.empty(len(lam))
+    for s in range(len(lam)):
+        nb, nh = Nbar[s], Nhat[s]
+        cols = {
+            "a": a, "x": x, "x_Nbar": x * nb,
+            "neg_Nhat": -nh, "neg_Nhat_Nbar": -(nh * nb),
+        }
+        X = np.column_stack([cols[c] for c in block])
+        y_adj = y - lam[s] * (x - phi[s] * x_prev)
+        V1 = np.linalg.inv(X.T @ X / sigma_eta2[s] + V0_inv)
+        b1 = V1 @ (X.T @ y_adj / sigma_eta2[s] + V0_inv @ prior_mean)
+        terms[s] = float(norm.pdf(0.0, loc=b1[index], scale=np.sqrt(V1[index, index])))
+
+    total = float(terms.sum())
+    if not np.isfinite(total) or total <= 0.0:
+        return None
+    # Reliability guard. The average is only meaningful if many draws contribute:
+    # if a handful of mixture components carry it, the estimator has the same
+    # far-tail problem as a kernel density estimate and should not be trusted.
+    weights = terms / total
+    effective = 1.0 / float(np.sum(weights**2))
+    if effective < RB_MIN_EFFECTIVE_DRAWS:
+        return None
+    return total / len(terms)
+
+
 def _bf10(idata, parameter: str) -> float | None:
+    """Savage-Dickey Bayes factor against ``parameter`` = 0.
+
+    The prior ordinate is exact. The posterior ordinate is Rao-Blackwellised
+    where the model's coefficient block allows it, and falls back to a Gaussian
+    kernel density estimate otherwise -- see ``_rao_blackwell_ordinate`` for why
+    the KDE is unreliable at this evaluation point.
+    """
     values = _draws(idata, parameter)
     if values is None or values.size < 20 or np.std(values, ddof=1) <= 0:
         return None
@@ -278,7 +420,9 @@ def _bf10(idata, parameter: str) -> float | None:
         prior_mean, prior_sd = float(prior["mean"]), float(prior["sd"])
     else:
         prior_mean, prior_sd = float(prior[0]), float(prior[1])
-    posterior_at_zero = float(gaussian_kde(values)([0.0])[0])
+    posterior_at_zero = _rao_blackwell_ordinate(idata, parameter)
+    if posterior_at_zero is None or not np.isfinite(posterior_at_zero) or posterior_at_zero <= 0.0:
+        posterior_at_zero = float(gaussian_kde(values)([0.0])[0])
     prior_at_zero = float(norm.pdf(0.0, loc=prior_mean, scale=prior_sd))
     bf01 = posterior_at_zero / max(prior_at_zero, 1e-300)
     return float(1.0 / max(bf01, 1e-300))
@@ -391,14 +535,22 @@ def _marked(value: str, converged: bool) -> str:
     return value if converged else value + r"\textsuperscript{$\dagger$}"
 
 
-def _conv_status(diagnostics: dict[str, object], *, japanese: bool = True) -> str:
-    """Short status string distinguishing coefficient from joint convergence."""
+def _conv_status(diagnostics: dict[str, object], *, japanese: bool = False) -> str:
+    """Short status string distinguishing coefficient from joint convergence.
+
+    ``japanese`` is retained only so older call sites keep working; the report is
+    English-only and the tables are written in English at source.
+    """
     watch = "要注意" if japanese else "watch"
     if not bool(diagnostics["converged"]):
         return watch
     if diagnostics["has_states"] and not bool(diagnostics["joint_converged"]):
         return "OK (coef)"
     return "OK"
+
+
+def _has_cjk(text: str) -> bool:
+    return any("\u3040" <= ch <= "\u30ff" or "\u4e00" <= ch <= "\u9fff" for ch in text)
 
 
 def _write_latex(df: pd.DataFrame, name: str, columns: list[str]) -> None:
@@ -412,6 +564,11 @@ def _write_latex(df: pd.DataFrame, name: str, columns: list[str]) -> None:
         column_format="l" * len(columns),
     )
     df.to_csv(OUT_TABLES / f"{name}.csv", index=False)
+    # The report is English-only and there is no longer a translation pass, so a
+    # Japanese label reaching a table would land straight in the PDF.
+    written = (OUT_TABLES / f"{name}.tex").read_text(encoding="utf-8")
+    if _has_cjk(written):
+        raise SystemExit(f"{name}.tex contains CJK text; tables must be written in English.")
 
 
 def build_hsa_steady_activity_table(runs) -> pd.DataFrame:
@@ -580,10 +737,10 @@ def build_ces_hsa_bias_table(runs, *, command_prefix: str = "") -> pd.DataFrame:
     specs = configured_data_specs(config, list(config.get("data_specs", {})))
     data = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]).set_index("DATE")
     comparisons = [
-        ("逆マークアップ（理論対応）", "inv_markup"),
-        ("Headline CPI / 失業ギャップ", PRIMARY_SPECS["Headline CPI"]),
-        ("Core CPI / 失業ギャップ", PRIMARY_SPECS["Core CPI"]),
-        ("PPI / 失業ギャップ", PRIMARY_SPECS["PPI"]),
+        ("Inverse markup (theory)", "inv_markup"),
+        ("Headline CPI / negative unemployment gap", PRIMARY_SPECS["Headline CPI"]),
+        ("Core CPI / negative unemployment gap", PRIMARY_SPECS["Core CPI"]),
+        ("PPI / negative unemployment gap", PRIMARY_SPECS["PPI"]),
     ]
     rows: list[dict[str, object]] = []
     direct_macros: list[str] = ["% Generated by scripts/12_build_cpi_ppi_report.py; do not edit by hand."]
@@ -609,7 +766,7 @@ def build_ces_hsa_bias_table(runs, *, command_prefix: str = "") -> pd.DataFrame:
                 "Pr(CES-HSA<0)": f"{difference['p_lt_0']:.3f}",
                 "HSA-implied OVB": _marked(_fmt(ovb), converged),
                 "Pr(OVB<0)": f"{ovb['p_lt_0']:.3f}",
-                "diagnostics": "OK" if converged else r"要注意$^{\dagger}$",
+                "diagnostics": "OK" if converged else r"watch$^{\dagger}$",
             }
         )
         if data_spec_name == "inv_markup":
@@ -908,7 +1065,7 @@ def build_group_convergence_diagnostics(runs) -> pd.DataFrame:
                     "state ESS": "--" if not np.isfinite(state["min_ess"]) else f"{state['min_ess']:.0f}",
                     "derived Rhat": "--" if not np.isfinite(derived["max_rhat"]) else f"{derived['max_rhat']:.3f}",
                     "derived ESS": "--" if not np.isfinite(derived["min_ess"]) else f"{derived['min_ess']:.0f}",
-                    "joint": "OK" if diagnostics["joint_converged"] else "要注意",
+                    "joint": "OK" if diagnostics["joint_converged"] else "watch",
                 }
             )
     table = pd.DataFrame(rows)
@@ -1258,18 +1415,6 @@ def main() -> None:
     parser.add_argument("--runs-dir", type=Path, default=ROOT / "results" / "runs")
     parser.add_argument("--min-iter", type=int, default=1000)
     parser.add_argument("--allow-incomplete", action="store_true", help="Generate partial tables instead of failing on missing report cells.")
-    parser.add_argument("--compile", action="store_true", help="Compile the Japanese CPI/PPI report with XeLaTeX.")
-    parser.add_argument(
-        "--pg-runs-dir",
-        type=Path,
-        default=PG_RUNS_DIR,
-        help="Particle-Gibbs run directory used for the PCHIP hsa_full cells.",
-    )
-    parser.add_argument(
-        "--no-pg",
-        action="store_true",
-        help="Ignore the Particle-Gibbs runs and report alternating-FFBS hsa_full everywhere.",
-    )
     args = parser.parse_args()
 
     quarterly_runs = _load_runs(
@@ -1283,47 +1428,6 @@ def main() -> None:
         competition_frequency="annual_q4",
     )
 
-    # ------------------------------------------------------------------
-    # Route the PCHIP hsa_full cells through the Particle-Gibbs runs, in the
-    # single place where the report's run-set is assembled. Every table, macro
-    # and figure downstream is then generated from one merged run-set, so a
-    # cell can never appear under one sampler in one table and another sampler
-    # in the next. Annual-Q4 is deliberately NOT substituted: no annual-Q4
-    # Particle-Gibbs runs exist, and silently reusing PCHIP ones would compare
-    # different observation schemes.
-    # ------------------------------------------------------------------
-    pg_replaced: list[tuple[str, str, str]] = []
-    if not args.no_pg and args.pg_runs_dir.exists():
-        pg_quarterly = _load_runs(
-            args.pg_runs_dir,
-            min_iter=args.min_iter,
-            competition_frequency="quarterly_interpolated",
-        )
-        quarterly_runs, pg_replaced = merge_preferred_runs(
-            quarterly_runs, pg_quarterly, models={"hsa_full"}
-        )
-        pg_annual = _load_runs(
-            args.pg_runs_dir,
-            min_iter=args.min_iter,
-            competition_frequency="annual_q4",
-        )
-        if pg_annual:
-            annual_hsa_runs, annual_replaced = merge_preferred_runs(
-                annual_hsa_runs, pg_annual, models={"hsa_full"}
-            )
-            print(f"Merged {len(annual_replaced)} annual-Q4 Particle-Gibbs hsa_full cells.")
-        else:
-            print("No annual-Q4 Particle-Gibbs runs found: annual-Q4 hsa_full stays alternating FFBS.")
-        print(f"Merged {len(pg_replaced)} PCHIP Particle-Gibbs hsa_full cells into the report run-set.")
-        expected_full = {key for key in report_run_keys() if key[0] == "hsa_full"}
-        unresolved = sorted(expected_full - set(pg_replaced))
-        if unresolved and not args.allow_incomplete:
-            preview = ", ".join("/".join(key) for key in unresolved[:8])
-            raise SystemExit(
-                f"{len(unresolved)} PCHIP hsa_full cells have no Particle-Gibbs run "
-                f"({preview}). Re-run scripts/appendix_pg_full_runs.py, or pass --no-pg "
-                "to report alternating FFBS for every hsa_full cell."
-            )
     missing_quarterly = sorted(set(report_run_keys()) - set(quarterly_runs))
     missing_annual = sorted(set(annual_q4_run_keys()) - set(annual_hsa_runs))
     missing = [("PCHIP", *key) for key in missing_quarterly] + [("annual-Q4", *key) for key in missing_annual]
@@ -1347,6 +1451,8 @@ def main() -> None:
     assert_single_sampler_per_cell(quarterly_display)
     assert_single_sampler_per_cell(annual_display)
     for label, run_set in (("PCHIP", quarterly_display), ("annual-Q4", annual_display)):
+        assert_expected_sampler(run_set, model="hsa_full", expected="particle_gibbs", label=label)
+        assert_expected_sampler(run_set, model="hsa_const_theta", expected="joint_ffbs", label=label)
         samplers = sorted({_sampler_label(idata) for (m, _, _), (_, idata) in run_set.items() if m == "hsa_full"})
         print(f"  {label} hsa_full state sampler: {' / '.join(samplers) or 'n/a'}")
 
@@ -1366,21 +1472,5 @@ def main() -> None:
     )
     subprocess.run(["python", str(ROOT / "scripts" / "11_additional_report_evidence.py")], cwd=ROOT, check=True)
     print(f"Saved PCHIP and annual-Q4 report inputs under {base_tables} and {base_figures}")
-    if args.compile:
-        tex = ROOT / "paper" / "nkpc_hsa_report_ja.tex"
-        build_dir = ROOT / "results" / "report" / "build" / "nkpc_hsa_report_ja"
-        build_dir.mkdir(parents=True, exist_ok=True)
-        command = [
-            "xelatex", "-interaction=nonstopmode", "-halt-on-error",
-            f"-output-directory={build_dir}", str(tex),
-        ]
-        subprocess.run(command, cwd=ROOT, check=True)
-        subprocess.run(command, cwd=ROOT, check=True)
-        built_pdf = build_dir / f"{tex.stem}.pdf"
-        final_pdf = ROOT / "results" / "report" / f"{tex.stem}.pdf"
-        shutil.copy2(built_pdf, final_pdf)
-        print(f"Saved {final_pdf}")
-
-
 if __name__ == "__main__":
     main()

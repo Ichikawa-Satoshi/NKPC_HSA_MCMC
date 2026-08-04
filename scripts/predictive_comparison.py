@@ -144,6 +144,32 @@ def prequential_hsa(post, d, idx, kind):
     return out
 
 
+def plugin_score(post, d, model):
+    """The in-sample plug-in fit score the report has always described.
+
+    Evaluate the inflation equation at posterior-MEAN parameters and states and score
+    the residuals with a Gaussian log-likelihood at the posterior-mean shock variance.
+    It reuses the estimation sample and collapses the posterior to a point, so it is
+    neither out-of-sample nor a posterior predictive density; it is reported next to the
+    prequential scores so the reader can see how far a crude criterion is from a proper one.
+    """
+    mean = lambda name: float(np.mean(_flat(post, name)))
+    alpha = mean("alpha")
+    if model == "ces":
+        kappa_t = np.full(d["pi"].size, mean("kappa"))
+    else:
+        Nbar = np.asarray(post["Nbar"], float).reshape(-1, d["pi"].size).mean(axis=0)
+        if model == "hsa_dynamic":
+            kappa_t = np.full(d["pi"].size, mean("kappa"))
+        else:
+            kappa_t = mean("kappa_0") + mean("delta") * Nbar
+    fitted = alpha * d["pi_prev"] + (1.0 - alpha) * d["pi_expect"] + kappa_t * d["x"]
+    resid = d["pi"] - fitted
+    sigma2 = mean("sigma_e") ** 2
+    T = resid.size
+    return float(-0.5 * T * np.log(2 * np.pi * sigma2) - 0.5 * np.sum(resid**2) / sigma2)
+
+
 def scores(ll):
     """ll: (S,T) pointwise log-lik. Returns LPD, WAIC, PSIS-LOO, max Pareto k."""
     import arviz as az
@@ -166,38 +192,47 @@ def scores(ll):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--draws", type=int, default=300)
+    ap.add_argument("--frequency", default=None,
+                    choices=["annual_q4", "quarterly_interpolated"],
+                    help="Observation design; default runs both.")
     args = ap.parse_args()
+    designs = [args.frequency] if args.frequency else ["annual_q4", "quarterly_interpolated"]
     specs = configured_data_specs(load_model_config())
     df = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv")
     import arviz as az
 
     rows = []
-    for price, spec in UNEMP.items():
-        md = _coerce_model_data(df, data_spec=specs[spec])
-        d = {k: np.asarray(md[k], float) for k in ["pi", "pi_prev", "pi_expect", "x", "x_prev"]}
-        d["N"] = np.asarray(transform_competition_series(md["N"], transform=DEFAULT_N_TRANSFORM), float)
-        base = None
-        for model in MODELS:
-            run = find_run(model, spec)
-            if run is None:
-                continue
-            post = az.from_netcdf(run / "posterior.nc").posterior
-            n_all = _flat(post, "alpha").size
-            idx = np.linspace(0, n_all - 1, min(args.draws, n_all)).astype(int)
-            if model == "ces":
-                ll = prequential_ces(post, d, idx)
-            else:
-                kind = {"hsa_steady": "steady", "hsa_dynamic": "dynamic"}.get(model, "full")
-                ll = prequential_hsa(post, d, idx, kind)
-            lpd, waic, loo, kmax = scores(ll)
-            if model == "ces":
-                base = lpd
-            rows.append({"price": price, "model": model,
-                         "LPD_1step": round(lpd, 2), "WAIC": round(waic, 2),
-                         "LOO": round(loo, 2), "max_pareto_k": round(kmax, 2),
-                         "dLPD_vs_ces": None if base is None else round(lpd - base, 2)})
-            print(f"{price:13s} {model:12s} LPD={lpd:9.2f}  WAIC={waic:9.2f}  LOO={loo:9.2f}  k={kmax:4.2f}"
-                  + ("" if base is None else f"  dLPD vs CES={lpd-base:+7.2f}"), flush=True)
+    for freq in designs:
+      for price, spec in UNEMP.items():
+          md = _coerce_model_data(df, data_spec=specs[spec])
+          d = {k: np.asarray(md[k], float) for k in ["pi", "pi_prev", "pi_expect", "x", "x_prev"]}
+          d["N"] = np.asarray(transform_competition_series(md["N"], transform=DEFAULT_N_TRANSFORM), float)
+          base = None
+          for model in MODELS:
+              # CES has no latent firm-count state, so its likelihood and posterior are
+              # invariant to the observation design; the same 16 cells are shared,
+              # exactly as in scripts/12_build_cpi_ppi_report.py.
+              run = find_run(model, spec, "quarterly_interpolated" if model == "ces" else freq)
+              if run is None:
+                  continue
+              post = az.from_netcdf(run / "posterior.nc").posterior
+              n_all = _flat(post, "alpha").size
+              idx = np.linspace(0, n_all - 1, min(args.draws, n_all)).astype(int)
+              if model == "ces":
+                  ll = prequential_ces(post, d, idx)
+              else:
+                  kind = {"hsa_steady": "steady", "hsa_dynamic": "dynamic"}.get(model, "full")
+                  ll = prequential_hsa(post, d, idx, kind)
+              lpd, waic, loo, kmax = scores(ll)
+              if model == "ces":
+                  base = lpd
+              rows.append({"design": freq, "price": price, "model": model,
+                           "plugin_score": round(plugin_score(post, d, model), 2),
+                           "LPD_1step": round(lpd, 2), "WAIC": round(waic, 2),
+                           "LOO": round(loo, 2), "max_pareto_k": round(kmax, 2),
+                           "dLPD_vs_ces": None if base is None else round(lpd - base, 2)})
+              print(f"{freq[:6]:6s} {price:13s} {model:12s} LPD={lpd:9.2f}  WAIC={waic:9.2f}  LOO={loo:9.2f}  k={kmax:4.2f}"
+                    + ("" if base is None else f"  dLPD vs CES={lpd-base:+7.2f}"), flush=True)
     tab = pd.DataFrame(rows)
     tab.to_csv(TAB / "predictive_comparison.csv", index=False)
     json.dump(rows, open(TAB / "predictive_comparison.json", "w"), indent=2)

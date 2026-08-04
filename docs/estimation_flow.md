@@ -433,9 +433,11 @@ matches `hsa_full`.
 
 ## 5. HSA full
 
-Two implementations. `run_model` reaches the first; the report's PCHIP tables use the second.
+**Production sampler: Particle Gibbs** (§5b), for both observation designs. §5a is the
+superseded alternating-FFBS implementation, retained for validation and no longer reachable
+from `run_model`.
 
-### 5a. Alternating FFBS — `gibbs/hsa_full/model.py`, loop at 702
+### 5a. Alternating FFBS — SUPERSEDED — `gibbs/hsa_full/model.py`, loop at 702
 
 **STEP 1 — (α, κ₀, δ, θ₀, γ)** (`:710-756`)
 ```python
@@ -475,7 +477,10 @@ Sign check: `y − αa = (κ₀+δN̄)x − (θ₀+γN̄)N̂ + λζ + η` ⟹
 
 Both blocks are exact conditionals, so the alternating scheme is a **valid** Gibbs kernel.
 
-### 5b. Particle Gibbs — `gibbs/hsa_full_pg/model.py`, loop at 444
+### 5b. Particle Gibbs — PRODUCTION — `gibbs/hsa_full_pg/model.py`, loop at 444
+
+Reached by `run_model("hsa_full")` through the facade `models/hsa_full.py`. Particle count comes
+from `configs/models.yaml → defaults.n_particles` (512) and is recorded in run metadata.
 
 **STEPS 1–7 are imported verbatim** from `hsa_full` (`:30-42`) — identical priors, scaling and
 conditionals. Only step 8 differs:

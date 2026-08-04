@@ -25,10 +25,10 @@
 \date{Draft --- August 2026}
 
 \begin{document}
-\input{results/tables/cpi_ppi_report_en/result_macros.tex}
-\input{results/tables/cpi_ppi_report_en/bias_macros.tex}
-\input{results/tables/cpi_ppi_report_en/annual_q4/result_macros.tex}
-\input{results/tables/cpi_ppi_report_en/annual_q4/bias_macros.tex}
+\input{results/tables/cpi_ppi_report/result_macros.tex}
+\input{results/tables/cpi_ppi_report/bias_macros.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/result_macros.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/bias_macros.tex}
 
 \tableofcontents
 \clearpage
@@ -140,13 +140,33 @@ expectation series also remains for core CPI.
 ($100\times$ log real output HP-filtered, in the same $100$-log-point units as BN),
 HP labor-share gap, and inverse markup. The unemployment measure enters as the \emph{negative} unemployment gap $x_t=-(u_t-u^*_t)$---labor-market tightness, positive in expansions and negative in downturns (e.g.\ $x_t\approx-4$ in 2009), co-moving positively with the output gaps. A positive slope $\kappa$ on $x_t$ is therefore a conventional downward-sloping Phillips curve.
 
-\paragraph{Competition proxy.} The competition series is Gustavo's firm-count measure
-(annual), i.e.\ the inverse of the \emph{HHI of U.S.\ listed firms}. The
-main results use PCHIP interpolation to a quarterly value observed every quarter; the
-additional results observe the annual value only in Q4 and infer the Q1--Q3 quarterly
-states inside the state-space model. The latter is a mixed-frequency specification that
-does not treat the interpolated value as data and propagates interpolation uncertainty
-into the posterior.
+\paragraph{Competition proxy, and why the main results are mixed-frequency.} The
+competition series is Gustavo's firm-count measure, i.e.\ the inverse of the \emph{HHI of
+U.S.\ listed firms}. It is \textbf{annual}: over 1982--2012 there are 31 observations, not
+124.
+
+The main results therefore use a \emph{mixed-frequency} observation scheme. The annual
+value enters the state-space model in that year's Q4 and the intervening 93 quarters are
+treated as \emph{missing}, so the sub-annual firm count is inferred rather than assumed
+(Section~\ref{sec:mixed-freq}). Alongside it we report the conventional alternative, in
+which the annual series is PCHIP-interpolated to a quarterly value and that interpolated
+value is then used \emph{as data} in all 124 quarters (Section~\ref{sec:pchip}).
+
+Earlier revisions of this paper took the interpolated version as the main result. We
+reversed that after finding that the interpolation is not innocuous. It manufactures
+within-year variation that does not exist, drives the estimated firm-count measurement
+error down to $\sigma_N\approx0.023$ (versus $0.068$ under mixed frequency), and through
+that pins $\bar N_t+\hat N_t$ so tightly at all 124 quarters that only the \emph{split}
+between trend and cycle is left free. The consequence is a near-exact posterior ridge
+between the two states---posterior correlation $-0.9996$ under interpolation against
+$+0.13$ under mixed frequency---which is the identification pathology described in
+Section~\ref{sec:scope}. The interpolated design also forces the AR(2) cycle to a
+near-unit root and hence to an $82$-quarter ``cycle'' that is a second trend rather than a
+cycle. None of this is visible if the interpolated series is simply taken as data.
+
+The reassuring part is that $\delta$ itself barely moves between the two designs, so the
+substantive result does not hinge on the choice; what changes is how much of the reported
+precision is real.
 
 \paragraph{Unit convention.} The default transform is
 $(100\log N-\overline{100\log N})/10$, so one unit of $\bar N$ or $\hat N$ is a
@@ -180,7 +200,7 @@ CES             & constant & $0$ & Textbook NKPC benchmark & Gibbs (conjugate)\\
 HSA steady     & $\kappa_0+\delta\bar N_t$ & $0$ & $\bar N$ channel only  & Gibbs + exact joint FFBS\\
 HSA dynamic    & constant & constant & $\hat N$ channel only  & Gibbs + exact joint FFBS\\
 HSA const-theta & $\kappa_0+\delta\bar N_t$ & constant & HSA full with $\gamma=0$ & Gibbs + exact joint FFBS\\
-HSA full       & $\kappa_0+\delta\bar N_t$ & $\theta_0+\gamma\bar N_t$ & HSA Full & Gibbs + Particle Gibbs (PCHIP)\\
+HSA full       & $\kappa_0+\delta\bar N_t$ & $\theta_0+\gamma\bar N_t$ & HSA Full & Gibbs + Particle Gibbs\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -188,10 +208,10 @@ HSA full       & $\kappa_0+\delta\bar N_t$ & $\theta_0+\gamma\bar N_t$ & HSA Ful
 \paragraph{State blocks.} The bilinear term $-\gamma\bar N_t\hat N_t$ makes the joint
 firm-count state non-linear-Gaussian, so \textbf{HSA full is estimated by a Particle
 Gibbs sampler}: one conditional sequential-Monte-Carlo sweep updates the whole state
-path (512 particles). This applies to the PCHIP cells reported in the body and
-appendices; the annual-Q4 HSA-full cells of Section~\ref{sec:annual-q4-results} are
-\emph{not} re-estimated by Particle Gibbs and still use the two alternating conditional
-FFBS blocks, which is why their diagnostics are reported separately.
+path (512 particles). This applies to \emph{every} HSA-full cell, under both the PCHIP
+and the annual-Q4 observation scheme, so the PCHIP-versus-annual-Q4 comparison of
+Section~\ref{sec:pchip} differs only in the observation scheme and not in the sampler. The table builder refuses to emit a table in which any HSA-full cell was
+drawn by a different sampler.
 
 Every other model draws the whole state $s_t=(\hat N_t,\hat N_{t-1},\bar N_t)'$ jointly
 by exact Kalman/FFBS. That includes \textbf{HSA const-theta}: with $\gamma=0$ the
@@ -258,9 +278,10 @@ observed firm count into components and then substitutes them into the NKPC, we 
 both states using the firm-count equation and the inflation equation within the same
 Gibbs iteration.
 
-\paragraph{Two observation frequencies.} The PCHIP version uses
-\eqref{eq:N-measurement} at all 124 quarters. The annual-Q4 version places the annual
-firm count in each year's Q4,
+\paragraph{Two observation frequencies; the main results use the first.}
+\label{sec:mixed-freq}
+The firm count is annual, so the \emph{mixed-frequency} design places the annual value in
+each year's Q4 and treats Q1--Q3 as missing,
 \begin{equation}
 N_t^{\mathrm{obs}}=
 \begin{cases}
@@ -270,8 +291,11 @@ N_t^{\mathrm{obs}}=
 \qquad |\mathcal T_N|=31,
 \label{eq:annual-q4-observation}
 \end{equation}
-where $\bar c$ is the same centering constant as the PCHIP reference series, keeping
-the coefficient units comparable. In Q4 the Kalman update uses two observation
+where $\bar c$ is a fixed centering constant, shared with the interpolated series so the
+coefficient units are comparable across designs. The alternative \emph{interpolated}
+design instead PCHIP-interpolates the annual series to quarterly and applies
+\eqref{eq:N-measurement} at all 124 quarters; Section~\ref{sec:pchip} reports it and
+documents what the interpolation costs. In Q4 the Kalman update uses two observation
 rows---the firm-count equation and the inflation equation---and in Q1--Q3 only the one
 inflation row. Because the state transition and prediction continue at every quarter,
 the Q1--Q3 $\bar N_t,\hat N_t$ are not simple interpolations but FFBS draws conditioned
@@ -509,31 +533,38 @@ coefficient chains can mix well while the joint posterior including the states h
 and reporting only the former would overstate what has been established.
 Table~\ref{tab:group-convergence} gives the group-by-group numbers for every model.
 
-Of the \ReportRunCount{} PCHIP runs, \ReportWarningCount{} fail the scalar rule,
-\ReportStateWarningCount{} fail the state-path rule and \ReportJointWarningCount{} fail at
-least one of the three. Note that the scalar rule covers the trend drift $n$ and the
-variance block, which earlier revisions of this table omitted; $n$ is the worst-mixing
-scalar in every HSA cell, which is the level-ridge of Section~\ref{sec:scope} showing up
-in the parameter block. The $95\%$ credible intervals are the $2.5\%$ and $97.5\%$
+Under the main mixed-frequency design, \AnnualReportWarningCount{} of the
+\AnnualReportRunCount{} runs fail the scalar rule; under the interpolated design the
+figures are \ReportWarningCount{} of \ReportRunCount{}. The two designs fail for different
+reasons, and the difference is informative rather than incidental. Under interpolation the
+worst-mixing scalar is the trend drift $n$ in 35 of the 38 failing cells---the level ridge
+of Section~\ref{sec:scope} surfacing in the parameter block. Under mixed frequency it is
+the AR(2) block $(\rho_1,\rho_2)$ in 53 of 61 cells, which for HSA steady is a nuisance
+object because $\theta=0$ keeps $\hat N_t$ out of the inflation equation. The parameters
+the conclusions rest on fail at the \emph{same} rate in the two designs: $\delta$ in 8 of
+61 cells and $\kappa_0$ in 6 of 61, either way. The $95\%$ credible intervals are the $2.5\%$ and $97.5\%$
 quantiles of the saved draws; the plotted points are posterior means.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.82\linewidth]{cpi_ppi_report/competition_decomposition_hsa_steady_core_unemployment.png}
-\caption{Posterior decomposition of the firm count $N_t=\bar N_t+\hat N_t$ under the
-main HSA steady (negative unemployment gap, core CPI). Lines are posterior means, bands are
-$95\%$ credible intervals. That the state paths are smoothly estimated does not by
-itself imply identification of $\kappa_0$ or $\delta$.}
-\label{fig:main-state-decomposition}
-\end{figure}
 
 \section{Main results}
 \label{sec:main}
-Table~\ref{tab:headline} gives the main-model (HSA steady) estimates for every price
-index and activity measure, so each result can be read against the specification it comes
-from. The main specification---\textbf{core CPI, negative unemployment gap}---is in bold;
-a positive $\delta$ means the slope flattens as the firm count falls.
-\input{results/tables/cpi_ppi_report_en/headline_results.tex}
+All results in this section use the \textbf{mixed-frequency} firm-count design: the 31
+annual observations enter in their own Q4 and the 93 intervening quarters are inferred
+inside the state-space model (Section~\ref{sec:mixed-freq}). Table~\ref{tab:headline}
+gives the main-model (HSA steady) estimates for every price index and activity measure,
+so each result can be read against the specification it comes from. The main
+specification---\textbf{core CPI, negative unemployment gap}---is in bold; a positive
+$\delta$ means the slope flattens as the firm count falls.
+\input{results/tables/cpi_ppi_report/annual_q4/headline_results.tex}
+
+\paragraph{Reading the convergence column.} Every cell in Table~\ref{tab:headline}
+carries a $\dagger$, and it would be a mistake to read that as ``$\delta$ is not
+estimated reliably here.'' The blanket flag is set by whichever scalar mixes worst, and
+under mixed frequency that is the AR(2) block $(\rho_1,\rho_2)$ in 53 of the 61 HSA cells.
+For \textbf{HSA steady} the AR(2) block governs $\hat N_t$, which---because $\theta=0$ in
+this model---does not enter the inflation equation at all. The coefficient the
+conclusions rest on is $\delta$, and its own diagnostics are in the penultimate column:
+$\hat R=1.000$ with bulk ESS between $2{,}600$ and $3{,}400$ in eight of the nine cells.
+Section~\ref{sec:scope} states which failures do and do not bear on the conclusions.
 
 Table~\ref{tab:model-comp} then places the main model against the other model variants
 (CES, HSA dynamic, HSA const-theta, HSA full) for the negative unemployment gap. CES and
@@ -541,38 +572,50 @@ HSA dynamic hold the slope constant, so they have no $\delta$; the HSA models wi
 firm-count-dependent slope estimate $\delta$, and HSA steady is the main model. Full
 coefficients ($\theta$, $\gamma$, and the $\kappa_t$ path) for every activity measure are
 in Appendix~\ref{app:model-tables}.
-\input{results/tables/cpi_ppi_report_en/model_comparison_unemp.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/model_comparison_unemp.tex}
 
 \subsection{The negative-unemployment-gap slope flattens as the firm count falls}
 For the baseline HSA steady on the main sample, the core-CPI negative-unemployment-gap
 specification gives
 \[
-\delta=\CoreUnempDelta,
+\delta=\AnnualCoreUnempDelta,
 \]
 and the Savage--Dickey Bayes factor against $\delta=0$ is
-$\mathrm{BF}_{10}=\CoreUnempDeltaBF$. Because $\bar N_t$ falls over the sample, the
-implied slope $\kt$ declines monotonically from $\CoreUnempKappaStart$ to
-$\CoreUnempKappaEnd$: as the firm count falls (concentration rises), the Phillips curve
-flattens, the sign the HSA mechanism predicts. Headline CPI also gives
-$\delta=\HeadlineUnempDelta$ ($\mathrm{BF}_{10}=\HeadlineUnempDeltaBF$), so the CPI
-result for the negative unemployment gap is robust to the inflation index. Figure~\ref{fig:kt_unemp}
-plots the implied $\kt$ path; its end-of-sample band includes zero, so the accurate
-statement is a flattening to near zero rather than a strictly positive residual slope.
+$\mathrm{BF}_{10}=\AnnualCoreUnempDeltaBF$. Because $\bar N_t$ falls over the sample, the
+implied slope $\kt$ declines monotonically from $\AnnualCoreUnempKappaStart$ to
+$\AnnualCoreUnempKappaEnd$: as the firm count falls (concentration rises), the Phillips
+curve flattens, the sign the HSA mechanism predicts. Headline CPI also gives
+$\delta=\AnnualHeadlineUnempDelta$
+($\mathrm{BF}_{10}=\AnnualHeadlineUnempDeltaBF$), so the CPI result for the negative
+unemployment gap is robust to the inflation index. Figure~\ref{fig:kt_unemp} plots the
+implied $\kt$ path; its end-of-sample band includes zero, so the accurate statement is a
+flattening to near zero rather than a strictly positive residual slope.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.62\linewidth]{cpi_ppi_report/kappa_t_unemployment_by_inflation.png}
-\caption{Time-varying slope $\kt$ for the negative unemployment gap (posterior mean and $95\%$
-band). Under CPI it declines to near zero by the end of the sample, whereas the PPI
-band is wide.}
+\includegraphics[width=0.62\linewidth]{cpi_ppi_report/annual_q4/kappa_t_unemployment_by_inflation.png}
+\caption{Time-varying slope $\kt$ for the negative unemployment gap under the
+mixed-frequency design (posterior mean and $95\%$ band). The band includes the
+uncertainty from inferring the 93 unobserved quarterly firm counts. Under CPI it declines
+to near zero by the end of the sample, whereas the PPI band is wide.}
 \label{fig:kt_unemp}
 \end{figure}
 
 The estimated Phillips-curve slope in the core-CPI specification declines from about
-0.12 at the beginning of the sample to approximately zero by the end of the sample.
-This change is economically meaningful. For example, a four-point deterioration in
-the negative unemployment gap ($x_t=-4$) implies an inflation response of about
-$-0.48$ percentage point at the 1982 slope, but almost no response at the 2012 slope.
+$0.11$ at the beginning of the sample to approximately zero by the end. This change is
+economically meaningful. For example, a four-point deterioration in the negative
+unemployment gap ($x_t=-4$) implies an inflation response of about $-0.44$ percentage
+point at the 1982 slope, but almost no response at the 2012 slope.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\linewidth]{cpi_ppi_report/annual_q4/competition_decomposition_hsa_steady_core_unemployment.png}
+\caption{Posterior decomposition of the firm count $N_t=\bar N_t+\hat N_t$ under the main
+HSA steady (negative unemployment gap, core CPI), mixed-frequency design. Lines are
+posterior means, bands are $95\%$ credible intervals. The quarterly states between the Q4
+annual observations are inferred, not interpolated, so the bands widen between anchors.}
+\label{fig:main-state-decomposition}
+\end{figure}
 
 \section{The CES slope bias and the constant-slope benchmark}
 \label{sec:ces-hsa-bias}\label{sec:bench}
@@ -610,12 +653,12 @@ difference by randomly permuting the HSA draws with a fixed seed.
 \subsection{Estimation results}
 For the inverse-markup specification that corresponds directly to the theory,
 \begin{align*}
-\kappa_{\mathrm{CES}}&=\BiasDirectCES,&
-\kappa_{\mathrm{HSA}}&=\BiasDirectHSA,\\
-\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}&=\BiasDirectDifference,&
-\Pr(\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0)&=\BiasDirectProbability,\\
-B_{\mathrm{HSA}}&=\BiasDirectOVB,&
-\Pr(B_{\mathrm{HSA}}<0)&=\BiasDirectOVBProbability
+\kappa_{\mathrm{CES}}&=\AnnualBiasDirectCES,&
+\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectHSA,\\
+\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectDifference,&
+\Pr(\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0)&=\AnnualBiasDirectProbability,\\
+B_{\mathrm{HSA}}&=\AnnualBiasDirectOVB,&
+\Pr(B_{\mathrm{HSA}}<0)&=\AnnualBiasDirectOVBProbability
 \end{align*}
 The CES--HSA difference does not show a negative bias. The omitted-variable bias
 implied by HSA itself also has a point estimate of the sign opposite to the theory
@@ -628,7 +671,7 @@ HSA. Each interval is a $95\%$ credible interval. $\dagger$ marks that at least 
 CES or HSA dynamic is outside the convergence criteria.}
 \label{tab:ces-hsa-bias}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/ces_hsa_kappa_bias.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/ces_hsa_kappa_bias.tex}}
 \end{table}
 
 \paragraph{Verdict.} The inverse-markup row passes the convergence criteria for both
@@ -667,28 +710,53 @@ distinguishes them is whether that slope varies with the firm count
 
 \section{Does the time-varying slope improve fit over the constant slope?}
 \label{sec:mc}
-We compare CES (constant $\kappa$) against HSA steady (slope varying with the
-firm count) by two criteria: an in-sample fit score and the Savage--Dickey Bayes factor
-for $\delta\neq 0$ (Table~\ref{tab:mc}).
+We compare CES (constant $\kappa$) against HSA steady (slope varying with the firm
+count) by two criteria: predictive fit (Table~\ref{tab:fit-comparison}) and the
+Savage--Dickey Bayes factor for $\delta\neq 0$ (Table~\ref{tab:mc}).
 
-\paragraph{In-sample plug-in fit score.} We evaluate the inflation equation at
-posterior-mean parameters and states (bars denote posterior means),
+\paragraph{Fit, by four scores at once.} Earlier revisions reported only an
+\emph{in-sample plug-in} score. It evaluates the inflation equation at posterior-mean
+parameters and states (bars denote posterior means),
 \begin{equation}
 \hat\pi_t=\bar\alpha\,\pi_{t-1}+(1-\bar\alpha)\,\mathbb{E}_t\pi_{t+1}+\bar\kt\,x_t,
 \qquad \bar\kt=\bar\kappa_0+\bar\delta\,\bar N_t
 \;\;(\text{CES: }\bar\kt=\bar\kappa),
 \end{equation}
-and score the fit by the Gaussian log-likelihood of the residuals
-$r_t=\pi_t-\hat\pi_t$ with $\bar\sigma_e^2$ the posterior-mean shock variance:
+and scores the residuals $r_t=\pi_t-\hat\pi_t$ by a Gaussian log-likelihood at the
+posterior-mean shock variance,
 \begin{equation}
 S=-\frac{T}{2}\log\!\big(2\pi\bar\sigma_e^2\big)-\frac{1}{2\bar\sigma_e^2}\sum_{t=1}^{T}r_t^2 .
 \end{equation}
-This is an \emph{in-sample plug-in} score: it reuses the estimation sample and the
-posterior means, and is neither an out-of-sample forecast nor a posterior predictive
-density. It is used only as a rough comparative fit diagnostic; a proper predictive
-comparison (LOO, WAIC, rolling one-step forecasts, or an integrated log predictive
-density) is left for future work. In the negative-unemployment-gap specification the time-varying
-slope improves this score over CES.
+This reuses the estimation sample and collapses the posterior to a point, so it is
+neither an out-of-sample forecast nor a posterior predictive density.
+
+We now report it \emph{alongside} three proper scores rather than in place of them:
+the prequential one-step-ahead log predictive density
+$\mathrm{LPD}_1=\sum_t\log p(\pi_t\mid\pi_{1:t-1},x,N)$, integrated over the posterior;
+WAIC; and PSIS-LOO. Keeping the plug-in score visible is the point of the table---it lets
+the reader see how much a crude criterion overstates the case:
+
+\input{results/tables/cpi_ppi_report/annual_q4/fit_comparison.tex}
+
+For HSA steady against CES the plug-in score gives $+7.93$ on core CPI where
+$\mathrm{LPD}_1$ gives $+3.92$ and WAIC and LOO give $+3.29$ and $+3.28$; on headline CPI
+it gives $+4.56$ against $+2.75$, $+0.89$ and $+0.83$. The plug-in score overstates the
+improvement by a factor of roughly two to five, which is what one expects from a
+criterion that rewards a model for the extra latent states it fitted to this same sample.
+The \emph{ordering} nevertheless survives: on both CPI indices the time-varying slope
+improves every score, on PPI no score separates the models (LPD$_1$ $+0.40$, WAIC $-0.54$,
+LOO $-0.92$), and HSA dynamic---the entry channel without a time-varying slope---never
+beats HSA steady. Two caveats. First, the LOO column is unreliable wherever the maximum Pareto
+$\hat k$ exceeds $0.7$, which is 5 of the 12 cells: CES and HSA full on core CPI
+($0.84$ and $0.92$), and CES, HSA steady and HSA dynamic on PPI ($1.00$, $1.25$, $1.09$).
+That includes the CES baseline for the core-CPI comparison, so the $+3.28$ LOO difference
+quoted above rests on one number that PSIS itself flags; the WAIC difference of $+3.29$,
+which does not depend on importance sampling, is the more trustworthy of the two, and it
+agrees. The PPI cells should simply not be read off the LOO column. Second, all four
+scores are computed on the estimation sample---LPD$_1$ is prequential in the sense that
+each $\pi_t$ is scored against a predictive density formed without $\pi_t$, but the
+parameters were estimated on the full sample---so none of this is a genuine
+out-of-sample exercise.
 
 \paragraph{Bayes factor (Savage--Dickey), stated precisely.} We test $\delta=0$
 \emph{within the HSA state model}: $M_1$ is HSA steady with $\delta$ free and
@@ -698,14 +766,32 @@ $M_0$ is the same model with $\delta=0$. The Savage--Dickey identity gives
 p(\delta=0)=\frac{1}{\sigma_\delta\sqrt{2\pi}}=\frac{1}{0.02\sqrt{2\pi}}\approx 19.95
 \;\;(\delta\sim\mathcal N(0,\sigma_\delta^2)),
 \end{equation}
-with the posterior ordinate estimated by a Gaussian kernel density on the draws
-$\{\delta^{(s)}\}$, $\hat\pi(\delta=0\mid y)=\tfrac{1}{Sh}\sum_s\phi\!\big((0-\delta^{(s)})/h\big)$.
-Three cautions. (i) This is \emph{not} a CES-vs-HSA marginal-likelihood ratio: CES and
-HSA also differ in the latent-$N$ block, which the SDDR holds fixed, so we keep the
-comparison inside the HSA state model. (ii) The theory is one-sided ($\delta>0$); the
-two-sided $\mathrm{BF}_{10}$ is conservative. (iii) The zero-point posterior density is
-a KDE estimate; the ordering across specifications is insensitive to the bandwidth, but
-the exact magnitudes are not, so we report them to a few significant figures.
+The posterior ordinate is computed \emph{without density estimation}. The Gibbs update
+for the inflation coefficients is an exact Gaussian conditional, so the marginal
+ordinate is its Rao--Blackwellised average over the retained draws of everything else,
+$\psi=(\bar N_{0:T},\hat N_{0:T},\sigma_\eta^2,\lambda_{e\zeta},\phi_1)$:
+\begin{equation}
+\hat\pi(\delta=0\mid y)=\frac{1}{S}\sum_{s=1}^{S}
+\mathcal N\!\big(0;\;b_1^{(s)}[\delta],\,V_1^{(s)}[\delta,\delta]\big),
+\qquad \psi^{(s)}\sim p(\psi\mid y),
+\label{eq:sddr-rb}
+\end{equation}
+with $b_1^{(s)},V_1^{(s)}$ the conditional moments of \eqref{eq:beta-posterior}
+evaluated at $\psi^{(s)}$. This matters because $\delta=0$ lies about three posterior
+standard deviations outside the sampled range---no retained draw of $\delta$ is
+negative---so a kernel density evaluated there extrapolates its own tail rather than
+measuring the posterior. For the main cell the kernel estimate moves from $22$ to
+$6.6\times10^{4}$ as its bandwidth is scaled between $3\times$ and $0.5\times$ Scott's
+rule, whereas \eqref{eq:sddr-rb} draws on $1{,}504$ effectively contributing terms out
+of $3{,}200$ (the three largest carry $1.2\%$ of the sum) and has a Monte Carlo standard
+error of about $3\%$.
+
+Three cautions remain. (i) This is \emph{not} a CES-vs-HSA marginal-likelihood ratio:
+CES and HSA also differ in the latent-$N$ block, which the SDDR holds fixed, so we keep
+the comparison inside the HSA state model. (ii) The theory is one-sided ($\delta>0$);
+the two-sided $\mathrm{BF}_{10}$ is conservative. (iii) A Bayes factor against a point
+null is proportional to the prior width by construction, so these numbers are statements
+about $\delta=0$ under the stated $\mathcal N(0,0.02^2)$ prior and are not prior-free.
 
 \begin{table}[H]
 \centering
@@ -719,9 +805,9 @@ $\mathrm{BF}_{10}>1$ favors a concentration-dependent slope.}
 \toprule
 Activity measure & Headline CPI & Core CPI & PPI \\
 \midrule
-Negative unemployment gap & \HeadlineUnempDelta\ (\HeadlineUnempDeltaBF) & \CoreUnempDelta\ (\CoreUnempDeltaBF) & \PPIUnempDelta\ (\PPIUnempDeltaBF) \\
-Output gap (HP)  & \HeadlineHPDelta\ (\HeadlineHPDeltaBF) & \CoreHPDelta\ (\CoreHPDeltaBF) & \PPIHPDelta\ (\PPIHPDeltaBF) \\
-Output gap (BN)  & \HeadlineBNDelta\ (\HeadlineBNDeltaBF) & \CoreBNDelta\ (\CoreBNDeltaBF) & \PPIBNDelta\ (\PPIBNDeltaBF) \\
+Negative unemployment gap & \AnnualHeadlineUnempDelta\ (\AnnualHeadlineUnempDeltaBF) & \AnnualCoreUnempDelta\ (\AnnualCoreUnempDeltaBF) & \AnnualPPIUnempDelta\ (\AnnualPPIUnempDeltaBF) \\
+Output gap (HP)  & \AnnualHeadlineHPDelta\ (\AnnualHeadlineHPDeltaBF) & \AnnualCoreHPDelta\ (\AnnualCoreHPDeltaBF) & \AnnualPPIHPDelta\ (\AnnualPPIHPDeltaBF) \\
+Output gap (BN)  & \AnnualHeadlineBNDelta\ (\AnnualHeadlineBNDeltaBF) & \AnnualCoreBNDelta\ (\AnnualCoreBNDeltaBF) & \AnnualPPIBNDelta\ (\AnnualPPIBNDeltaBF) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -745,266 +831,137 @@ Chib ordinate with explicit reduced Gibbs runs---now exists in the repository
 (Section~\ref{sec:status}), but its numbers are not promoted into this table until they
 have been reviewed.
 
-\section{Estimating quarterly firm counts from Q4-only observations}
-\label{sec:annual-q4-results}
-Against the results so far, which use the PCHIP-interpolated value as data every
-quarter, this section applies the mixed-frequency observation scheme of
-\eqref{eq:annual-q4-observation} and reports the results in the same order. The 3 price
-indices, 3 activity measures, 5 models, 3 priors, and the inverse-markup slope-bias
-diagnostic are unchanged. We newly estimate the 61 HSA cells with 12{,}000 iterations
-and 2 chains. Because CES contains neither $N_t$ nor a latent firm-count state, its
-likelihood and posterior do not change with the observation frequency, so we reuse it as
-a shared reference across the 16 CES cells. In the CES--HSA comparisons below, the CES
-column is therefore the same benchmark and only the HSA column is annual-Q4 estimated.
+\section{What PCHIP interpolation does to the estimates}
+\label{sec:pchip}
+The conventional alternative to the mixed-frequency design of
+Section~\ref{sec:mixed-freq} is to interpolate the annual firm count to a quarterly
+series and then use that series \emph{as data}. This section reports that version and
+documents what the interpolation costs. Everything else---3 price indices, 3 activity
+measures, 5 models, 3 priors, the inverse-markup slope-bias diagnostic, and all MCMC
+settings---is identical. CES contains neither $N_t$ nor a latent firm-count state, so its
+likelihood and posterior are invariant to the observation scheme and its 16 cells are
+shared across both designs.
 
-\subsection{What the annual-Q4 estimation does}
-\label{sec:annual-q4-method}
-The annual-Q4 variant is a \emph{mixed-frequency state-space estimation}, not an
-interpolate-then-regress procedure. The distinction is the whole point: the PCHIP
-version inserts a smooth deterministic curve and treats it as if the firm count were
-observed every quarter, which injects manufactured within-year variation and
-understates uncertainty; the annual-Q4 version instead treats the sub-annual firm
-count as \emph{latent} and lets the model infer it.
-
-Concretely, the firm count enters the observation equation only in the 31 fourth
-quarters, and Q1--Q3 are coded as missing (\eqref{eq:annual-q4-observation}). The
-Kalman filter handles this exactly by varying the observation block by quarter. In a
-Q4 the update uses both rows of \eqref{eq:steady-measurement-matrix}---the firm-count
-row and the inflation row---so the annual anchor pins the level of $\bar N_t$. In
-Q1--Q3 the firm-count row is dropped and only the inflation row remains, i.e.\ the
-measurement update for that quarter carries just the information that the slope
-$\delta x_t$ places on $\bar N_t$; the state prediction and transition
-\eqref{eq:state-matrices} nonetheless run at every quarter, propagating the latent
-$(\hat N_t,\hat N_{t-1},\bar N_t)$ forward between the annual observations. Each Gibbs
-iteration then draws the \emph{entire} quarterly path $s_{0:T}$ by FFBS, conditioned on
-the 31 annual anchors, the quarterly inflation and activity data, the state dynamics,
-and the current coefficients and variances. The Q1--Q3 firm counts are therefore
-posterior draws, not deterministic interpolations, and their uncertainty flows through
-to the posterior of $\delta$ and the $\kt$ path.
-
-\paragraph{The mixed-frequency Kalman step, in equations.} Yes, the state block is an
-exact Kalman filter---the same one as in Section~\ref{sec:model}; annual-Q4 changes only
-the observation row that is available each quarter. Let $\mathcal T_N$ be the 31 Q4
-quarters and, as before, write the inflation observation net of its known part as
-$y_t^\pi=y_t-\alpha a_t-\kappa_0 x_t-\lambda_{e\zeta}\zeta_t$. The observation triple
-$(z_t,H_t,R_t)$ switches with the calendar quarter:
-\begin{equation}
-(z_t,H_t,R_t)=
-\begin{cases}
-\left(\begin{bmatrix}N_t^{\mathrm{obs}}\\[1pt] y_t^\pi\end{bmatrix},\;
-\begin{bmatrix}1&0&1\\ 0&0&\delta x_t\end{bmatrix},\;
-\begin{bmatrix}\sigma_N^2&0\\ 0&\sigma_\eta^2\end{bmatrix}\right),
-& t\in\mathcal T_N\ (\mathrm{Q4}),\\[2.4ex]
-\left(\,y_t^\pi,\;\;
-\begin{bmatrix}0&0&\delta x_t\end{bmatrix},\;\;\sigma_\eta^2\right),
-& t\notin\mathcal T_N\ (\mathrm{Q1\text{--}Q3}).
-\end{cases}
-\label{eq:annual-q4-obsblock}
-\end{equation}
-The same linear-Gaussian recursion then runs at \emph{every} quarter, with only the row
-dimension of the update changing (two rows in Q4, one in Q1--Q3):
-\begin{align*}
-m_{t\mid t-1}&=c+Fm_{t-1}, & P_{t\mid t-1}&=FP_{t-1}F'+Q,\\
-v_t&=z_t-H_tm_{t\mid t-1}, & S_t&=H_tP_{t\mid t-1}H_t'+R_t,\\
-K_t&=P_{t\mid t-1}H_t'S_t^{-1}, & m_t&=m_{t\mid t-1}+K_tv_t,\\
-P_t&=(I-K_tH_t)P_{t\mid t-1}\ \ (\text{Joseph form}). & &
-\end{align*}
-In Q1--Q3 the prediction still advances $\bar N_t,\hat N_t$ through
-\eqref{eq:state-matrices}, but the firm-count row is simply absent and the only
-measurement information is the scalar $y_t^\pi$ loading on $\bar N_t$ through $\delta
-x_t$. The smoothed path $s_{0:T}$ is drawn by the same forward-filtering
-backward-sampling pass as the PCHIP version. Finally, the measurement-variance update
-uses only the finite Q4 residuals,
-\begin{equation}
-r_t^N=N_t^{\mathrm{obs}}-\hat N_t-\bar N_t\ \ (t\in\mathcal T_N),\qquad
-\sigma_N^2\mid\cdot\sim\operatorname{IG}\!\Big(a_N+\tfrac{|\mathcal T_N|}{2},\;
-b_N+\tfrac12\!\sum_{t\in\mathcal T_N}(r_t^N)^2\Big),\qquad |\mathcal T_N|=31.
-\label{eq:annual-q4-sigmaN}
-\end{equation}
-Setting $\mathcal T_N=\{1,\dots,T\}$ (every quarter observed) recovers the PCHIP filter
-exactly; annual-Q4 is that filter with 93 of the 124 firm-count rows removed.
-
-In short, within the same Gibbs sweep the annual-Q4 estimation jointly updates:
-\begin{itemize}
-\item the coefficients $(\alpha,\kappa_0,\delta,\dots)$ from \eqref{eq:beta-posterior},
-exactly as in the PCHIP version;
-\item the shock and measurement variances, with $\sigma_N^2$ updated from only the 31
-finite Q4 residuals;
-\item the full latent path $\bar N_{0:T},\hat N_{0:T}$ (all 124 quarters, including the
-93 unobserved ones) by FFBS.
-\end{itemize}
-CES carries no latent firm-count state and no $N_t$ term, so its likelihood and
-posterior are unchanged by the observation frequency; it is reused as the common
-reference. The practical cost is that not pretending the quarterly count is observed
-widens the intervals and lowers the effective sample size for the state block---which is
-itself the measurement uncertainty that the PCHIP version hides rather than a defect of
-the estimator.
-
-\subsection{CPI and PPI: main results of HSA steady}
-We first line up all price indices and activity measures for the main
-HSA steady. For the negative unemployment gap, headline CPI gives
-$\delta=\AnnualHeadlineUnempDelta$
-($\mathrm{BF}_{10}=\AnnualHeadlineUnempDeltaBF$), core CPI gives
-$\delta=\AnnualCoreUnempDelta$ ($\mathrm{BF}_{10}=\AnnualCoreUnempDeltaBF$), and PPI
-gives $\delta=\AnnualPPIUnempDelta$ ($\mathrm{BF}_{10}=\AnnualPPIUnempDeltaBF$). The
-corresponding PCHIP values are, in order, \HeadlineUnempDelta, \CoreUnempDelta, and
-\PPIUnempDelta, so the change in point estimate and interval from the change in
-observation frequency can be compared directly.
+\subsection{The two designs, side by side}
+Setting $\mathcal T_N=\{1,\dots,T\}$ in \eqref{eq:annual-q4-observation}---every quarter
+observed---recovers the interpolated filter exactly; the mixed-frequency design is that
+same filter with 93 of the 124 firm-count rows removed. The estimator is not the issue.
+What differs is what is fed to it.
 
 \begin{table}[H]
 \centering
-\caption{Annual-Q4 version: HSA-steady results by price index and activity measure.
-$\delta$ is posterior mean $[95\%$ CI$]$; $\kappa$ path is the change in posterior mean
-from the start to the end of the sample. $\dagger$ marks failure of the whole-run
-convergence criteria.}
-\label{tab:annual-hsa-steady}
+\caption{What the interpolation changes. Posterior quantities for the main cell
+(HSA steady, core CPI, negative unemployment gap, baseline priors).}
+\label{tab:pchip-vs-mixed}
 \small
-\input{results/tables/cpi_ppi_report_en/annual_q4/hsa_steady_by_activity.tex}
+\begin{tabular}{lcc}
+\toprule
+& Mixed-frequency (main) & PCHIP-interpolated \\
+\midrule
+Firm-count observations used            & 31 of 124 & 124 of 124 \\
+Estimated measurement error $\sigma_N$  & $0.068$   & $0.023$ \\
+$\rho_1,\rho_2$                         & $+0.20,\,-0.89$ & $+1.80,\,-0.81$ \\
+Implied AR(2) period                    & $4.3$ quarters & $82$ quarters \\
+Mean reversion $1-\rho_1-\rho_2$        & $1.69$    & $0.014$ \\
+Posterior corr$(\bar N_0,\hat N_0)$     & $+0.13$   & $\mathbf{-0.9996}$ \\
+Posterior corr$(\bar N$ level$,\kappa_0)$ & $-0.32$ & $-0.55$ \\
+\midrule
+$\delta$                                & \AnnualCoreUnempDelta & \CoreUnempDelta \\
+$\kt$ start $\to$ end                   & $\AnnualCoreUnempKappaStart \to \AnnualCoreUnempKappaEnd$
+                                        & $\CoreUnempKappaStart \to \CoreUnempKappaEnd$ \\
+\bottomrule
+\end{tabular}
 \end{table}
 
-It is important to distinguish ``the marginal chains of the coefficients mixed'' from
-``the joint posterior including the latent states converged.'' For the three price
-indices of the negative unemployment gap, the maximum $\hat R$ of $\delta$ is 1.000 throughout,
-the minimum bulk ESS exceeds 3{,}000, and $\kappa_0$ has $\hat R\leq1.003$ and ESS
-above 1{,}000. By contrast, the $\bar N_t$ and $\hat N_t$ paths have time points with
-$\hat R>1.01$ or ESS $<400$, so the 15 HSA-steady cells fail the whole-run criteria.
-Table~\ref{tab:annual-parameter-state-diagnostics} shows this difference without hiding
-it.
+Three things follow. First, the interpolated series is so smooth that the model drives
+$\sigma_N$ down to $0.023$ to fit it, which pins $\bar N_t+\hat N_t$ at all 124 quarters
+and leaves only the split free. Second, the AR(2) cycle is pushed to a near-unit root,
+$\rho_1+\rho_2=0.986$, so its mean-reversion term $1-\rho_1-\rho_2$ collapses to $0.014$.
+That term is the \emph{only} thing anchoring the level of $\hat N_t$: adding a constant
+$c$ to $\bar N$ and subtracting it from $\hat N$ leaves the firm-count equation, the trend
+equation and---through $\kappa_0\to\kappa_0-\delta c$---the inflation equation all exactly
+unchanged. When the anchor vanishes the two states become almost perfectly
+counter-identified, which is the $-0.9996$ in the table. Across all 122 estimated HSA
+cells the correlation between $1-\rho_1-\rho_2$ and corr$(\bar N_0,\hat N_0)$ is $+0.92$,
+so this is the mechanism and not a coincidence. Third, the ``cycle'' the interpolated
+design recovers has an $82$-quarter period: it is a second trend competing with $\bar N_t$
+for the same low-frequency variation, not a business-cycle object.
+
+\paragraph{What is \emph{not} affected.} $\delta$ is essentially unchanged---the
+interaction $x_t\bar N_t$ that identifies it is insensitive to a level shift in $\bar N$,
+which is absorbed by $\kappa_0$. Across the nine HSA-steady baseline cells the two designs
+agree on $\delta$ to the third decimal in eight of them. The substantive conclusion of
+this paper does not depend on the choice; the reported precision and the interpretation of
+the latent states do.
+
+\subsection{Interpolated results, for comparison}
+\input{results/tables/cpi_ppi_report/headline_results.tex}
 
 \begin{table}[H]
 \centering
-\caption{Annual-Q4 version: coefficient-by-coefficient / state-by-state diagnostics for
-HSA steady, negative unemployment gap. Rhat is the maximum along the path, ESS the minimum bulk
-ESS along the path. The acceptance criteria are Rhat $\leq1.01$ and ESS $\geq400$.}
-\label{tab:annual-parameter-state-diagnostics}
+\caption{Interpolated design: model-by-model results for the negative unemployment gap.}
+\label{tab:pchip-models}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/primary_parameter_state_diagnostics.tex}}
-\end{table}
-
-Thus the positive sign and magnitude of the annual-Q4 CPI $\delta$ are a strong
-\emph{provisional} reproduction of the PCHIP version, but under this paper's strict
-acceptance rule we do not call them a confirmed robustness check. The $\kappa_t$ paths
-and state decompositions below are diagnostic figures showing the pointwise-posterior
-computations, not converged main results.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.88\linewidth]{cpi_ppi_report/annual_q4/kappa_t_unemployment_by_inflation.png}
-\caption{Annual-Q4 version: time-varying slope $\kappa_t$ for the negative unemployment gap
-(posterior mean and $95\%$ band). It includes the uncertainty from estimating the
-Q1--Q3 firm-count states by FFBS, but is provisional because of state-path convergence
-warnings.}
-\label{fig:annual-kappa-path}
-\end{figure}
-
-For core CPI and the negative unemployment gap the implied slope moves from
-$\AnnualCoreUnempKappaStart$ to $\AnnualCoreUnempKappaEnd$. This path uses a $\bar N_t$
-extracted jointly from the 31 annual anchors and the quarterly inflation and activity
-data, not one taken as given from a quarterly PCHIP curve.
-Figure~\ref{fig:annual-state-decomposition} shows the posterior of the total firm-count
-state, trend, and cycle, including the unobserved quarters.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.88\linewidth]{cpi_ppi_report/annual_q4/competition_decomposition_hsa_steady_core_unemployment.png}
-\caption{Annual-Q4 version: firm-count state decomposition for core CPI, negative unemployment
-gap, HSA steady. Lines are posterior means, bands are $95\%$ credible intervals. The
-quarterly states between the Q4 annual observations are also inferred.}
-\label{fig:annual-state-decomposition}
-\end{figure}
-
-\subsection{Comparison of the five models}
-For the negative unemployment gap we show the same five models as the PCHIP version by price
-index. Constant-slope CES is the common benchmark; HSA steady is the time-varying slope
-through $\bar N_t$; HSA dynamic is the entry term in $\hat N_t$; const-theta/full
-combine both channels. The $\dagger$ in the table marks that the annual-Q4 posterior is
-outside the convergence criteria, and its coefficients are not used for conclusions even
-when the sign is consistent.
-
-\begin{table}[H]
-\centering
-\caption{Annual-Q4 version: model-by-model results for the negative unemployment gap. CES is a
-common reference that does not use the firm count.}
-\label{tab:annual-models}
-\tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/unemployment_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/unemployment_by_model.tex}}
 \end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[height=0.68\textheight,keepaspectratio]{cpi_ppi_report/annual_q4/slope_by_model_inflation.png}
-\caption{Annual-Q4 version: slope at average competition for the negative unemployment gap.
-Circles are runs meeting the convergence criteria; gray crosses are runs to watch.}
-\label{fig:annual-model-slopes}
+\includegraphics[width=0.62\linewidth]{cpi_ppi_report/kappa_t_unemployment_by_inflation.png}
+\caption{Interpolated design: time-varying slope $\kt$ for the negative unemployment gap.
+Compare Figure~\ref{fig:kt_unemp}: the paths are close, but the bands here do not include
+the uncertainty from the 93 firm-count values that were interpolated rather than observed.}
+\label{fig:kt_unemp_pchip}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.94\linewidth]{cpi_ppi_report/annual_q4/alpha_entry_by_model_inflation.png}
-\caption{Annual-Q4 version: inflation inertia $\alpha$ (left) and entry coefficient
-$\theta$ or $\theta_0$ (right). It shows whether the entry coefficient is updated by
-the data once the quarterly firm-count cycle is estimated inside the model.}
-\label{fig:annual-alpha-entry}
+\includegraphics[width=0.88\linewidth]{cpi_ppi_report/competition_decomposition_hsa_steady_core_unemployment.png}
+\caption{Interpolated design: firm-count state decomposition. The cycle $\hat N_t$ reaches
+$\pm3.4$ ten-log-point units---a $\pm34$ log-point ``cyclical'' swing in the number of
+listed firms---which is the level ridge, not an economic cycle. Compare
+Figure~\ref{fig:main-state-decomposition}.}
+\label{fig:pchip-state-decomposition}
 \end{figure}
 
-\subsection{CES--HSA slope bias}
-For the inverse-markup specification that corresponds directly to the theory,
-\begin{align*}
-\kappa_{\mathrm{CES}}&=\AnnualBiasDirectCES,&
-\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectHSA,\\
-\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}&=\AnnualBiasDirectDifference,&
-\Pr(\kappa_{\mathrm{CES}}-\kappa_{\mathrm{HSA}}<0)&=\AnnualBiasDirectProbability,\\
-B_{\mathrm{HSA}}&=\AnnualBiasDirectOVB,&
-\Pr(B_{\mathrm{HSA}}<0)&=\AnnualBiasDirectOVBProbability.
-\end{align*}
-The CES coefficient is identical to the PCHIP version, while the HSA coefficient and the
-$\hat N_t$ of \eqref{eq:bias-ovb} are computed from the annual-Q4 posterior. This keeps
-the smooth quarterly variation produced by interpolation out of the omitted-variable
-bias diagnostic. Because the annual-Q4 HSA dynamic, including the inverse markup, is
-outside the whole-run convergence criteria, the difference and OVB below are an
-additional diagnostic and not a formal test of the theoretical prediction.
-
+\subsection{Prior sensitivity under interpolation}
 \begin{table}[H]
 \centering
-\caption{Annual-Q4 version: CES--HSA-dynamic slope difference and the omitted-variable
-bias implied by HSA.}
-\label{tab:annual-bias}
+\caption{Interpolated design: three-prior sensitivity for the negative unemployment gap.
+$\dagger$ marks cells outside the convergence criteria.}
+\label{tab:pchip-priors}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/ces_hsa_kappa_bias.tex}}
-\end{table}
-
-\subsection{Prior sensitivity and convergence}
-The baseline/weak/tight comparison is also re-estimated under the same annual-Q4
-observation scheme. This is not a re-weighting that appends a different prior to the
-PCHIP posterior: the firm-count states, coefficients, and variances are re-drawn by
-Gibbs/FFBS under each prior.
-
-\begin{table}[H]
-\centering
-\caption{Annual-Q4 version: all models, three-prior sensitivity for the negative unemployment
-gap. $\dagger$ marks failure of the convergence criteria.}
-\label{tab:annual-priors}
-\tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/prior_sensitivity_compact.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/prior_sensitivity_compact.tex}}
 \end{table}
 
 \begin{table}[H]
 \centering
-\caption{Model-by-model convergence tally for the annual-Q4 comparison. The 16 CES
-cells are a common reference; the 61 HSA cells are newly estimated.}
-\label{tab:annual-convergence}
+\caption{Interpolated design: model-by-model convergence tally.}
+\label{tab:pchip-convergence}
 \small
-\input{results/tables/cpi_ppi_report_en/annual_q4/convergence_summary.tex}
+\input{results/tables/cpi_ppi_report/convergence_summary.tex}
 \end{table}
 
-For the annual-Q4 version too, the conclusions we adopt are limited to cells meeting the
-criteria of Table~\ref{tab:annual-convergence}. In particular, a model that jointly
-identifies the quarterly cycle $\hat N_t$ and its coefficient from a firm count observed
-only annually carries little information. The widening intervals and lower ESS are
-themselves evidence of the measurement uncertainty hidden when PCHIP is taken as given.
-Also, because the $\delta$ interval for the CPI negative-unemployment-gap specification includes zero
-under the HSA-steady tight prior, the annual-Q4 version is not prior-invariant either.
-The same comparison by output gap is in Appendix~\ref{app:annual-output-gaps}.
+\begin{table}[H]
+\centering
+\caption{Interpolated design: scalar / state-path / derived-path diagnostics by model.
+Compare Table~\ref{tab:group-convergence}: the worst-mixing scalar here is the trend
+drift $n$ in nearly every cell, which is the level ridge in the parameter block.}
+\label{tab:group-convergence-pchip}
+\tiny
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/group_convergence_diagnostics.tex}}
+\end{table}
+
+\paragraph{A prior--data conflict that is specific to interpolation.} The AR(2) prior,
+$\rho_1\sim\mathcal N(0.5,\sigma_\rho^2)$ and $\rho_2\sim\mathcal N(-0.5,\sigma_\rho^2)$
+truncated to the stationary region, encodes a cycle of about $5.2$ quarters with a
+two-quarter half-life, and does so identically under all three prior sets---they differ
+only in width. Under the mixed-frequency design the posterior is compatible with it: the
+$\rho_1$ posterior sits between $-1.5$ and $+1.6$ prior standard deviations of the prior
+mean. Under interpolation it sits $+2.7$ to $+7.1$ prior standard deviations away. The
+prior is not obviously wrong; the interpolated series is simply not the object the prior
+describes. One consequence is that the tight-prior cells inherit a prior--data tug-of-war
+in the AR(2) block, which is where their mixing failures come from.
 
 \section{Scope condition and the limits of identification}
 \label{sec:scope}
@@ -1015,16 +972,52 @@ cannot claim.
 left-hand side, makes $\delta$ include zero for all activity measures. Despite the
 measurement limitation that no PPI expectation exists, we cannot claim that the CPI
 relationship holds generally at the price-setting stage.
-\item \textbf{The complex models do not converge.} Many const-theta/full cells are
-outside the acceptance criteria, so we cannot claim to have demonstrated the
-cyclical-entry channel or $\gamma$.
-\item \textbf{The annual-Q4 joint posterior does not converge.} The CPI $\delta$
-marginal chains mix well and give a positive point estimate close to the PCHIP version,
-but the ESS/Rhat of the AR(2) coefficients and latent-state paths are outside the
-criteria. The annual-Q4 result is therefore an important additional diagnostic of
-interpolation dependence, but at this stage does not count as a robustness check that
-confirms the main result.
+\item \textbf{HSA full does not converge; const-theta now does, in part.} Every
+HSA-full cell is outside the acceptance criteria even under Particle Gibbs, so
+$\gamma$---which only HSA full estimates---remains undemonstrated. HSA const-theta is a
+different case: its earlier failure was a blocking artifact of the alternating FFBS, and
+under the exact joint FFBS 6 of its 15 cells now pass, including both CPI
+negative-unemployment-gap cells. Its $\delta$ agrees in sign and magnitude with HSA
+steady there. That is a computational fix, not new identification.
+\item \textbf{The joint posterior does not converge, though $\delta$ does.} Every
+HSA cell in the main design is outside the whole-run acceptance criteria. The failure is
+concentrated in the AR(2) block: $(\rho_1,\rho_2)$ is the worst-mixing scalar in 53 of
+the 61 HSA cells, and the latent-state paths fail alongside it. What does \emph{not} fail
+is the coefficient the conclusions rest on: $\delta$ has $\hat R=1.000$ and bulk ESS above
+$2{,}600$ in eight of the nine HSA-steady baseline cells, and $\delta$ and $\kappa_0$
+fail at exactly the same rate under either observation design (8 and 6 cells out of 61).
+We therefore report $\delta$ and $\kt$ as results and treat the estimated cycle
+$\hat N_t$, its AR(2) coefficients, and anything that depends on them as diagnostic only.
+Readers who want the whole-run criterion satisfied should treat every number in this
+paper as provisional.
 \end{itemize}
+
+\paragraph{The latent-level ridge, and where it comes from.} The firm-count equation
+$N^{\mathrm{obs}}_t=\bar N_t+\hat N_t+\nu_t$ constrains the \emph{sum} of the two states
+but not the split. Adding a constant $c$ to $\bar N$ and subtracting it from $\hat N$
+leaves that equation, the random-walk trend equation, and---through
+$\kappa_0\to\kappa_0-\delta c$---the inflation equation all exactly unchanged. The only
+thing that resists is the AR(2) cycle equation, which carries no intercept and therefore
+pulls $\hat N$ toward mean zero with force $1-\rho_1-\rho_2$; the initial-state prior
+$s_0\sim\mathcal N(0,10I_3)$ resists weakly as well.
+
+Earlier revisions of this paper described the resulting ridge as a limitation of the data.
+It is better described as a consequence of the interpolated design. Under interpolation
+the AR(2) is pushed to a near-unit root and $1-\rho_1-\rho_2$ collapses to $0.014$, so the
+anchor effectively disappears and the posterior correlation between the two states reaches
+$-0.9996$. Under the mixed-frequency design used here the same quantity is $1.69$ and the
+correlation is $+0.13$. Across all 122 estimated HSA cells the two quantities correlate at
+$+0.92$, which identifies the mechanism (Section~\ref{sec:pchip}).
+
+Two things follow. First, $\kappa_0$---the slope at average competition---is identified
+only up to the location normalisation of $\bar N$, and under interpolation that
+normalisation comes substantially from the initial-state prior rather than from data:
+the posterior correlation between the $\bar N$ level and $\kappa_0$ is $-0.55$ there
+against $-0.32$ here. Statements about the \emph{level} of the Phillips-curve slope should
+be read with that in mind. Second, $\delta$ is not affected, because a level shift in
+$\bar N$ is absorbed by $\kappa_0$ and leaves the interaction $x_t\bar N_t$ that identifies
+$\delta$ unchanged. That is why the headline result is stable across designs while the
+state decomposition is not.
 
 \paragraph{Not a causal effect.} $\bar N_t$ is a near-monotone low-frequency trend, so
 on this design $\delta$ cannot be separated from other things that trended over the
@@ -1047,26 +1040,42 @@ a re-weighting of a single posterior.
 
 \begin{table}[H]
 \centering
-\caption{Three-prior sensitivity of the current results (negative-unemployment-gap
-specification): $\delta$ under baseline, weak, and tight priors, by model and price
-index. Each cell is a separate re-estimation of the current runs, not a re-weighting.
-$\dagger$ marks cells outside the convergence criteria and not interpreted.}
+\caption{Three-prior sensitivity under the main mixed-frequency design
+(negative-unemployment-gap specification): $\delta$ under baseline, weak, and tight
+priors, by model and price index. Each cell is a separate re-estimation, not a
+re-weighting. The interpolated counterpart is Table~\ref{tab:pchip-priors}.}
 \label{tab:current-priors}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/prior_sensitivity_compact.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/prior_sensitivity_compact.tex}}
 \end{table}
 
 \paragraph{HSA steady.} The headline-CPI and core-CPI $\delta$ keep a positive sign
-under baseline/weak/tight, with posterior intervals on the positive side. But the
-interval is wide under weak and shrinks toward zero under tight, so it is not fully
-prior-invariant. The core-CPI baseline carries the strongest weight of evidence. PPI
-includes zero under all three priors and does not provide external confirmation of the
-CPI result.
+under weak and baseline priors, but not their interval: core CPI moves
+$+0.038\,[+0.013,+0.124]$ (weak), $+0.022\,[+0.008,+0.038]$ (baseline),
+$+0.009\,[-0.007,+0.024]$ (tight), so the tight prior pulls the interval across zero. The
+result is \emph{not} prior-invariant, and the paper does not claim otherwise. PPI includes
+zero under all three priors.
 
-\paragraph{Model variants.} The $\dagger$ cells of const-theta/full are not counted as
-robustness evidence even when the sign matches steady. Dynamic is also short of ESS in
-some cells. Before claiming ``the result survives'' under added complexity, convergence
-must be established through reparameterization or longer independent chains.
+Because the three prior sets move every prior at once, we ran a factorial experiment
+crossing $\delta$'s own prior with the AR(2) prior while holding all others at baseline,
+to see which channel drives the sweep. The answer is $\delta$'s own prior: tightening it
+alone accounts for $84\%$ of the headline-CPI shrinkage and $78\%$ of the core-CPI
+shrinkage, against $13\%$ and $50\%$ for the AR(2) prior (with a $-28\%$ interaction in
+the core cell). This matters because the AR(2) prior is in tension with the interpolated
+data (Section~\ref{sec:pchip}); the experiment shows that tension is not what is moving
+$\delta$. It does, however, break the sampler in the tight corner: the cells where the
+AR(2) prior fights the data hardest are where $\delta$'s own ESS collapses.
+
+\paragraph{Model variants.} HSA const-theta reproduces the main result almost exactly
+under the added entry term: $\delta=+0.029\,[+0.003,+0.055]$ for headline CPI and
+$\delta=+0.022\,[+0.004,+0.038]$ for core CPI, against $+0.029$ and $+0.022$ under HSA
+steady. The agreement is close enough that the firm-count-trend channel is evidently not
+being carried by the omission of the entry term. Under the interpolated design the same
+comparison also holds, and there 6 of the 15 const-theta cells additionally satisfy the
+coefficient rule; under mixed frequency none do, for the AR(2) reason above. HSA full
+remains outside the criteria in every cell under either design, so $\gamma$ is not
+identified here. HSA dynamic is short of ESS in most cells once the trend drift $n$ and
+the variance block are included in the rule.
 
 \paragraph{Period robustness.} The state equation assumes consecutive quarters. We do
 not use the old treatment that deletes an interior span and compresses what precedes and
@@ -1080,25 +1089,39 @@ firms and the decline in inflation's sensitivity to the negative unemployment ga
 We read this as theory-consistent time-series evidence, not a causal effect.
 \begin{itemize}
 \item \textbf{Sign consistent with HSA.} For the core-CPI negative-unemployment-gap specification
-$\delta=\CoreUnempDelta$ ($\mathrm{BF}_{10}=\CoreUnempDeltaBF$); a falling firm count
+$\delta=\AnnualCoreUnempDelta$ ($\mathrm{BF}_{10}=\AnnualCoreUnempDeltaBF$); a falling firm count
 implies a flatter slope, as the theory predicts.
 \item \textbf{Economically sizable flattening.} The implied $\kt$ falls from
-$\CoreUnempKappaStart$ to $\CoreUnempKappaEnd$; the start-to-end response to a one-point
-negative unemployment gap differs by about 0.126 point.
+$\AnnualCoreUnempKappaStart$ to $\AnnualCoreUnempKappaEnd$; the start-to-end response to a one-point
+negative unemployment gap differs by about $0.11$ point.
 \item \textbf{Core CPI aligns the output gap.} Under core CPI the HP output gap shows the
 same positive sign; BN stays inconclusive.
 \item \textbf{Not confirmed for PPI.} The negative-unemployment-gap specification gives
-$\delta=\PPIUnempDelta$, with the interval including zero for all activity measures, so
+$\delta=\AnnualPPIUnempDelta$, with the interval including zero for all activity measures, so
 the relationship is not a general upstream (price-setting-stage) effect.
 \item \textbf{No CES-slope bias found.} The theory's predicted negative bias of the CES
 slope is not supported: both the CES--HSA difference and the HSA-implied omitted-variable
 bias have intervals including zero, with, if anything, positive point estimates.
-\item \textbf{Cyclical-entry channel unconfirmed.} Many HSA const-theta/full
-cells do not converge and the converged entry coefficients include zero.
-\item \textbf{Annual-Q4 is provisional.} The CPI $\delta$ marginal posterior stays
-positive under Q4-only observation, but the latent states and AR(2) block miss the
-convergence criteria, so this is a sensitivity diagnostic, not a confirmed robustness
-check.
+\item \textbf{Cyclical-entry channel unconfirmed, and sign-unstable.} The theory
+predicts a positive entry coefficient $\theta$ in $-\theta_t\hat N_t$. In the main design
+HSA const-theta gives $+0.022\,[-0.159,+0.241]$ for headline CPI and
+$-0.039\,[-0.136,+0.054]$ for core CPI---opposite signs across two price indices, both
+intervals wide and straddling zero. The sign is not stable across the observation design
+either: the same core-CPI cell gives $+0.040$ with $\Pr(\theta>0)=0.89$ under
+interpolation against $-0.039$ with $\Pr(\theta>0)=0.15$ here. Under interpolation the
+sign also flips between activity measures ($+0.040$ core CPI with the unemployment gap
+versus $-0.049$ with the BN output gap, the latter putting $97\%$ of its mass on the
+theory-wrong side). We claim no support for this channel and note that what the data say
+about its sign depends on choices that should not matter. $\gamma$ is estimated only in
+HSA full, which converges in no cell under either design.
+\item \textbf{The result does not depend on the interpolation, but the reported
+precision does.} Estimating with the annual firm count PCHIP-interpolated to quarterly
+and used as data gives $\delta=\CoreUnempDelta$ against $\AnnualCoreUnempDelta$ here---the
+same number. What the interpolation changes is everything around it: it drives the
+firm-count measurement error to a third of its mixed-frequency value, forces the AR(2)
+cycle to a near-unit root, and through that opens a near-exact ridge between the trend and
+cycle states (posterior correlation $-0.9996$ against $+0.13$). We report it in
+Section~\ref{sec:pchip} as a comparison rather than as the main specification.
 \item \textbf{Identification caveat.} The variation is concentrated in the 1980s and
 $\bar N_t$ is nearly collinear with a linear trend, so $\delta$ is an association, not a
 causal effect.
@@ -1107,25 +1130,24 @@ causal effect.
 \section{Status and open items}
 \label{sec:status}
 \paragraph{Estimation status (auto-generated).}
-This draft uses the \ReportRunCount{} runs of the current corrected estimation revision.
-Of these, \ReportWarningCount{} runs fail the acceptance criteria (maximum
-$\hat R\leq1.01$ and minimum bulk ESS $\geq400$) and their coefficients are not used
-for the main conclusions. All headline estimates, tables, and figures are generated
-automatically from the saved posteriors; no numbers from earlier revisions are read
-in. In addition, an annual-Q4 variant---in which the firm count is observed only in
-Q4 and the intervening quarterly states are inferred---is assembled from \emph{new}
-estimates of the 61 HSA cells and a shared reference of 16 CES cells that do not use
-the firm count. Of the \AnnualReportRunCount{} cells in the annual-Q4 comparison,
-\AnnualReportWarningCount{} fail the same convergence criteria.
+The main results use the \AnnualReportRunCount{} runs of the mixed-frequency design,
+of which \AnnualReportWarningCount{} fail the scalar acceptance rule (maximum
+$\hat R\leq1.01$ and minimum bulk ESS $\geq400$ over every stored scalar). The
+interpolated comparison of Section~\ref{sec:pchip} uses \ReportRunCount{} runs, of which
+\ReportWarningCount{} fail the same rule. CES carries no latent firm-count state, so its
+16 cells are shared across both designs. All headline estimates, tables, and figures are
+generated automatically from the saved posteriors; no numbers from earlier revisions are
+read in. Section~\ref{sec:scope} states which failures bear on the conclusions and which
+do not.
 
 \paragraph{Settled in the current revision.} The positive $\delta$ and flattening $\kt$
-for the CPI negative-unemployment-gap specification of HSA steady; the positive sign of the core-CPI
-HP specification and the non-result of BN, separated into the appendix; the non-results
-of the three PPI activity specifications; the three-prior sensitivity; the convergence
-of CES/HSA steady; the economic magnitude; and the CES--HSA slope-bias diagnostic via the
-inverse markup. The HSA
-results settled here are the PCHIP version. The 61 annual-Q4 HSA cells are estimated in
-this setting but retain the convergence issues below.
+for the CPI negative-unemployment-gap specification of HSA steady, and their insensitivity
+to the firm-count observation design; the positive sign of the core-CPI HP specification
+and the non-result of BN; the non-results of the three PPI activity specifications; the
+prior sensitivity of $\delta$ and its decomposition into $\delta$'s own prior versus the
+AR(2) prior; the economic magnitude; the CES--HSA slope-bias diagnostic via the inverse
+markup; and the diagnosis that the latent-level ridge is a property of the interpolated
+design rather than of the data.
 
 \paragraph{Open (empirical / econometric).}
 \begin{itemize}
@@ -1135,8 +1157,13 @@ structural-break dummies, and placebo interactions.
 \item \textbf{Expectation mismatch.} Beyond core-matched expected inflation, connect a
 PPI forecast series (e.g.\ the Livingston Survey) so the expectation term matches the
 price index.
-\item \textbf{Predictive evaluation.} Replace the in-sample plug-in fit score with
-LOO/WAIC or rolling out-of-sample forecasts.
+\item \textbf{Genuinely out-of-sample evaluation.} Table~\ref{tab:fit-comparison} now
+reports prequential LPD$_1$, WAIC and PSIS-LOO next to the plug-in score, but all four
+are computed on the estimation sample. A rolling out-of-sample exercise---re-estimating
+on an expanding window and scoring only genuinely future quarters---remains open, and
+would be the only way to settle whether the time-varying slope forecasts better or merely
+fits better. The PPI and HSA-full cells additionally have maximum Pareto $\hat k>0.7$, so
+their LOO values should be replaced by exact or $K$-fold cross-validation.
 \item \textbf{Period robustness.} Re-estimate the current revision using only contiguous
 quarters. The pre-2008/post-1988 numbers from earlier revisions are not used for the
 conclusions of this paper.
@@ -1177,7 +1204,7 @@ by this ridge.
 \end{itemize}
 
 \appendix
-\section{Appendix: results by output gap}
+\section{Appendix: results by output gap (mixed-frequency, main design)}
 \label{app:output-gaps}
 The body takes the negative unemployment gap as the main activity measure and separates the
 output-gap results here. Because HP and BN estimate potential output differently, we do
@@ -1189,7 +1216,7 @@ entry denotes $\theta$ or $\theta_0$.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.82\linewidth]{cpi_ppi_report/delta_output_gaps.png}
+\includegraphics[width=0.82\linewidth]{cpi_ppi_report/annual_q4/delta_output_gaps.png}
 \caption{HSA-steady $\delta$ by output gap (posterior mean and $95\%$ CI). HP and BN are
 separated and headline CPI, core CPI, and PPI are shown on the same scale.}
 \label{fig:output-gap-delta}
@@ -1198,10 +1225,10 @@ separated and headline CPI, core CPI, and PPI are shown on the same scale.}
 \subsection{HP output gap}
 For HSA steady the headline-CPI $\delta$ is near zero, while core CPI is positive:
 \begin{equation*}
-\delta_{\mathrm{Core,HP}}=\CoreHPDelta,
-\qquad \mathrm{BF}_{10}=\CoreHPDeltaBF.
+\delta_{\mathrm{Core,HP}}=\AnnualCoreHPDelta,
+\qquad \mathrm{BF}_{10}=\AnnualCoreHPDeltaBF.
 \end{equation*}
-The PPI $\delta=\PPIHPDelta$ includes zero. The positive competition dependence of the
+The PPI $\delta=\AnnualPPIHPDelta$ includes zero. The positive competition dependence of the
 HP specification is therefore limited to core CPI and is not a result for price indices
 in general.
 
@@ -1211,13 +1238,13 @@ in general.
 failure of the convergence criteria.}
 \label{tab:output-gap-hp}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/output_gap_hp_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/output_gap_hp_by_model.tex}}
 \end{table}
 
 \subsection{BN output gap}
 For HSA steady the $\delta$ point estimates are negative for headline CPI, positive for
 core CPI, and negative for PPI, but all three $95\%$ credible intervals include zero
-(headline $\HeadlineBNDelta$, core $\CoreBNDelta$, PPI $\PPIBNDelta$). Each
+(headline $\AnnualHeadlineBNDelta$, core $\AnnualCoreBNDelta$, PPI $\AnnualPPIBNDelta$). Each
 $\mathrm{BF}_{10}$ is also about one, so the BN specification provides no evidence for a
 competition dependence of the slope.
 
@@ -1227,20 +1254,20 @@ competition dependence of the slope.
 failure of the convergence criteria.}
 \label{tab:output-gap-bn}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/output_gap_bn_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/output_gap_bn_by_model.tex}}
 \end{table}
 
 \paragraph{How to read the whole.} HP core CPI agrees in direction with the CPI result
 for the negative unemployment gap, but HP headline, HP PPI, and all price indices of BN do not
-support it. And because const-theta/full have many cells outside the convergence
+support it. And because HSA full has every cell, and const-theta most cells, outside the convergence
 criteria, we do not count sign agreement in the complex models as robustness evidence.
 The output-gap results are not a claim that ``the result always holds across activity
 measures'' but a sensitivity analysis showing which combinations of measurement and
 price index the result depends on.
 
-\section{Appendix: annual-Q4 results by output gap}
+\section{Appendix: results by output gap (interpolated design, for comparison)}
 \label{app:annual-output-gaps}
-We apply the same mixed-frequency estimation as Section~\ref{sec:annual-q4-results} to
+We apply the same mixed-frequency estimation as Section~\ref{sec:main} to
 the HP and BN output gaps. Each table gives the full baseline results by price index (3)
 and model (5); only the CES row is a common reference that does not depend on the
 firm-count observation scheme. We first compare the HSA-steady $\delta$ on the same
@@ -1248,8 +1275,8 @@ scale, then show the full coefficients and diagnostics by model.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.82\linewidth]{cpi_ppi_report/annual_q4/delta_output_gaps.png}
-\caption{Annual-Q4 version: HSA-steady $\delta$ by HP and BN output gap (posterior mean
+\includegraphics[width=0.82\linewidth]{cpi_ppi_report/delta_output_gaps.png}
+\caption{Interpolated design: HSA-steady $\delta$ by HP and BN output gap (posterior mean
 and $95\%$ CI).}
 \label{fig:annual-output-gap-delta}
 \end{figure}
@@ -1262,10 +1289,10 @@ gives $\delta=\AnnualPPIHPDelta$ ($\mathrm{BF}_{10}=\AnnualPPIHPDeltaBF$).
 
 \begin{table}[H]
 \centering
-\caption{Annual-Q4 version: HP output gap, baseline estimates by price index and model.}
+\caption{Interpolated design: HP output gap, baseline estimates by price index and model.}
 \label{tab:annual-output-gap-hp}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/output_gap_hp_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/output_gap_hp_by_model.tex}}
 \end{table}
 
 \subsection{BN output gap}
@@ -1276,10 +1303,10 @@ gives $\delta=\AnnualPPIBNDelta$ ($\mathrm{BF}_{10}=\AnnualPPIBNDeltaBF$).
 
 \begin{table}[H]
 \centering
-\caption{Annual-Q4 version: BN output gap, baseline estimates by price index and model.}
+\caption{Interpolated design: BN output gap, baseline estimates by price index and model.}
 \label{tab:annual-output-gap-bn}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/annual_q4/output_gap_bn_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/output_gap_bn_by_model.tex}}
 \end{table}
 
 These correspond one-to-one with Appendix~\ref{app:output-gaps} of the PCHIP version. In
@@ -1304,12 +1331,12 @@ $\kappa$ for CES/HSA dynamic and $\kappa_0$ otherwise; entry is $\theta$ or $\th
 $\dagger$ marks cells that fail the convergence criteria and are not interpreted.}
 \label{tab:current-models}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/unemployment_by_model.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/unemployment_by_model.tex}}
 \end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[height=0.68\textheight,keepaspectratio]{cpi_ppi_report/slope_by_model_inflation.png}
+\includegraphics[height=0.68\textheight,keepaspectratio]{cpi_ppi_report/annual_q4/slope_by_model_inflation.png}
 \caption{Slope at average competition for the negative-unemployment-gap specification. $\kappa$
 for CES/HSA dynamic and $\kappa_0$ otherwise. Circles are runs meeting the convergence
 criteria; gray crosses are runs to watch.}
@@ -1318,7 +1345,7 @@ criteria; gray crosses are runs to watch.}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.94\linewidth]{cpi_ppi_report/alpha_entry_by_model_inflation.png}
+\includegraphics[width=0.94\linewidth]{cpi_ppi_report/annual_q4/alpha_entry_by_model_inflation.png}
 \caption{Inflation inertia $\alpha$ (left) and entry coefficient $\theta$ or $\theta_0$
 (right) for the negative-unemployment-gap specification. Circles and gray crosses are as in
 Figure~\ref{fig:current-slope-model}.}
@@ -1334,7 +1361,7 @@ latent-path rule, and ``joint warnings'' at least one of the three groups
 $\bar N_t,\hat N_t$.}
 \label{tab:main-convergence}
 \small
-\input{results/tables/cpi_ppi_report_en/convergence_summary.tex}
+\input{results/tables/cpi_ppi_report/annual_q4/convergence_summary.tex}
 \end{table}
 
 \begin{table}[H]
@@ -1343,12 +1370,13 @@ $\bar N_t,\hat N_t$.}
 baseline cells: scalar parameters, the trend drift $n$ on its own, the latent-state
 paths $\bar N_t,\hat N_t$, and the derived paths $\kt,\theta_t$. ``worst scalar'' names
 the scalar with the lowest bulk ESS. Thresholds are $\hat R\leq1.01$ and bulk
-ESS $\geq400$. This table is the evidence behind the $\dagger$ and ``OK (coef)'' marks
-elsewhere: it shows whether a failure is driven by a coefficient of interest or by a
-nuisance term.}
+ESS $\geq400$. Mixed-frequency (main) design. This table is the evidence behind the
+$\dagger$ and ``OK (coef)'' marks elsewhere: it shows whether a failure is driven by a
+coefficient of interest or by a nuisance term. Here the worst-mixing scalar is the AR(2)
+block in almost every cell, which for HSA steady is a nuisance object.}
 \label{tab:group-convergence}
 \tiny
-\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report_en/group_convergence_diagnostics.tex}}
+\resizebox{\linewidth}{!}{\input{results/tables/cpi_ppi_report/annual_q4/group_convergence_diagnostics.tex}}
 \end{table}
 
 

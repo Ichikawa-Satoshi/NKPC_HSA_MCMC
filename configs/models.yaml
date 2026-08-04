@@ -6,9 +6,22 @@ defaults:
   seed: 12345
   n_transform: log100_centered10
   competition_measurement:
-    frequency: quarterly_interpolated
+    # The firm count is annual (31 observations over 1982-2012), so the main design
+    # observes it in Q4 only and infers the intervening quarters inside the state-space
+    # model. The interpolated alternative is still estimated and reported as a
+    # comparison, but it is not the default: PCHIP manufactures within-year variation,
+    # drives sigma_N to a third of its mixed-frequency value, forces the AR(2) cycle to
+    # a near-unit root and thereby opens a near-exact ridge between Nbar and Nhat
+    # (posterior correlation -0.9996 against +0.13). See paper section "What PCHIP
+    # interpolation does to the estimates".
+    frequency: annual_q4
     annual_timing: q4
   covariance_structure: e_zeta_only
+  # Particle count for the hsa_full Particle-Gibbs state update. The pilot
+  # (results/appendix_particle_gibbs/tables/pilot.json) shows ess-per-particle
+  # flat at ~0.38 from 128 to 512, i.e. returns had not begun to diminish;
+  # 512 is the operating point, not a demonstrated optimum.
+  n_particles: 512
   enforce_stationary: true
   ar2_max_tries: 2000
   coefficient_constraints:

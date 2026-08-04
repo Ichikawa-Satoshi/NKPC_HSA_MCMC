@@ -46,7 +46,7 @@ class RunMetadata:
     chains: int
     seed: int
     n_transform: str
-    competition_measurement_frequency: str = "quarterly_interpolated"
+    competition_measurement_frequency: str = "annual_q4"
     competition_measurement_annual_timing: str = "q4"
     period: str = "full"
     covariance_structure: str = "e_zeta_only"
@@ -90,8 +90,10 @@ def _default_run_dir(
     parts = [model, data_spec, prior_spec]
     if constraint_spec != "unrestricted":
         parts.append(constraint_spec)
-    if competition_frequency != "quarterly_interpolated":
-        parts.append(competition_frequency)
+    # Always name the observation design. Earlier revisions omitted it for the
+    # interpolated case because that was the default; now that mixed frequency is the
+    # default, a conditional suffix would silently invert the convention.
+    parts.append(competition_frequency)
     parts.append(run_id)
     safe = "_".join(part.replace("/", "-") for part in parts)
     return project_path("results", "runs", safe)
@@ -481,11 +483,13 @@ def _run_sampler(
     coefficient_constraints: Mapping[str, Any] | None,
     enforce_stationary: bool = True,
     ar2_max_tries: int = 2000,
+    n_particles: int = 512,
+    no_inertia: bool = False,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     from nkpc_hsa.models.ces import func_nkpc_ces
     from nkpc_hsa.models.hsa_const_theta import func_nkpc_hsa_const_theta
     from nkpc_hsa.models.hsa_dynamic import func_nkpc_hsa_decomp
-    from nkpc_hsa.models.hsa_full import func_nkpc_hsa_full
+    from nkpc_hsa.models.hsa_full import func_nkpc_hsa_full  # Particle Gibbs
     from nkpc_hsa.models.hsa_steady import func_nkpc_hsa_decomp_tv_kappa_noerror
 
     funcs: dict[str, Callable[..., Mapping[str, Any]]] = {
@@ -529,6 +533,15 @@ def _run_sampler(
         }
         if model == "hsa_dynamic":
             kwargs["opts"]["covariance_structure"] = covariance_structure
+        if no_inertia:
+            if model != "hsa_steady":
+                raise ValueError("no_inertia is only implemented for hsa_steady.")
+            kwargs["opts"]["no_inertia"] = True
+        if model == "hsa_full":
+            # Particle count for the conditional-SMC state update. Passed
+            # explicitly so the operating point is recorded in run metadata
+            # rather than living as a module constant.
+            kwargs["opts"]["n_particles"] = int(n_particles)
         if model != "ces":
             if "N_obs" in model_data:
                 kwargs["N_data"] = np.asarray(model_data["N_obs"], dtype=float)
@@ -566,6 +579,8 @@ def run_model(
     competition_measurement: Mapping[str, Any] | None = None,
     enforce_stationary: bool = True,
     ar2_max_tries: int = 2000,
+    n_particles: int = 512,
+    no_inertia: bool = False,
     run_id: str | None = None,
     run_dir: str | Path | None = None,
     save: bool = True,
@@ -607,6 +622,11 @@ def run_model(
         model_data_for_sampler["N_obs"] = np.asarray(competition_context["N_obs_used"], dtype=float)
     run_id = run_id or _timestamp()
     constraint_spec = _constraint_label(coefficient_constraints)
+    if no_inertia:
+        # A different estimating equation, not a variant of the same one. Marking it as a
+        # restricted spec keeps it out of the report's main run-set, which selects on
+        # constraint_spec == "unrestricted".
+        constraint_spec = "alpha_zero" if constraint_spec == "unrestricted" else f"{constraint_spec}_alpha_zero"
     metadata = RunMetadata(
         model=model,
         data_spec=data_spec_name,
@@ -640,6 +660,8 @@ def run_model(
         coefficient_constraints=coefficient_constraints,
         enforce_stationary=enforce_stationary,
         ar2_max_tries=ar2_max_tries,
+        n_particles=n_particles,
+        no_inertia=no_inertia,
     )
     meta = {
         **metadata.__dict__,
@@ -657,6 +679,8 @@ def run_model(
         "run_priors_json": json.dumps(prior_dict, sort_keys=True),
         "enforce_stationary": enforce_stationary,
         "ar2_max_tries": ar2_max_tries,
+        "n_particles": n_particles if model == "hsa_full" else None,
+        "no_inertia": no_inertia,
         "extra": extra_meta,
     }
     idata = _to_idata(posterior, meta)

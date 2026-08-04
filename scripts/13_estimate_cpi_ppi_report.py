@@ -79,6 +79,7 @@ def _estimate_one(job: dict[str, object]) -> tuple[tuple[str, str, str], float, 
         seed=int(job["seed"]),
         n_transform=str(job["n_transform"]),
         covariance_structure=str(job["covariance_structure"]),
+        n_particles=int(job.get("n_particles", 512)),
         coefficient_constraints=None,
         competition_measurement={"frequency": str(job["competition_frequency"]), "annual_timing": "q4"},
         enforce_stationary=True,
@@ -101,8 +102,9 @@ def main() -> None:
     parser.add_argument(
         "--competition-frequency",
         choices=["quarterly_interpolated", "annual_q4"],
-        default="quarterly_interpolated",
-        help="Estimate the standard PCHIP cells or the mixed-frequency annual-Q4 HSA cells.",
+        default=None,
+        help="Observation design. Defaults to configs/models.yaml "
+             "defaults.competition_measurement.frequency.",
     )
     args = parser.parse_args()
 
@@ -113,6 +115,10 @@ def main() -> None:
     thin = 2 if args.quick else int(defaults.get("thin", 5))
     chains = 2 if args.quick else int(defaults.get("chains", 2))
     seed = int(defaults.get("seed", 12345))
+    if args.competition_frequency is None:
+        args.competition_frequency = str(
+            (defaults.get("competition_measurement", {}) or {}).get("frequency", "annual_q4")
+        )
     required = report_run_keys() if args.competition_frequency == "quarterly_interpolated" else annual_q4_run_keys()
     existing = set() if args.force else _existing_keys(
         args.runs_dir,
@@ -144,6 +150,7 @@ def main() -> None:
                 "n_transform": defaults.get("n_transform", DEFAULT_N_TRANSFORM),
                 "covariance_structure": defaults.get("covariance_structure", "e_zeta_only"),
                 "ar2_max_tries": defaults.get("ar2_max_tries", 2000),
+                "n_particles": int(defaults.get("n_particles", 512)),
                 "competition_frequency": args.competition_frequency,
                 "run_id": f"{stamp}_{index:03d}",
             }

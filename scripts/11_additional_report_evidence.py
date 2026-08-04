@@ -111,10 +111,10 @@ def write_report_tex_inputs() -> None:
     magnitude = pd.read_csv(TABLE_DIR / "economic_magnitude.csv")
     magnitude["change"] = magnitude["unemployment_gap_change"].map(
         {
-            "1 percentage point": "1ポイント",
-            "2 percentage points": "2ポイント",
-            "4 percentage points": "4ポイント",
-            "one sample standard deviation": "標本内1標準偏差",
+            "1 percentage point": "1 pp",
+            "2 percentage points": "2 pp",
+            "4 percentage points": "4 pp",
+            "one sample standard deviation": "one sample s.d.",
         }
     )
     magnitude["posterior mean"] = magnitude["inflation_response_difference_mean_pp"].map(lambda x: f"{x:.3f}")
@@ -125,7 +125,7 @@ def write_report_tex_inputs() -> None:
 
     trend = pd.read_csv(TABLE_DIR / "competition_trend_sensitivity.csv")
     trend["competition trend"] = trend["competition_trend"].map(
-        {"posterior Nbar": r"事後潜在トレンド $\bar N$", "observed N": "観測企業数", "source BN trend": "元データのBNトレンド"}
+        {"posterior Nbar": r"posterior latent trend $\bar N$", "observed N": "observed N", "source BN trend": "source BN trend"}
     )
     trend["trend change"] = trend["trend_change"].map(lambda x: f"{x:+.3f}")
     trend["delta (s.e.)"] = trend.apply(lambda r: f"{r['delta']:.3f} ({r['delta_se']:.3f})", axis=1)
@@ -139,7 +139,7 @@ def write_report_tex_inputs() -> None:
 
     mechanism = pd.read_csv(TABLE_DIR / "mechanism_endpoints.csv")
     mechanism["series label"] = mechanism["series"].map(
-        {"listed firm count": "上場企業数", "aggregate markup": "集計マークアップ", "inverse markup": "逆マークアップ"}
+        {"listed firm count": "listed firm count", "aggregate markup": "aggregate markup", "inverse markup": "inverse markup"}
     )
     mechanism["1982"] = mechanism["1982_average"].map(lambda x: f"{x:.3f}")
     mechanism["2012"] = mechanism["2012_average"].map(lambda x: f"{x:.3f}")
@@ -147,9 +147,9 @@ def write_report_tex_inputs() -> None:
     _write_tex_table(mechanism, "mechanism_endpoints.tex", ["series label", "1982", "2012", "change"])
 
     passthrough = pd.read_csv(TABLE_DIR / "ppi_core_pass_through.csv")
-    passthrough["window"] = passthrough["window_years"].map(lambda x: f"{int(x)}年")
+    passthrough["window"] = passthrough["window_years"].map(lambda x: f"{int(x)} yr")
     passthrough["PPI specification"] = passthrough["specification"].map(
-        {"current PPI": "当期", "current plus four lags": "当期+4ラグの和"}
+        {"current PPI": "current", "current plus four lags": "current + 4 lags"}
     )
     passthrough["first"] = passthrough["first_estimate"].map(lambda x: f"{x:+.3f}")
     passthrough["2012Q4"] = passthrough["last_estimate"].map(lambda x: f"{x:+.3f}")

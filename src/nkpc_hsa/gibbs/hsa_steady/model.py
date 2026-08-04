@@ -178,7 +178,14 @@ def _sample_ar2_coeffs(
 def _kappa_t_constraint_validators(
     Nbar: np.ndarray,
     coefficient_constraints: dict[str, Any] | None,
+    *,
+    offset: int = 1,
 ) -> list:
+    """``offset`` is the index of kappa_0 in the drawn beta vector.
+
+    It is 1 in the baseline block ``(alpha, kappa_0, delta)`` and 0 under the
+    purely forward-looking restriction, where alpha is not drawn.
+    """
     bounds = dict((coefficient_constraints or {}).get("bounds", {}) or {})
     pair = bounds.get("kappa_t", bounds.get("kappa"))
     if pair is None:
@@ -187,7 +194,7 @@ def _kappa_t_constraint_validators(
     Nbar_arr = _as_1d(Nbar)
 
     def _valid(beta: np.ndarray) -> bool:
-        kappa_t = float(beta[1]) + float(beta[2]) * Nbar_arr
+        kappa_t = float(beta[offset]) + float(beta[offset + 1]) * Nbar_arr
         if lower is not None and np.any(kappa_t < float(lower)):
             return False
         if upper is not None and np.any(kappa_t > float(upper)):
@@ -511,6 +518,13 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         "Initial variances must be positive.",
     )
 
+    # Purely forward-looking restriction: alpha == 0, i.e. no lagged-inflation term.
+    # The theoretical Phillips curve has no backward-looking term; it is added in the
+    # baseline specification only as reduced-form inertia. Because every inflation series
+    # here is a four-quarter change sampled quarterly, pi_t and pi_{t-1} share three of
+    # four quarters, so a large alpha is partly a property of that overlap rather than of
+    # price setting. This restriction estimates the specification without it.
+    no_inertia = bool(_getd(opts, "no_inertia", False))
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
@@ -629,30 +643,18 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
 
         y_adj = y - lambda_ez * zeta
 
-        X = np.column_stack(
-            [
-                a_t,
-                x_t / KAPPA_SCALE,
-                (x_t * Nbar) / KAPPA_SCALE,
-            ]
-        )
+        columns = [] if no_inertia else [a_t]
+        columns += [x_t / KAPPA_SCALE, (x_t * Nbar) / KAPPA_SCALE]
+        X = np.column_stack(columns)
 
-        beta_prior_mean = np.array(
-            [
-                pri["mu_alpha"],
-                pri["mu_kappa0"],
-                pri["mu_delta"],
-            ],
-            dtype=float,
-        )
-        beta_prior_var = np.array(
-            [
-                pri["sigma_alpha"]**2,
-                pri["sigma_kappa0"]**2,
-                pri["sigma_delta"]**2,
-            ],
-            dtype=float,
-        )
+        prior_means = [] if no_inertia else [pri["mu_alpha"]]
+        prior_means += [pri["mu_kappa0"], pri["mu_delta"]]
+        prior_vars = [] if no_inertia else [pri["sigma_alpha"]**2]
+        prior_vars += [pri["sigma_kappa0"]**2, pri["sigma_delta"]**2]
+        beta_prior_mean = np.array(prior_means, dtype=float)
+        beta_prior_var = np.array(prior_vars, dtype=float)
+        beta_names = ("kappa_0", "delta") if no_inertia else ("alpha", "kappa_0", "delta")
+
         if "beta" not in fixed:
             beta = draw_with_constraints(
                 lambda: _sample_beta_gaussian(
@@ -663,15 +665,22 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
                     prior_var=beta_prior_var,
                     rng=rng,
                 ),
-                ("alpha", "kappa_0", "delta"),
+                beta_names,
                 coefficient_constraints,
-                validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
+                validators=_kappa_t_constraint_validators(
+                    Nbar, coefficient_constraints, offset=0 if no_inertia else 1
+                ),
                 stats=constraint_stats,
             )
 
-            alpha = float(beta[0])
-            kappa0 = float(beta[1])
-            delta = float(beta[2])
+            if no_inertia:
+                alpha = 0.0
+                kappa0 = float(beta[0])
+                delta = float(beta[1])
+            else:
+                alpha = float(beta[0])
+                kappa0 = float(beta[1])
+                delta = float(beta[2])
 
         kappa_t = kappa0 + delta * Nbar
         kappa_t_eff = kappa_t / KAPPA_SCALE
@@ -928,6 +937,12 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + measurement_error_t",
             "state_sampler": "joint_ffbs",
             "theta_sampled": False,
+            "inflation_equation": (
+                "y_t = kappa_t*x_t + lambda_ez*zeta_t + eta_t  (alpha restricted to 0)"
+                if no_inertia
+                else "y_t = alpha*a_t + kappa_t*x_t + lambda_ez*zeta_t + eta_t"
+            ),
+            "no_inertia": no_inertia,
             "state_vector": "[Nhat_t, Nhat_{t-1}, Nbar_t]'",
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",

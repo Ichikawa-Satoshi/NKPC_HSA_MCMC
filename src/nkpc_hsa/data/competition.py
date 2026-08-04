@@ -10,8 +10,11 @@ from scipy.interpolate import PchipInterpolator
 
 from nkpc_hsa.paths import project_path
 
+# Mixed-frequency is the project default: see configs/models.yaml. Callers that read a
+# saved run's metadata must NOT use this as their fallback -- runs written before the
+# field existed were interpolated, so those readers keep "quarterly_interpolated".
 DEFAULT_COMPETITION_MEASUREMENT: dict[str, str] = {
-    "frequency": "quarterly_interpolated",
+    "frequency": "annual_q4",
     "annual_timing": "q4",
 }
 VALID_COMPETITION_FREQUENCIES = {"quarterly_interpolated", "annual_q4"}
