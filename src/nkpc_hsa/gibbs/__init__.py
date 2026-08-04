@@ -1,23 +1,20 @@
-from . import ces, common, hsa_dynamic, hsa_full, hsa_steady
-from .gibbs_wrappers import (
-    draws_to_idata,
-    run_ces,
-    run_hsa_dynamic,
-    run_hsa_full,
-    run_hsa_steady,
-    run_hsa_steady_tv,
-)
+"""Gibbs/FFBS sampler engine.
+
+The deprecated ``gibbs_wrappers`` helpers are intentionally NOT re-exported
+here: they carried a second, lossy prior mapper and use a different N transform
+from the production pipeline. Import them explicitly from
+``nkpc_hsa.gibbs.gibbs_wrappers`` if an archived script still needs them.
+Production estimation goes through ``nkpc_hsa.inference.wrappers.run_model``.
+"""
+
+from . import ces, common, hsa_const_theta, hsa_dynamic, hsa_full, hsa_full_pg, hsa_steady
 
 __all__ = [
     "ces",
     "common",
-    "draws_to_idata",
+    "hsa_const_theta",
     "hsa_dynamic",
-    "hsa_steady",
     "hsa_full",
-    "run_ces",
-    "run_hsa_dynamic",
-    "run_hsa_full",
-    "run_hsa_steady",
-    "run_hsa_steady_tv",
+    "hsa_full_pg",
+    "hsa_steady",
 ]

@@ -936,6 +936,7 @@ def func_nkpc_hsa_full(
         "model": {
             "N_measurement_error": True,
             "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + nu_t, nu_t ~ N(0, sigma_N^2)",
+            "state_sampler": "alternating_ffbs",
             "state_blocks": (
                 "Nhat | Nbar and Nbar | Nhat are exact conditional FFBS blocks using sigma_N^2 "
                 "as the N measurement variance; earlier versions used pseudo variances "

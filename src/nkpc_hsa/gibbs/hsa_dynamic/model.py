@@ -1419,6 +1419,7 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
                 else "iw_missing_shock_augmentation"
             ),
             "nu_independent": True,
+            "state_sampler": "joint_ffbs",
             "state_vector": "[Nhat_t, Nhat_{t-1}, Nbar_t]'",
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa * KAPPA_SCALE",

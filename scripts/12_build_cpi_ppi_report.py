@@ -29,12 +29,92 @@ from nkpc_hsa.report.cpi_ppi_spec import (
 
 OUT_TABLES = ROOT / "results" / "tables" / "cpi_ppi_report"
 OUT_FIGURES = ROOT / "results" / "figures" / "cpi_ppi_report"
+PG_RUNS_DIR = ROOT / "results" / "appendix_particle_gibbs" / "runs"
 RHAT_LIMIT = 1.01
 ESS_LIMIT = 400.0
+
+# ---------------------------------------------------------------------------
+# Convergence diagnostics groups.
+#
+# The report's acceptance rule is max Rhat <= 1.01 and min bulk ESS >= 400.
+# It is applied to three *separately reported* groups so that a marginally
+# elevated Rhat on a raw latent-state level does not silently reclassify an
+# otherwise well-mixed coefficient block, and so that the report can never
+# claim "converged" on the strength of a coefficient-only check.
+#
+#   scalar  -> every stored scalar parameter (coefficients, AR terms, drift,
+#              simultaneity loading and every estimated variance)
+#   state   -> the raw latent firm-count paths
+#   derived -> the economically relevant time-varying coefficient paths
+#
+# The dagger mark in the coefficient tables remains the *scalar* rule; the
+# state and derived rules are reported alongside it and drive the explicit
+# "joint" column.
+# ---------------------------------------------------------------------------
+SCALAR_PARAMETERS = [
+    "alpha",
+    "kappa",
+    "kappa_0",
+    "delta",
+    "theta",
+    "theta_0",
+    "gamma",
+    "rho_1",
+    "rho_2",
+    "n",
+    "phi_1",
+    "lambda_ez",
+    "sigma_e",
+    "sigma_eta",
+    "sigma_zeta",
+    "sigma_u",
+    "sigma_eps",
+    "sigma_N",
+]
+STATE_PATH_PARAMETERS = ["Nbar", "Nhat"]
+DERIVED_PATH_PARAMETERS = ["kappa_t", "theta_t"]
+
+SAMPLER_LABELS = {
+    "particle_gibbs": "Particle Gibbs",
+    "joint_ffbs": "joint FFBS",
+    "alternating_ffbs": "alternating FFBS",
+    "ffbs": "FFBS",
+    "conjugate": "conjugate Gibbs",
+}
+
 
 def _run_key(path: Path, idata) -> tuple[str, str]:
     attrs = getattr(idata, "attrs", {})
     return str(attrs.get("run_id", "")), path.parent.name
+
+
+_FALLBACK_STATE_SAMPLER = {
+    "ces": "conjugate",
+    "hsa_steady": "joint_ffbs",
+    "hsa_dynamic": "joint_ffbs",
+    "hsa_const_theta": "alternating_ffbs",
+    "hsa_full": "alternating_ffbs",
+}
+
+
+def _resolve_state_sampler(run_dir: Path, model: str) -> str:
+    """Sampler that drew the latent-state block, for table notes and the manifest.
+
+    Newer samplers declare ``state_sampler`` in their model metadata. Runs saved
+    before that declaration existed fall back to the per-model default, which is
+    what those runs actually used.
+    """
+    metadata_path = run_dir / "metadata.json"
+    if metadata_path.exists():
+        try:
+            meta = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            meta = {}
+        for chain in (meta.get("extra", {}) or {}).get("chains", []) or []:
+            declared = (chain.get("model_metadata", {}) or {}).get("state_sampler")
+            if declared:
+                return str(declared)
+    return _FALLBACK_STATE_SAMPLER.get(model, "unknown")
 
 
 def _load_runs(
@@ -67,11 +147,90 @@ def _load_runs(
         priors_path = posterior.parent / "priors.json"
         if priors_path.exists():
             idata.attrs["run_priors"] = json.loads(priors_path.read_text(encoding="utf-8"))
+        idata.attrs["state_sampler"] = _resolve_state_sampler(posterior.parent, model)
         key = (model, data_spec, prior)
         current = selected.get(key)
         if current is None or _run_key(posterior, idata) >= _run_key(current[0], current[1]):
             selected[key] = (posterior, idata)
     return selected
+
+
+def _sampler_label(idata) -> str:
+    sampler = str(getattr(idata, "attrs", {}).get("state_sampler", "unknown"))
+    return SAMPLER_LABELS.get(sampler, sampler)
+
+
+def merge_preferred_runs(
+    base_runs: dict[tuple[str, str, str], tuple[Path, object]],
+    override_runs: dict[tuple[str, str, str], tuple[Path, object]],
+    *,
+    models: set[str],
+) -> tuple[dict[tuple[str, str, str], tuple[Path, object]], list[tuple[str, str, str]]]:
+    """Replace ``models``' cells in ``base_runs`` with ``override_runs`` where available.
+
+    Used to route the PCHIP ``hsa_full`` cells through the Particle-Gibbs runs.
+    Cells with no override run are left untouched, so a partially-populated
+    override directory can never produce a half-substituted table: the merge is
+    reported and validated by the caller.
+    """
+    merged = dict(base_runs)
+    replaced: list[tuple[str, str, str]] = []
+    for key, value in override_runs.items():
+        if key[0] not in models:
+            continue
+        if key not in merged:
+            continue
+        merged[key] = value
+        replaced.append(key)
+    return merged, sorted(replaced)
+
+
+def load_report_runs(
+    *,
+    runs_dir: Path | None = None,
+    pg_runs_dir: Path | None = None,
+    min_iter: int = 1,
+    competition_frequency: str = "quarterly_interpolated",
+    use_pg: bool = True,
+    verbose: bool = False,
+) -> dict[tuple[str, str, str], tuple[Path, object]]:
+    """The single entry point every report artifact must use to obtain its runs.
+
+    Assembles the authoritative run-set for one observation design: production
+    runs for every model, with the ``hsa_full`` cells routed through the
+    Particle-Gibbs directory when runs for that design exist there. Any script
+    that builds a report table calls this rather than ``_load_runs`` directly,
+    so a cell cannot be reported under one sampler in one table and a different
+    sampler in another.
+    """
+    runs_dir = ROOT / "results" / "runs" if runs_dir is None else runs_dir
+    pg_runs_dir = PG_RUNS_DIR if pg_runs_dir is None else pg_runs_dir
+    runs = _load_runs(runs_dir, min_iter=min_iter, competition_frequency=competition_frequency)
+    if use_pg and pg_runs_dir.exists():
+        override = _load_runs(
+            pg_runs_dir, min_iter=min_iter, competition_frequency=competition_frequency
+        )
+        runs, replaced = merge_preferred_runs(runs, override, models={"hsa_full"})
+        if verbose:
+            print(f"  {competition_frequency}: merged {len(replaced)} Particle-Gibbs hsa_full cells")
+    return runs
+
+
+def assert_single_sampler_per_cell(*run_sets: dict[tuple[str, str, str], tuple[Path, object]]) -> None:
+    """Fail loudly if one (model, spec, prior) cell is reported under two samplers.
+
+    This is the guard against the failure mode where one table is regenerated
+    from the Particle-Gibbs runs while another still shows the alternating-FFBS
+    numbers for the same cell.
+    """
+    seen: dict[tuple[str, str, str], set[str]] = {}
+    for runs in run_sets:
+        for key, (_, idata) in runs.items():
+            seen.setdefault(key, set()).add(str(idata.attrs.get("state_sampler", "unknown")))
+    clashes = {key: samplers for key, samplers in seen.items() if len(samplers) > 1}
+    if clashes:
+        detail = "; ".join(f"{'/'.join(k)}: {sorted(v)}" for k, v in sorted(clashes.items()))
+        raise SystemExit(f"Same cell reported under multiple samplers: {detail}")
 
 
 def _draws(idata, parameter: str) -> np.ndarray | None:
@@ -139,27 +298,107 @@ def _fmt_num(value: float | None, digits: int = 1) -> str:
     return f"{value:.{digits}f}"
 
 
-def _diagnostics(idata) -> dict[str, float | bool]:
-    scalar_names = [
-        name
-        for name in ["alpha", "kappa", "kappa_0", "delta", "theta", "theta_0", "gamma", "rho_1", "rho_2"]
-        if name in idata.posterior
-    ]
-    rhats = [float(np.asarray(az.rhat(np.asarray(idata.posterior[name], dtype=float)))) for name in scalar_names]
-    esses = [
-        float(np.asarray(az.ess(np.asarray(idata.posterior[name], dtype=float), method="bulk")))
-        for name in scalar_names
-    ]
-    max_rhat = max(rhats) if rhats else np.nan
-    min_ess = min(esses) if esses else np.nan
-    converged = bool(np.isfinite(max_rhat) and np.isfinite(min_ess) and max_rhat <= RHAT_LIMIT and min_ess >= ESS_LIMIT)
-    return {"max_rhat": max_rhat, "min_ess": min_ess, "converged": converged}
+def _group_diagnostics(idata, names: list[str]) -> dict[str, float | bool | str | None]:
+    """max Rhat / min bulk ESS over one group of stored quantities.
+
+    Variables that are constant across draws (for example a coefficient a model
+    restricts to zero) produce a non-finite Rhat; they carry no mixing
+    information and are skipped rather than poisoning the max/min.
+    """
+    max_rhat = -np.inf
+    min_ess = np.inf
+    worst_rhat_name: str | None = None
+    worst_ess_name: str | None = None
+    checked: list[str] = []
+    for name in names:
+        if name not in idata.posterior:
+            continue
+        values = np.asarray(idata.posterior[name], dtype=float)
+        if not np.isfinite(values).any() or float(np.nanstd(values)) <= 0.0:
+            continue
+        rhat = float(np.nanmax(np.asarray(az.rhat(idata.posterior[name]), dtype=float)))
+        ess = float(np.nanmin(np.asarray(az.ess(idata.posterior[name], method="bulk"), dtype=float)))
+        checked.append(name)
+        if np.isfinite(rhat) and rhat > max_rhat:
+            max_rhat, worst_rhat_name = rhat, name
+        if np.isfinite(ess) and ess < min_ess:
+            min_ess, worst_ess_name = ess, name
+    if not checked:
+        return {
+            "max_rhat": np.nan,
+            "min_ess": np.nan,
+            "converged": None,
+            "worst_rhat": None,
+            "worst_ess": None,
+            "n_checked": 0,
+        }
+    converged = bool(
+        np.isfinite(max_rhat)
+        and np.isfinite(min_ess)
+        and max_rhat <= RHAT_LIMIT
+        and min_ess >= ESS_LIMIT
+    )
+    return {
+        "max_rhat": max_rhat,
+        "min_ess": min_ess,
+        "converged": converged,
+        "worst_rhat": worst_rhat_name,
+        "worst_ess": worst_ess_name,
+        "n_checked": len(checked),
+    }
+
+
+def _diagnostics(idata) -> dict[str, object]:
+    """Grouped convergence diagnostics.
+
+    Three groups are computed and reported separately:
+
+    ``scalar``  every stored scalar parameter -- coefficients, the AR(2) block,
+                the trend drift ``n``, the simultaneity loading and every
+                estimated variance.
+    ``state``   the raw latent firm-count paths ``Nbar_t`` and ``Nhat_t``.
+    ``derived`` the economically relevant time-varying coefficient paths
+                ``kappa_t`` and (where estimated) ``theta_t``.
+
+    ``converged`` is the *scalar* rule and is what the dagger mark in the
+    coefficient tables means. ``state_converged`` / ``derived_converged`` /
+    ``joint_converged`` are exposed so the report can state which of the three
+    it is asserting rather than implying all of them.
+    """
+    scalar = _group_diagnostics(idata, SCALAR_PARAMETERS)
+    state = _group_diagnostics(idata, STATE_PATH_PARAMETERS)
+    derived = _group_diagnostics(idata, DERIVED_PATH_PARAMETERS)
+    groups = [scalar["converged"], state["converged"], derived["converged"]]
+    present = [flag for flag in groups if flag is not None]
+    return {
+        "scalar": scalar,
+        "state": state,
+        "derived": derived,
+        # Backwards-compatible keys: the dagger rule stays coefficient-based.
+        "max_rhat": scalar["max_rhat"],
+        "min_ess": scalar["min_ess"],
+        "converged": bool(scalar["converged"]),
+        "state_converged": state["converged"],
+        "derived_converged": derived["converged"],
+        "joint_converged": bool(present) and all(present),
+        "has_states": state["converged"] is not None,
+    }
 
 
 def _marked(value: str, converged: bool) -> str:
     if value == "--":
         return value
     return value if converged else value + r"\textsuperscript{$\dagger$}"
+
+
+def _conv_status(diagnostics: dict[str, object], *, japanese: bool = True) -> str:
+    """Short status string distinguishing coefficient from joint convergence."""
+    watch = "要注意" if japanese else "watch"
+    if not bool(diagnostics["converged"]):
+        return watch
+    if diagnostics["has_states"] and not bool(diagnostics["joint_converged"]):
+        return "OK (coef)"
+    return "OK"
 
 
 def _write_latex(df: pd.DataFrame, name: str, columns: list[str]) -> None:
@@ -238,7 +477,7 @@ def build_model_table(runs) -> pd.DataFrame:
                     "entry": _fmt(entry),
                     "gamma": _fmt(gamma),
                     "kappa path": "--" if path is None else f"{path['start']:+.3f} $\\rightarrow$ {path['end']:+.3f}",
-                    "diagnostics": "OK" if diagnostics["converged"] else r"要注意$^{\dagger}$",
+                    "diagnostics": _conv_status(diagnostics),
                 }
             )
     table = pd.DataFrame(rows)
@@ -276,7 +515,7 @@ def build_output_gap_model_tables(runs) -> pd.DataFrame:
                         "entry": _marked(_fmt(_summary(idata, entry_name)), bool(diagnostics["converged"])),
                         "gamma": _marked(_fmt(_summary(idata, "gamma")), bool(diagnostics["converged"])),
                         "kappa path": "--" if path is None else f"{path['start']:+.3f} $\\rightarrow$ {path['end']:+.3f}",
-                        "diagnostics": "OK" if diagnostics["converged"] else r"要注意$^{\dagger}$",
+                        "diagnostics": _conv_status(diagnostics),
                     }
                 )
     table = pd.DataFrame(rows)
@@ -452,16 +691,27 @@ def build_run_manifest(runs) -> pd.DataFrame:
                 ).replace("quarterly_interpolated", "PCHIP quarterly").replace("annual_q4", "annual Q4"),
                 "T": int(attrs.get("n_obs", 0) or 0),
                 "run id": r"\texttt{" + str(attrs.get("run_id", path.parent.name)).replace("_", r"\_") + "}",
+                "state sampler": _sampler_label(idata),
                 "max Rhat": diagnostics["max_rhat"],
                 "min bulk ESS": diagnostics["min_ess"],
+                "state max Rhat": diagnostics["state"]["max_rhat"],
+                "state min ESS": diagnostics["state"]["min_ess"],
+                "path max Rhat": diagnostics["derived"]["max_rhat"],
+                "path min ESS": diagnostics["derived"]["min_ess"],
                 "converged": bool(diagnostics["converged"]),
+                "state converged": diagnostics["state_converged"],
+                "joint converged": bool(diagnostics["joint_converged"]),
+                "has states": bool(diagnostics["has_states"]),
             }
         )
     table = pd.DataFrame(rows)
     _write_latex(
         table,
         "report_run_manifest",
-        ["model", "data spec", "prior", "N frequency", "T", "run id", "max Rhat", "min bulk ESS"],
+        [
+            "model", "data spec", "prior", "N frequency", "T", "run id", "state sampler",
+            "max Rhat", "min bulk ESS", "state max Rhat", "state min ESS",
+        ],
     )
     if not table.empty:
         summary = (
@@ -469,13 +719,23 @@ def build_run_manifest(runs) -> pd.DataFrame:
             .agg(
                 runs=("model", "size"),
                 warnings=("converged", lambda x: int((~x).sum())),
-                **{"max Rhat": ("max Rhat", "max"), "min bulk ESS": ("min bulk ESS", "min")},
+                **{
+                    "state warnings": ("state converged", lambda x: int((x == False).sum())),  # noqa: E712
+                    "joint warnings": ("joint converged", lambda x: int((~x).sum())),
+                    "sampler": ("state sampler", lambda x: "/".join(sorted(set(x)))),
+                    "max Rhat": ("max Rhat", "max"),
+                    "min bulk ESS": ("min bulk ESS", "min"),
+                },
             )
             .reset_index()
         )
         summary["max Rhat"] = summary["max Rhat"].map(lambda x: f"{x:.3f}")
         summary["min bulk ESS"] = summary["min bulk ESS"].map(lambda x: f"{x:.0f}")
-        _write_latex(summary, "convergence_summary", ["model", "runs", "warnings", "max Rhat", "min bulk ESS"])
+        _write_latex(
+            summary,
+            "convergence_summary",
+            ["model", "sampler", "runs", "warnings", "state warnings", "joint warnings", "max Rhat", "min bulk ESS"],
+        )
 
         warnings = table.loc[~table["converged"]].copy()
         warnings = warnings.sort_values(["max Rhat", "min bulk ESS"], ascending=[False, True])
@@ -511,6 +771,7 @@ def build_frequency_outputs(
     build_prior_table(runs)
     build_diagnostics_table(runs)
     build_primary_parameter_state_diagnostics(runs)
+    build_group_convergence_diagnostics(runs)
     build_run_manifest(runs)
     write_result_macros(runs, command_prefix=command_prefix)
     save_delta_forest(hsa_table)
@@ -529,11 +790,23 @@ def write_result_macros(
     OUT_TABLES.mkdir(parents=True, exist_ok=True)
     diagnostics = [_diagnostics(idata) for _, idata in runs.values()]
     warning_count = sum(not bool(item["converged"]) for item in diagnostics)
+    state_warning_count = sum(item["state_converged"] is False for item in diagnostics)
+    joint_warning_count = sum(not bool(item["joint_converged"]) for item in diagnostics)
+    full_samplers = sorted(
+        {_sampler_label(idata) for (model, _, _), (_, idata) in runs.items() if model == "hsa_full"}
+    )
+    const_theta_samplers = sorted(
+        {_sampler_label(idata) for (model, _, _), (_, idata) in runs.items() if model == "hsa_const_theta"}
+    )
     lines = [
         "% Generated by scripts/12_build_cpi_ppi_report.py; do not edit by hand.",
         rf"\providecommand{{\{command_prefix}ReportEstimationRevision}}{{\texttt{{{ESTIMATION_REVISION}}}}}",
         rf"\providecommand{{\{command_prefix}ReportRunCount}}{{{len(runs)}}}",
         rf"\providecommand{{\{command_prefix}ReportWarningCount}}{{{warning_count}}}",
+        rf"\providecommand{{\{command_prefix}ReportStateWarningCount}}{{{state_warning_count}}}",
+        rf"\providecommand{{\{command_prefix}ReportJointWarningCount}}{{{joint_warning_count}}}",
+        rf"\providecommand{{\{command_prefix}HsaFullSampler}}{{{' / '.join(full_samplers) or 'n/a'}}}",
+        rf"\providecommand{{\{command_prefix}HsaConstThetaSampler}}{{{' / '.join(const_theta_samplers) or 'n/a'}}}",
     ]
     prefixes = {"Headline CPI": "HeadlineUnemp", "Core CPI": "CoreUnemp", "PPI": "PPIUnemp"}
     for inflation, data_spec in PRIMARY_SPECS.items():
@@ -585,7 +858,7 @@ def build_diagnostics_table(runs) -> pd.DataFrame:
                 "model": MODEL_LABELS[model],
                 "max Rhat": diagnostics["max_rhat"],
                 "min bulk ESS": diagnostics["min_ess"],
-                "status": "OK" if diagnostics["converged"] else "要注意",
+                "status": _conv_status(diagnostics),
             }
         )
     table = pd.DataFrame(rows)
@@ -601,6 +874,57 @@ def _array_diagnostics(idata, parameter: str) -> tuple[float, float]:
     rhat = np.asarray(az.rhat(values), dtype=float)
     ess = np.asarray(az.ess(values, method="bulk"), dtype=float)
     return float(np.nanmax(rhat)), float(np.nanmin(ess))
+
+
+def build_group_convergence_diagnostics(runs) -> pd.DataFrame:
+    """Scalar / state-path / derived-path diagnostics for every model.
+
+    This is the table that makes the acceptance rule auditable: it shows which
+    group each cell passes, and names the single worst-mixing quantity in the
+    scalar group so a reader can see whether a dagger is driven by a
+    coefficient of interest or by a nuisance term such as the trend drift.
+    """
+    rows: list[dict[str, object]] = []
+    for model in MODEL_ORDER:
+        for inflation, data_spec in PRIMARY_SPECS.items():
+            item = runs.get((model, data_spec, "baseline"))
+            if item is None:
+                continue
+            idata = item[1]
+            diagnostics = _diagnostics(idata)
+            scalar, state, derived = diagnostics["scalar"], diagnostics["state"], diagnostics["derived"]
+            n_diag = _group_diagnostics(idata, ["n"])
+            rows.append(
+                {
+                    "model": MODEL_LABELS[model],
+                    "inflation": inflation,
+                    "sampler": _sampler_label(idata),
+                    "scalar Rhat": f"{scalar['max_rhat']:.3f}",
+                    "scalar ESS": f"{scalar['min_ess']:.0f}",
+                    "worst scalar": (scalar["worst_ess"] or "--").replace("_", r"\_"),
+                    "n Rhat": "--" if not np.isfinite(n_diag["max_rhat"]) else f"{n_diag['max_rhat']:.3f}",
+                    "n ESS": "--" if not np.isfinite(n_diag["min_ess"]) else f"{n_diag['min_ess']:.0f}",
+                    "state Rhat": "--" if not np.isfinite(state["max_rhat"]) else f"{state['max_rhat']:.3f}",
+                    "state ESS": "--" if not np.isfinite(state["min_ess"]) else f"{state['min_ess']:.0f}",
+                    "derived Rhat": "--" if not np.isfinite(derived["max_rhat"]) else f"{derived['max_rhat']:.3f}",
+                    "derived ESS": "--" if not np.isfinite(derived["min_ess"]) else f"{derived['min_ess']:.0f}",
+                    "joint": "OK" if diagnostics["joint_converged"] else "要注意",
+                }
+            )
+    table = pd.DataFrame(rows)
+    _write_latex(
+        table,
+        "group_convergence_diagnostics",
+        [
+            "model", "inflation", "sampler",
+            "scalar Rhat", "scalar ESS", "worst scalar",
+            "n Rhat", "n ESS",
+            "state Rhat", "state ESS",
+            "derived Rhat", "derived ESS",
+            "joint",
+        ],
+    )
+    return table
 
 
 def build_primary_parameter_state_diagnostics(runs) -> pd.DataFrame:
@@ -935,6 +1259,17 @@ def main() -> None:
     parser.add_argument("--min-iter", type=int, default=1000)
     parser.add_argument("--allow-incomplete", action="store_true", help="Generate partial tables instead of failing on missing report cells.")
     parser.add_argument("--compile", action="store_true", help="Compile the Japanese CPI/PPI report with XeLaTeX.")
+    parser.add_argument(
+        "--pg-runs-dir",
+        type=Path,
+        default=PG_RUNS_DIR,
+        help="Particle-Gibbs run directory used for the PCHIP hsa_full cells.",
+    )
+    parser.add_argument(
+        "--no-pg",
+        action="store_true",
+        help="Ignore the Particle-Gibbs runs and report alternating-FFBS hsa_full everywhere.",
+    )
     args = parser.parse_args()
 
     quarterly_runs = _load_runs(
@@ -947,6 +1282,48 @@ def main() -> None:
         min_iter=args.min_iter,
         competition_frequency="annual_q4",
     )
+
+    # ------------------------------------------------------------------
+    # Route the PCHIP hsa_full cells through the Particle-Gibbs runs, in the
+    # single place where the report's run-set is assembled. Every table, macro
+    # and figure downstream is then generated from one merged run-set, so a
+    # cell can never appear under one sampler in one table and another sampler
+    # in the next. Annual-Q4 is deliberately NOT substituted: no annual-Q4
+    # Particle-Gibbs runs exist, and silently reusing PCHIP ones would compare
+    # different observation schemes.
+    # ------------------------------------------------------------------
+    pg_replaced: list[tuple[str, str, str]] = []
+    if not args.no_pg and args.pg_runs_dir.exists():
+        pg_quarterly = _load_runs(
+            args.pg_runs_dir,
+            min_iter=args.min_iter,
+            competition_frequency="quarterly_interpolated",
+        )
+        quarterly_runs, pg_replaced = merge_preferred_runs(
+            quarterly_runs, pg_quarterly, models={"hsa_full"}
+        )
+        pg_annual = _load_runs(
+            args.pg_runs_dir,
+            min_iter=args.min_iter,
+            competition_frequency="annual_q4",
+        )
+        if pg_annual:
+            annual_hsa_runs, annual_replaced = merge_preferred_runs(
+                annual_hsa_runs, pg_annual, models={"hsa_full"}
+            )
+            print(f"Merged {len(annual_replaced)} annual-Q4 Particle-Gibbs hsa_full cells.")
+        else:
+            print("No annual-Q4 Particle-Gibbs runs found: annual-Q4 hsa_full stays alternating FFBS.")
+        print(f"Merged {len(pg_replaced)} PCHIP Particle-Gibbs hsa_full cells into the report run-set.")
+        expected_full = {key for key in report_run_keys() if key[0] == "hsa_full"}
+        unresolved = sorted(expected_full - set(pg_replaced))
+        if unresolved and not args.allow_incomplete:
+            preview = ", ".join("/".join(key) for key in unresolved[:8])
+            raise SystemExit(
+                f"{len(unresolved)} PCHIP hsa_full cells have no Particle-Gibbs run "
+                f"({preview}). Re-run scripts/appendix_pg_full_runs.py, or pass --no-pg "
+                "to report alternating FFBS for every hsa_full cell."
+            )
     missing_quarterly = sorted(set(report_run_keys()) - set(quarterly_runs))
     missing_annual = sorted(set(annual_q4_run_keys()) - set(annual_hsa_runs))
     missing = [("PCHIP", *key) for key in missing_quarterly] + [("annual-Q4", *key) for key in missing_annual]
@@ -963,6 +1340,15 @@ def main() -> None:
         if key[0] == "ces"
     }
     annual_display.update({key: value for key, value in annual_hsa_runs.items() if key in annual_required})
+
+    # Within one observation design a cell must be reported under exactly one
+    # sampler. (PCHIP vs annual-Q4 are different designs, so they are checked
+    # separately rather than against each other.)
+    assert_single_sampler_per_cell(quarterly_display)
+    assert_single_sampler_per_cell(annual_display)
+    for label, run_set in (("PCHIP", quarterly_display), ("annual-Q4", annual_display)):
+        samplers = sorted({_sampler_label(idata) for (m, _, _), (_, idata) in run_set.items() if m == "hsa_full"})
+        print(f"  {label} hsa_full state sampler: {' / '.join(samplers) or 'n/a'}")
 
     base_tables = ROOT / "results" / "tables" / "cpi_ppi_report"
     base_figures = ROOT / "results" / "figures" / "cpi_ppi_report"

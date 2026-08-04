@@ -116,6 +116,22 @@ def func_nkpc_ces(
     verbose = bool(_getd(opts, "verbose", False))
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
+    # Reduced-run support for Chib's marginal likelihood: pin named blocks and
+    # skip their draw, so reduced runs reuse these exact production conditionals.
+    fixed = dict(_getd(opts, "fixed", {}) or {})
+    unknown_fixed = set(fixed) - {"beta", "lambda_ez", "phi_1", "sigma_zeta2", "sigma_eta2"}
+    if unknown_fixed:
+        raise ValueError(f"Unknown fixed block(s): {sorted(unknown_fixed)}")
+    if "beta" in fixed:
+        alpha, kappa = (float(v) for v in fixed["beta"])
+    if "lambda_ez" in fixed:
+        lambda_ez = float(fixed["lambda_ez"])
+    if "phi_1" in fixed:
+        phi_1 = float(fixed["phi_1"])
+    if "sigma_zeta2" in fixed:
+        sigma_zeta2 = float(fixed["sigma_zeta2"])
+    if "sigma_eta2" in fixed:
+        sigma_eta2 = float(fixed["sigma_eta2"])
     rng = np.random.default_rng(seed)
 
     n_store = int(n_keep // store_every)
@@ -144,17 +160,20 @@ def func_nkpc_ces(
         y_adj = y - lambda_ez * zeta
         post_cov = np.linalg.inv(X.T @ X / sigma_eta2 + prior_prec)
         post_mean = post_cov @ (X.T @ y_adj / sigma_eta2 + prior_prec @ prior_mean)
-        beta = draw_with_constraints(
-            lambda: _mvnrnd(post_mean, post_cov, rng),
-            ("alpha", "kappa"),
-            coefficient_constraints,
-            stats=constraint_stats,
-        )
-        alpha = float(beta[0])
-        kappa = float(beta[1])
+        if "beta" not in fixed:
+            beta = draw_with_constraints(
+                lambda: _mvnrnd(post_mean, post_cov, rng),
+                ("alpha", "kappa"),
+                coefficient_constraints,
+                stats=constraint_stats,
+            )
+            alpha = float(beta[0])
+            kappa = float(beta[1])
         kappa_eff = kappa / KAPPA_SCALE
 
-        if not orth:
+        if orth:
+            lambda_ez = 0.0
+        elif "lambda_ez" not in fixed:
             e_base = y - alpha * a_t - kappa_eff * x_t
             post_var_lambda = 1.0 / (
                 lambda_prec0 + float(np.sum(zeta**2)) / sigma_eta2
@@ -165,8 +184,6 @@ def func_nkpc_ces(
             lambda_ez = float(
                 post_mean_lambda + np.sqrt(post_var_lambda) * rng.standard_normal()
             )
-        else:
-            lambda_ez = 0.0
 
         prec_phi = (
             phi_prec0
@@ -180,23 +197,26 @@ def func_nkpc_ces(
             * float(np.dot(x_tm1, y - alpha * a_t - kappa_eff * x_t - lambda_ez * x_t))
             / sigma_eta2
         )
-        phi_1 = float(
-            mean_num_phi / prec_phi + rng.standard_normal() / np.sqrt(prec_phi)
-        )
+        if "phi_1" not in fixed:
+            phi_1 = float(
+                mean_num_phi / prec_phi + rng.standard_normal() / np.sqrt(prec_phi)
+            )
 
         zeta = x_t - phi_1 * x_tm1
         eta = y - alpha * a_t - kappa_eff * x_t - lambda_ez * zeta
 
-        sigma_zeta2 = _sample_invgamma(
-            a_z + 0.5 * T,
-            b_z + 0.5 * float(np.sum(zeta**2)),
-            rng,
-        )
-        sigma_eta2 = _sample_invgamma(
-            a_e + 0.5 * T,
-            b_e + 0.5 * float(np.sum(eta**2)),
-            rng,
-        )
+        if "sigma_zeta2" not in fixed:
+            sigma_zeta2 = _sample_invgamma(
+                a_z + 0.5 * T,
+                b_z + 0.5 * float(np.sum(zeta**2)),
+                rng,
+            )
+        if "sigma_eta2" not in fixed:
+            sigma_eta2 = _sample_invgamma(
+                a_e + 0.5 * T,
+                b_e + 0.5 * float(np.sum(eta**2)),
+                rng,
+            )
 
         sigma_e2 = lambda_ez**2 * sigma_zeta2 + sigma_eta2
         rho_corr = 0.0 if orth else float(

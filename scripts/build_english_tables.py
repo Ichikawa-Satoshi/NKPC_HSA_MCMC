@@ -49,7 +49,7 @@ REPLACEMENTS: list[tuple[str, str]] = [
     ("逆マークアップ", "inverse markup"),
     ("上場企業数", "listed firm count"),
     ("観測企業数", "observed N"),
-    ("失業ギャップ", "unemployment gap"),
+    ("失業ギャップ", "negative unemployment gap"),
     ("要注意", "watch"),
     ("当期", "current"),
     ("ポイント", " pp"),

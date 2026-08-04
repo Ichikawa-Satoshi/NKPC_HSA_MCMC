@@ -1,0 +1,198 @@
+# Data dictionary
+
+Source of truth: `src/nkpc_hsa/data/func_data_build.py`, `src/nkpc_hsa/data/build.py`,
+`src/nkpc_hsa/data/transforms.py`, `src/nkpc_hsa/data/competition.py`, `configs/models.yaml`.
+Generated dataset: `data/processed/model_ready.csv` (451 rows; the estimation sample is the
+complete-case subset, **T = 124**, 1982Q1–2012Q4).
+
+Anything not recoverable from code/config is marked **UNVERIFIED**.
+
+---
+
+## How a data spec becomes sampler input
+
+`configs/models.yaml → data_specs.<name>` names six columns. `_coerce_model_data`
+(`src/nkpc_hsa/inference/wrappers.py:100-125`) selects them and applies `.dropna()` **jointly**,
+so the estimation sample is the complete-case intersection of all six series:
+
+```python
+sample = data[[cols[k] for k in required]].dropna()
+```
+
+That is why every specification has T = 124 even though `model_ready.csv` has 451 rows.
+
+---
+
+## Inflation measures
+
+### π_t — headline CPI inflation
+
+| | |
+|---|---|
+| **Symbol** | `π_t` (headline) |
+| **Code name** | `pi_cpi`; lag `pi_cpi_prev` |
+| **Source** | `data/raw/inflation/CPIAUCSL.csv` (FRED CPIAUCSL, monthly) |
+| **Construction** | monthly → quarterly mean (`resample_quarterly_mean`), then `yoy_pct`: `100*(x_t/x_{t-4} − 1)` — `func_data_build.py:22-25, 258` |
+| **Frequency** | quarterly, four-quarter change |
+| **Units** | annual percent |
+| **Lag** | `pi_cpi_prev = pi_cpi.shift(1)` — `func_data_build.py:252` |
+| **Missing** | dropped jointly with the rest of the spec |
+| **Used in** | `unemployment_gap`, `output_gap_bn`, `output_gap_hp`, `inv_markup`, `labor_share_gap_hp` |
+| **Economic meaning** | headline consumer-price inflation, the left-hand side of the NKPC |
+
+⚠️ **Overlapping observations.** `π_t` is a *four-quarter* change sampled *quarterly*, so `π_t`
+and `π_{t-1}` share three of four months by construction. Every model's inflation-equation
+likelihood nevertheless treats the residual `η_t` as i.i.d. Gaussian. This is a property of the
+data construction, not of the samplers; it is documented here because it is invisible from the
+sampler code alone.
+
+### π_t — core CPI inflation
+
+Identical pipeline **except the transform**: `log_yoy`, i.e. `100*(log x_t − log x_{t-4})`
+(`func_data_build.py:27-29, 261`). Code name `pi_cpi_core`, lag `pi_cpi_core_prev`. Source
+`CPILFESL.csv`. Used in `unemployment_gap_core`, `output_gap_bn_core`, `output_gap_hp_core`.
+
+⚠️ **Discrepancy vs. headline/PPI**: headline CPI and PPI use `pct_yoy` (simple percent change)
+while core CPI uses `log_yoy` (log difference). Second-order at these rates, but the three price
+indices are therefore *not* constructed identically, in a comparison whose purpose is the price
+index. Neither the report nor the config remarks on this.
+
+### π_t — PPI inflation
+
+`pi_ppi`, lag `pi_ppi_prev`, from `PPIACO.csv`, transform `pct_yoy` (`func_data_build.py:264`).
+Used in `unemployment_gap_ppi`, `output_gap_bn_ppi`, `output_gap_hp_ppi`.
+
+---
+
+## Expected inflation
+
+| | |
+|---|---|
+| **Symbol** | `E_t π_{t+1}` |
+| **Code name** | `Epi` |
+| **Source** | `data/raw/inflation/Clev_Fed_Inflation_Expectation.csv` — Cleveland Fed inflation expectations |
+| **Construction** | `epi["Epi"] = epi[" Epi"] * 100`, monthly → `resample("QE").mean()` — `func_data_build.py:155-160` |
+| **Units** | annual percent |
+| **Horizon** | **UNVERIFIED** which maturity is in the ` Epi` column. The model equation calls it `E_t π_{t+1}`; with four-quarter inflation on the LHS, a one-year-ahead series is the coherent match, but the column is not labelled in code and the raw file is not self-documenting. |
+| **Used in** | every model and every data spec — the same series in all of them |
+| **Note** | The SPF loader (`load_spf_expectations`, `func_data_build.py:126-131`, producing `Epi_spf_gdp` / `Epi_spf_cpi`) exists but **no configured data spec uses it** — `pi_expect_col` is `Epi` everywhere in `configs/models.yaml`. |
+
+⚠️ **Deliberate mismatch, disclosed in the report**: the PPI and core-CPI specs pair their price
+index with this *same* headline-oriented expectation series, because no PPI expectation is
+available. Report §2 states this.
+
+---
+
+## Activity / slack measures (`x_t`)
+
+### Negative unemployment gap
+
+| | |
+|---|---|
+| **Symbol** | `x_t = u*_t − u_t` |
+| **Code name** | `unemp_gap`, lag `unemp_gap_prev` |
+| **Source** | `data/raw/unemp_gap/NROU.csv` (CBO natural rate) and `UNRATENSA.csv` (unemployment, NSA) |
+| **Construction** | `tt_gap["unemp_gap"] = tt_gap["NROU"] - tt_gap["UNRATENSA"]` — `func_data_build.py:222`, after `resample("QE").mean()` |
+| **Units** | percentage points of unemployment |
+| **Sign convention** | **`u* − u`, i.e. the NEGATIVE unemployment gap.** Positive in booms, negative in slumps (≈ −4 in 2009). Co-moves positively with output gaps. A **positive** `κ` is therefore a conventionally-signed downward-sloping Phillips curve. |
+| **Used in** | `unemployment_gap`, `unemployment_gap_core`, `unemployment_gap_ppi` (+ TNIC variants) |
+
+### BN output gap
+
+`output_gap_BN`, lag `output_gap_BN_prev`. Source `data/raw/output_gap/BN_filter_GDPC1_quaterly.csv`,
+column `cycle` — a pre-computed Beveridge–Nelson decomposition of real GDP
+(`func_data_build.py:226-229`). Units: 100 log points. The BN filtering itself is **UNVERIFIED**
+(done outside this repository; only its output is read).
+
+### HP output gap
+
+`output_gap_HP`, lag `output_gap_HP_prev`. Constructed **inside** this repo:
+`add_hp_output_gap` (`src/nkpc_hsa/data/build.py:49-70`) applies a λ=1600 HP filter to
+`100 * output`, where `output = log(GDPC1_original_series * 0.01)`
+(`func_data_build.py:229`). The ×100 is explicit so HP and BN share 100-log-point units. The
+filter runs separately on each contiguous finite block (`hp_filter_series`, `build.py:26-47`), so
+raw gaps are not silently interpolated.
+
+### HP labor-share gap
+
+`labor_share_gap_HP`. From `data/raw/laborshare/PRS85006173.csv`; the cycle is taken from
+`100 * log(index)` then HP-filtered at λ=1600 — `build.py:73-107`. Used in `labor_share_gap_hp`.
+
+### Inverse markup (real marginal cost proxy)
+
+`markup_BN_inv`, lag `markup_BN_inv_prev`. From `data/raw/markup/BN_markup_inv.csv`, column
+`cycle` (`func_data_build.py:200-204`). Used **only** in the `inv_markup` spec, which the report
+uses for the CES–HSA slope-bias diagnostic because it is the closest empirical counterpart to the
+theory's real-marginal-cost regressor. The upstream BN decomposition is **UNVERIFIED**.
+A related series `markup` (`mu_bus` from `nekarda_ramey_markups.xlsx`) is loaded but not used by
+any configured spec.
+
+---
+
+## Firm count / competition
+
+| | |
+|---|---|
+| **Symbol** | `N^obs_t` (transformed); raw level `N` |
+| **Code name** | `N_Gustavo` |
+| **Source** | `data/raw/competition/BN_N_Gustavo_26.csv`, column `original_series` |
+| **Meaning** | inverse HHI of U.S. listed firms — an effective firm count |
+| **Native frequency** | **annual** |
+| **Raw range in sample** | 5.96 – 9.68 (after PCHIP; declining over the sample) |
+| **Used in** | every HSA model. **Not** used by CES. |
+
+Two observation schemes, selected by `configs/models.yaml → defaults.competition_measurement.frequency`:
+
+**1. `quarterly_interpolated` (PCHIP) — the production default.**
+`annual_to_quarterly_pchip` (`func_data_build.py:41-70`) fits a `scipy` `PchipInterpolator` to the
+annual levels and evaluates it at quarter-ends. The result is treated as **observed every
+quarter**: `N^obs_t` is finite for all 124 quarters.
+
+**2. `annual_q4` — the mixed-frequency scheme.**
+`build_competition_observation` (`competition.py:131-141`) places the annual value in that year's
+Q4 and leaves Q1–Q3 as `np.nan`:
+
+```python
+out = np.full(len(q_index), np.nan, dtype=float)
+for i, period in enumerate(q_index):
+    if int(period.quarter) == 4 and int(period.year) in by_year:
+        out[i] = float(by_year[int(period.year)])
+```
+
+31 finite observations out of 124. The samplers treat `nan` as genuinely missing: the firm-count
+observation row is dropped for that quarter and `σ_N²` uses only the finite residuals
+(`finite_N_residuals`, `src/nkpc_hsa/gibbs/common/competition.py:12-21`).
+
+**Centering consistency.** Under `annual_q4` the annual values are centered on the **PCHIP
+quarterly** mean, not their own, so coefficient units stay comparable across the two schemes —
+`_transform_annual_competition_like_quarterly` (`wrappers.py:167-179`):
+
+```python
+center = float(np.mean(100.0 * np.log(reference)))
+return (100.0 * np.log(annual_values) - center) / 10.0
+```
+
+**Initialisation only.** `initial_competition_path` (`common/competition.py:23-36`) linearly
+interpolates missing `N^obs` — used *solely* to seed the state path at iteration 0, never in a
+likelihood.
+
+### Alternative competition series (configured but not in `run_data_specs`)
+
+`N_TNIC` (from `HHI_TNIC`) feeds `unemployment_gap_tnic` and `unemployment_gap_core_tnic`. These
+specs exist in `configs/models.yaml` but are **absent from `run_data_specs`**, so they are not
+estimated by the production pipeline.
+
+---
+
+## Auxiliary series loaded but unused by production specs
+
+| Series | Loaded at | Status |
+|---|---|---|
+| `Epi_spf_gdp`, `Epi_spf_cpi` | `func_data_build.py:126-131` | no spec references them |
+| `pi_pce`, `pi_pce_core` | `func_data_build.py:262-263` | no spec references them |
+| `oil` | `func_data_build.py:244` | no spec references them |
+| `markup` (`mu_bus`) | `func_data_build.py:197` | only `markup_BN_inv` is used |
+| `N_TNIC`, `HHI_TNIC` | competition loader | specs exist, not in `run_data_specs` |
+
+No shock series is constructed from an auxiliary series: `ζ_t` is built inside the samplers from
+`x_t` and `φ_1` (see `docs/estimation_specification.md` §C).

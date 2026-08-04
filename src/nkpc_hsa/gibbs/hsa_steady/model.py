@@ -7,6 +7,7 @@ from numpy.linalg import inv
 
 from nkpc_hsa.gibbs.common.competition import finite_N_residuals, initial_competition_path
 from nkpc_hsa.gibbs.common.constraints import constraint_stats_summary, draw_with_constraints
+from nkpc_hsa.gibbs.common.joint_ffbs import sample_joint_competition_states_ffbs
 
 # Kappa-related parameters are sampled internally on a KAPPA_SCALE-multiplied
 # scale because the inflation regressors use x / KAPPA_SCALE. Stored posterior
@@ -351,6 +352,13 @@ def _sample_states_kalman_ffbs(
 
     where obs_offset_t = lambda_ez*zeta_t.
     If orth=True, lambda_ez=0 and obs_offset_t=0.
+
+    Thin wrapper over the shared exact joint FFBS in
+    ``nkpc_hsa.gibbs.common.joint_ffbs``; hsa_steady is the ``h_nhat = 0``
+    special case of that routine. The delegation is numerically exact -- it
+    reproduces the previous in-line implementation bit for bit under the same
+    seed (pinned by ``tests/test_joint_ffbs.py``), so existing hsa_steady
+    posteriors are unaffected.
     """
     N_obs = _as_1d(N_obs)
     pi_t = _as_1d(pi_t)
@@ -364,91 +372,30 @@ def _sample_states_kalman_ffbs(
     if not (pi_t.size == pi_tm1.size == pi_expect.size == x_t.size == obs_offset.size == T):
         raise ValueError("All input series must have the same length.")
 
-    F = np.array(
-        [
-            [rho1, rho2, 0.0],
-            [1.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0],
-        ],
-        dtype=float,
+    y_tilde = (
+        pi_t
+        - pi_expect
+        - alpha * (pi_tm1 - pi_expect)
+        - (kappa0 / KAPPA_SCALE) * x_t
+        - obs_offset
     )
 
-    c = np.array([0.0, 0.0, n_drift], dtype=float)
-
-    Q = np.diag([sigma_u2, 0.0, sigma_eps2])
-
-    m_pred = np.zeros((T, 3), dtype=float)
-    P_pred = np.zeros((T, 3, 3), dtype=float)
-
-    m_filt = np.zeros((T, 3), dtype=float)
-    P_filt = np.zeros((T, 3, 3), dtype=float)
-
-    I3 = np.eye(3)
-
-    # ---------- Forward Kalman filter ----------
-    for t in range(T):
-        if t == 0:
-            m_pred[t] = _as_1d(m0)
-            P_pred[t] = _force_pd(P0)
-        else:
-            m_pred[t] = c + F @ m_filt[t - 1]
-            P_pred[t] = _force_pd(F @ P_filt[t - 1] @ F.T + Q)
-
-        y_pi = (
-            pi_t[t]
-            - pi_expect[t]
-            - alpha * (pi_tm1[t] - pi_expect[t])
-            - (kappa0 / KAPPA_SCALE) * x_t[t]
-            - obs_offset[t]
-        )
-
-        h_pi = (delta / KAPPA_SCALE) * x_t[t]
-
-        if np.isfinite(N_obs[t]):
-            y_obs = np.array([N_obs[t], y_pi], dtype=float)
-            H = np.array(
-                [
-                    [1.0, 0.0, 1.0],
-                    [0.0, 0.0, h_pi],
-                ],
-                dtype=float,
-            )
-            R = np.diag([sigma_N2, sigma_eta2])
-        else:
-            y_obs = np.array([y_pi], dtype=float)
-            H = np.array([[0.0, 0.0, h_pi]], dtype=float)
-            R = np.array([[sigma_eta2]], dtype=float)
-
-        S = _force_pd(H @ P_pred[t] @ H.T + R)
-        K = P_pred[t] @ H.T @ inv(S)
-
-        innov = y_obs - H @ m_pred[t]
-
-        m_filt[t] = m_pred[t] + K @ innov
-
-        # Joseph form for numerical stability
-        KH = K @ H
-        P_filt[t] = _force_pd((I3 - KH) @ P_pred[t] @ (I3 - KH).T + K @ R @ K.T)
-
-    # ---------- Backward sampling ----------
-    states = np.zeros((T, 3), dtype=float)
-
-    states[-1] = _mvnrnd(m_filt[-1], P_filt[-1], rng)
-
-    for t in range(T - 2, -1, -1):
-        Ptp1 = _force_pd(P_pred[t + 1])
-
-        A = P_filt[t] @ F.T @ inv(Ptp1)
-
-        mean_s = m_filt[t] + A @ (states[t + 1] - c - F @ m_filt[t])
-        cov_s = _force_pd(P_filt[t] - A @ Ptp1 @ A.T)
-
-        states[t] = _mvnrnd(mean_s, cov_s, rng)
-
-    Nhat = states[:, 0]
-    Nbar = states[:, 2]
-
-    return Nbar, Nhat, states
+    return sample_joint_competition_states_ffbs(
+        N_obs=N_obs,
+        y_tilde=y_tilde,
+        h_nhat=np.zeros(T, dtype=float),
+        h_nbar=(delta / KAPPA_SCALE) * x_t,
+        n_drift=n_drift,
+        rho1=rho1,
+        rho2=rho2,
+        sigma_eta2=sigma_eta2,
+        sigma_u2=sigma_u2,
+        sigma_eps2=sigma_eps2,
+        sigma_N2=sigma_N2,
+        m0=m0,
+        P0=P0,
+        rng=rng,
+    )
 
 
 def func_nkpc_hsa_decomp_tv_kappa_kalman(
@@ -572,6 +519,39 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     constraint_stats: dict[str, int] = {}
     ar2_stats: dict[str, int] = {}
 
+    # Reduced-run support for Chib's marginal likelihood. ``opts["fixed"]`` pins
+    # named blocks to supplied values and skips their draw, so the reduced runs
+    # reuse these exact production conditionals instead of a reimplementation.
+    # Recognised block names: beta, lambda_ez, phi_1, sigma_zeta2, sigma_eta2,
+    # rho, sigma_u2, n, sigma_eps2, sigma_N2.
+    fixed = dict(_getd(opts, "fixed", {}) or {})
+    unknown_fixed = set(fixed) - {
+        "beta", "lambda_ez", "phi_1", "sigma_zeta2", "sigma_eta2",
+        "rho", "sigma_u2", "n", "sigma_eps2", "sigma_N2",
+    }
+    if unknown_fixed:
+        raise ValueError(f"Unknown fixed block(s): {sorted(unknown_fixed)}")
+    if "beta" in fixed:
+        alpha, kappa0, delta = (float(v) for v in fixed["beta"])
+    if "lambda_ez" in fixed:
+        lambda_ez = float(fixed["lambda_ez"])
+    if "phi_1" in fixed:
+        phi_1 = float(fixed["phi_1"])
+    if "rho" in fixed:
+        rho1, rho2 = (float(v) for v in fixed["rho"])
+    if "sigma_zeta2" in fixed:
+        sigma_zeta2 = float(fixed["sigma_zeta2"])
+    if "sigma_eta2" in fixed:
+        sigma_eta2 = float(fixed["sigma_eta2"])
+    if "sigma_u2" in fixed:
+        sigma_u2 = float(fixed["sigma_u2"])
+    if "sigma_eps2" in fixed:
+        sigma_eps2 = float(fixed["sigma_eps2"])
+    if "sigma_N2" in fixed:
+        sigma_N2 = float(fixed["sigma_N2"])
+    if "n" in fixed:
+        n_drift = float(fixed["n"])
+
     n_store = int(n_keep // store_every)
 
     if n_store <= 0:
@@ -631,6 +611,12 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     Nbar_draws = np.zeros((n_store, T))
     Nhat_draws = np.zeros((n_store, T))
     kappa_t_draws = np.zeros((n_store, T))
+    # Nhat_{-1}, the sampled initial AR(2) lag. Not part of the saved production
+    # schema (opt-in via opts["return_state_lag"]) because it would change the
+    # shape of every stored posterior; Chib's AR(2) ordinate needs it, since with
+    # sigma_u ~ 0.045 substituting the prior mean for it mis-weights the first
+    # regression row by hundreds of log points.
+    nhat_lag_draws = np.zeros(n_store)
 
     total_iter = n_burn + n_keep
     store_idx = 0
@@ -667,24 +653,25 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             ],
             dtype=float,
         )
-        beta = draw_with_constraints(
-            lambda: _sample_beta_gaussian(
-                y=y_adj,
-                X=X,
-                sigma2=sigma_eta2,
-                prior_mean=beta_prior_mean,
-                prior_var=beta_prior_var,
-                rng=rng,
-            ),
-            ("alpha", "kappa_0", "delta"),
-            coefficient_constraints,
-            validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
-            stats=constraint_stats,
-        )
+        if "beta" not in fixed:
+            beta = draw_with_constraints(
+                lambda: _sample_beta_gaussian(
+                    y=y_adj,
+                    X=X,
+                    sigma2=sigma_eta2,
+                    prior_mean=beta_prior_mean,
+                    prior_var=beta_prior_var,
+                    rng=rng,
+                ),
+                ("alpha", "kappa_0", "delta"),
+                coefficient_constraints,
+                validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
+                stats=constraint_stats,
+            )
 
-        alpha = float(beta[0])
-        kappa0 = float(beta[1])
-        delta = float(beta[2])
+            alpha = float(beta[0])
+            kappa0 = float(beta[1])
+            delta = float(beta[2])
 
         kappa_t = kappa0 + delta * Nbar
         kappa_t_eff = kappa_t / KAPPA_SCALE
@@ -692,7 +679,9 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         # ------------------------------------------------------------
         # 2. Draw lambda_ez if not imposing orthogonality.
         # ------------------------------------------------------------
-        if not orth:
+        if orth:
+            lambda_ez = 0.0
+        elif "lambda_ez" not in fixed:
             e_base = y - alpha * a_t - kappa_t_eff * x_t
 
             post_var_lambda = 1.0 / (
@@ -709,25 +698,24 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
                 post_mean_lambda
                 + np.sqrt(post_var_lambda) * rng.standard_normal()
             )
-        else:
-            lambda_ez = 0.0
 
         # ------------------------------------------------------------
         # 3. Draw phi_1.
         # ------------------------------------------------------------
         y_tilde_phi = y - alpha * a_t - kappa_t_eff * x_t
 
-        phi_1 = _sample_phi_joint(
-            x_t=x_t,
-            x_tm1=x_tm1,
-            y_tilde=y_tilde_phi,
-            lambda_ez=lambda_ez,
-            sigma_zeta2=sigma_zeta2,
-            sigma_eta2=sigma_eta2,
-            mu_phi=pri["mu_phi"],
-            sigma_phi=pri["sigma_phi"],
-            rng=rng,
-        )
+        if "phi_1" not in fixed:
+            phi_1 = _sample_phi_joint(
+                x_t=x_t,
+                x_tm1=x_tm1,
+                y_tilde=y_tilde_phi,
+                lambda_ez=lambda_ez,
+                sigma_zeta2=sigma_zeta2,
+                sigma_eta2=sigma_eta2,
+                mu_phi=pri["mu_phi"],
+                sigma_phi=pri["sigma_phi"],
+                rng=rng,
+            )
 
         # ------------------------------------------------------------
         # 4. Draw sigma_zeta2 and sigma_eta2.
@@ -741,43 +729,47 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             - lambda_ez * zeta
         )
 
-        sigma_zeta2 = _sample_invgamma(
-            pri["a_z"] + 0.5 * T,
-            pri["b_z"] + 0.5 * float(np.sum(zeta**2)),
-            rng,
-        )
+        if "sigma_zeta2" not in fixed:
+            sigma_zeta2 = _sample_invgamma(
+                pri["a_z"] + 0.5 * T,
+                pri["b_z"] + 0.5 * float(np.sum(zeta**2)),
+                rng,
+            )
 
-        sigma_eta2 = _sample_invgamma(
-            pri["a_e"] + 0.5 * T,
-            pri["b_e"] + 0.5 * float(np.sum(eta**2)),
-            rng,
-        )
+        if "sigma_eta2" not in fixed:
+            sigma_eta2 = _sample_invgamma(
+                pri["a_e"] + 0.5 * T,
+                pri["b_e"] + 0.5 * float(np.sum(eta**2)),
+                rng,
+            )
 
         # ------------------------------------------------------------
         # 5. Draw rho1, rho2 and sigma_u2.
         # ------------------------------------------------------------
-        rho1, rho2 = _sample_ar2_coeffs(
-            Nhat=Nhat,
-            sigma_state2=sigma_u2,
-            mu_rho1=pri["mu_rho1"],
-            sigma_rho1=pri["sigma_rho1"],
-            mu_rho2=pri["mu_rho2"],
-            sigma_rho2=pri["sigma_rho2"],
-            enforce_stationary=enforce_stationary,
-            rng=rng,
-            max_tries=ar2_max_tries,
-            current=(rho1, rho2),
-            stats=ar2_stats,
-            initial_lag=float(states[0, 1]),
-        )
+        if "rho" not in fixed:
+            rho1, rho2 = _sample_ar2_coeffs(
+                Nhat=Nhat,
+                sigma_state2=sigma_u2,
+                mu_rho1=pri["mu_rho1"],
+                sigma_rho1=pri["sigma_rho1"],
+                mu_rho2=pri["mu_rho2"],
+                sigma_rho2=pri["sigma_rho2"],
+                enforce_stationary=enforce_stationary,
+                rng=rng,
+                max_tries=ar2_max_tries,
+                current=(rho1, rho2),
+                stats=ar2_stats,
+                initial_lag=float(states[0, 1]),
+            )
 
         resid_u = states[1:, 0] - rho1 * states[:-1, 0] - rho2 * states[:-1, 1]
 
-        sigma_u2 = _sample_invgamma(
-            pri["a_u"] + 0.5 * resid_u.size,
-            pri["b_u"] + 0.5 * float(np.sum(resid_u**2)),
-            rng,
-        )
+        if "sigma_u2" not in fixed:
+            sigma_u2 = _sample_invgamma(
+                pri["a_u"] + 0.5 * resid_u.size,
+                pri["b_u"] + 0.5 * float(np.sum(resid_u**2)),
+                rng,
+            )
 
         # ------------------------------------------------------------
         # 6. Draw n and sigma_eps2.
@@ -794,29 +786,32 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             + float(np.sum(dNbar)) / sigma_eps2
         )
 
-        n_drift = float(
-            post_mean_n
-            + np.sqrt(post_var_n) * rng.standard_normal()
-        )
+        if "n" not in fixed:
+            n_drift = float(
+                post_mean_n
+                + np.sqrt(post_var_n) * rng.standard_normal()
+            )
 
         resid_eps = Nbar[1:] - n_drift - Nbar[:-1]
 
-        sigma_eps2 = _sample_invgamma(
-            pri["a_eps"] + 0.5 * resid_eps.size,
-            pri["b_eps"] + 0.5 * float(np.sum(resid_eps**2)),
-            rng,
-        )
+        if "sigma_eps2" not in fixed:
+            sigma_eps2 = _sample_invgamma(
+                pri["a_eps"] + 0.5 * resid_eps.size,
+                pri["b_eps"] + 0.5 * float(np.sum(resid_eps**2)),
+                rng,
+            )
 
         # ------------------------------------------------------------
         # 7. Draw measurement variance sigma_N2.
         # ------------------------------------------------------------
         resid_N = finite_N_residuals(N_obs, Nhat, Nbar)
 
-        sigma_N2 = _sample_invgamma(
-            pri["a_N"] + 0.5 * resid_N.size,
-            pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
-            rng,
-        )
+        if "sigma_N2" not in fixed:
+            sigma_N2 = _sample_invgamma(
+                pri["a_N"] + 0.5 * resid_N.size,
+                pri["b_N"] + 0.5 * float(np.sum(resid_N**2)),
+                rng,
+            )
 
         # ------------------------------------------------------------
         # 8. Draw latent states jointly by Kalman filter + FFBS.
@@ -883,6 +878,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
 
             Nbar_draws[store_idx] = Nbar
             Nhat_draws[store_idx] = Nhat
+            nhat_lag_draws[store_idx] = float(states[0, 1])
             kappa_t_draws[store_idx] = kappa_t / KAPPA_SCALE
 
             store_idx += 1
@@ -919,12 +915,18 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             "Nbar": Nbar_draws,
             "Nhat": Nhat_draws,
             "kappa_t": kappa_t_draws,
+            **(
+                {"Nhat_lag": nhat_lag_draws}
+                if bool(_getd(opts, "return_state_lag", False))
+                else {}
+            ),
         },
         "priors": priors or {},
         "opts": opts,
         "model": {
             "N_measurement_error": True,
             "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + measurement_error_t",
+            "state_sampler": "joint_ffbs",
             "theta_sampled": False,
             "state_vector": "[Nhat_t, Nhat_{t-1}, Nbar_t]'",
             "kappa_scale": KAPPA_SCALE,

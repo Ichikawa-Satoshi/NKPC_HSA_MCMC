@@ -483,7 +483,7 @@ def _run_sampler(
     ar2_max_tries: int = 2000,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     from nkpc_hsa.models.ces import func_nkpc_ces
-    from nkpc_hsa.models.hsa_const_theta import func_nkpc_hsa_full_static_theta
+    from nkpc_hsa.models.hsa_const_theta import func_nkpc_hsa_const_theta
     from nkpc_hsa.models.hsa_dynamic import func_nkpc_hsa_decomp
     from nkpc_hsa.models.hsa_full import func_nkpc_hsa_full
     from nkpc_hsa.models.hsa_steady import func_nkpc_hsa_decomp_tv_kappa_noerror
@@ -493,7 +493,9 @@ def _run_sampler(
         "hsa_steady": func_nkpc_hsa_decomp_tv_kappa_noerror,
         "hsa_dynamic": func_nkpc_hsa_decomp,
         "hsa_full": func_nkpc_hsa_full,
-        "hsa_const_theta": func_nkpc_hsa_full_static_theta,
+        # gamma = 0 makes the joint state linear-Gaussian, so const-theta uses the
+        # exact joint FFBS rather than hsa_full's alternating conditional blocks.
+        "hsa_const_theta": func_nkpc_hsa_const_theta,
     }
     if model not in funcs:
         raise ValueError(f"Unknown model: {model}")

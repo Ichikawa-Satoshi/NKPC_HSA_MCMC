@@ -1,11 +1,35 @@
+"""DEPRECATED thin sampler wrappers.
+
+Retained only so that archived notebooks keep importing. Nothing in the active
+pipeline uses this module: production estimation goes through
+``nkpc_hsa.inference.wrappers.run_model``.
+
+History / why this is deprecated rather than merely unused. This module used to
+carry its own ``_prior_specs_to_dict`` prior mapper, a second implementation
+alongside the authoritative ``nkpc_hsa.models.common.prior_specs_to_internal``.
+It silently dropped ``theta_0``, ``gamma``, ``n`` and *every* inverse-gamma
+hyperparameter, so a caller passing the project's own ``priors_baseline.yaml``
+would have received the samplers' hard-coded fallbacks -- among them
+``b_u = b_eps = b_N = 2.0`` instead of the configured ``0.02 / 0.01 / 0.01``,
+i.e. the two-orders-of-magnitude state-variance error that the July 2026
+revision had already fixed once. The duplicate mapper is gone; this module now
+delegates to the single authoritative implementation.
+
+A second trap remains inherent to these wrappers and is why they are not
+recommended: ``_transform_N_series`` applies the plain ``100*log(N)``
+transform, not the project default ``log100_centered10``. Coefficient units
+from these wrappers are therefore NOT comparable with the production runs.
+"""
+
 from __future__ import annotations
 
 import inspect
+import warnings
 from typing import Any, Mapping, Optional
 
 import numpy as np
 
-KAPPA_SCALE = 100.0
+from nkpc_hsa.models.common import KAPPA_SCALE, prior_specs_to_internal
 
 try:
     from .ces import func_nkpc_ces
@@ -18,32 +42,22 @@ except ImportError:  # pragma: no cover
     from nkpc_hsa.gibbs.hsa_steady import func_nkpc_hsa_decomp_tv_kappa_noerror, func_nkpc_hsa_decomp_tv_theta_kappa
     from nkpc_hsa.gibbs.hsa_full import func_nkpc_hsa_full
 
-def _prior_specs_to_dict(prior_specs: Optional[Mapping[str, tuple[float, float]]]) -> dict[str, float]:
-    """Convert physical-unit kappa priors to sampler-internal units."""
-    specs = dict(prior_specs or {})
-    out: dict[str, float] = {}
-    if "alpha" in specs:
-        out["mu_alpha"], out["sigma_alpha"] = specs["alpha"]
-    if "kappa" in specs:
-        mu, sigma = specs["kappa"]
-        out["mu_kappa"], out["sigma_kappa"] = KAPPA_SCALE * mu, KAPPA_SCALE * sigma
-    if "kappa_0" in specs:
-        mu, sigma = specs["kappa_0"]
-        out["mu_kappa_0"], out["sigma_kappa_0"] = KAPPA_SCALE * mu, KAPPA_SCALE * sigma
-    if "delta" in specs:
-        mu, sigma = specs["delta"]
-        out["mu_delta"], out["sigma_delta"] = KAPPA_SCALE * mu, KAPPA_SCALE * sigma
-    if "theta" in specs:
-        out["mu_theta"], out["sigma_theta"] = specs["theta"]
-    if "phi_1" in specs:
-        out["mu_phi_1"], out["sigma_phi_1"] = specs["phi_1"]
-    if "rho_1" in specs:
-        out["mu_rho1"], out["sigma_rho1"] = specs["rho_1"]
-    if "rho_2" in specs:
-        out["mu_rho2"], out["sigma_rho2"] = specs["rho_2"]
-    if "rho" in specs:
-        out["mu_lambda"], out["sigma_lambda"] = specs["rho"]
-    return out
+def _prior_specs_to_dict(prior_specs: Optional[Mapping[str, Any]]) -> dict[str, Any]:
+    """Deprecated alias for the authoritative prior mapper.
+
+    Delegates to ``nkpc_hsa.models.common.prior_specs_to_internal`` so there is
+    exactly one prior-mapping implementation in the project. The previous
+    hand-rolled version silently dropped theta_0, gamma, n and every
+    inverse-gamma hyperparameter; see the module docstring.
+    """
+    warnings.warn(
+        "nkpc_hsa.gibbs.gibbs_wrappers is deprecated; use "
+        "nkpc_hsa.inference.wrappers.run_model (priors are mapped by "
+        "nkpc_hsa.models.common.prior_specs_to_internal).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return prior_specs_to_internal(prior_specs)
 
 
 def _transform_N_series(N: np.ndarray) -> np.ndarray:
