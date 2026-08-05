@@ -9,7 +9,7 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
 from nkpc_hsa.inference.model_comparison import model_comparison_table, save_model_comparison
 
 

@@ -6,13 +6,13 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.prior_robustness import (
     prior_robustness_table,
     run_prior_robustness,
     save_prior_robustness_overlays,
 )
-from nkpc_hsa.report.tables import write_latex_fragment
+from nkpc_hsa.reporting.tables import write_latex_fragment
 
 
 def main() -> None:
@@ -96,18 +96,18 @@ def main() -> None:
         spec_dir.mkdir(parents=True, exist_ok=True)
         spec_table = table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]})
         spec_table.to_csv(spec_dir / "prior_robustness.csv", index=False)
-        write_latex_fragment(spec_table, ROOT / "results" / "tables" / data_spec_name / "prior_robustness.tex")
+        write_latex_fragment(spec_table, ROOT / "results" / "prior_robustness" / data_spec_name / "prior_robustness.tex")
     table = pd.concat(all_tables, ignore_index=True) if all_tables else pd.DataFrame()
     table.to_csv(out_dir / "prior_robustness.csv", index=False)
-    (ROOT / "results" / "tables").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "tables" / "prior_robustness.csv", index=False)
+    (ROOT / "results" / "prior_robustness").mkdir(parents=True, exist_ok=True)
+    table.to_csv(ROOT / "results" / "prior_robustness" / "prior_robustness.csv", index=False)
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]}),
-        ROOT / "results" / "tables" / "prior_robustness.tex",
+        ROOT / "results" / "prior_robustness" / "prior_robustness.tex",
     )
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]}),
-        ROOT / "results" / "tables" / "prior_sensitivity.tex",
+        ROOT / "results" / "prior_robustness" / "prior_sensitivity.tex",
     )
 
 

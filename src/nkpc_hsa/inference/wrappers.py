@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from nkpc_hsa.data.competition import (
+from nkpc_hsa.dataprep.competition import (
     CompetitionObservation,
     build_competition_observation,
     competition_observation_from_array,
@@ -20,8 +20,8 @@ from nkpc_hsa.data.competition import (
     pchip_interpolate_annual_q4,
     to_quarter_period_index,
 )
-from nkpc_hsa.data.load import load_processed_dataset
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM, competition_transform_note, transform_competition_series
+from nkpc_hsa.dataprep.load import load_processed_dataset
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, competition_transform_note, transform_competition_series
 from nkpc_hsa.models.common import (
     KAPPA_SCALE,
     KAPPA_UNIT_NOTE,
@@ -31,7 +31,16 @@ from nkpc_hsa.models.common import (
 from nkpc_hsa.paths import project_path
 
 
-ESTIMATION_REVISION = "2026-08-state-initial-covariance-v2"
+# Bumped when the estimation inputs or the sampler change in a way that makes older
+# runs incomparable. Every run stamps this into its metadata, and both the report
+# builder and script 13 select on it, so runs from earlier revisions stay on disk and
+# stay out of the report automatically -- that is how a superseded vintage is kept for
+# comparison rather than deleted.
+#
+# 2026-08-unrate-sa-v1  unemp_gap switched from UNRATENSA to UNRATE (seasonally
+#                       adjusted). The prior vintage,
+#                       "2026-08-state-initial-covariance-v2", is the NSA one.
+ESTIMATION_REVISION = "2026-08-unrate-sa-v1"
 
 
 @dataclass(frozen=True)
@@ -379,9 +388,9 @@ def _write_run_data_model_artifacts(
     data_spec: Mapping[str, Any] | None,
     competition_context: Mapping[str, Any],
 ) -> None:
-    from nkpc_hsa.report.data_model_report import write_data_model_report
-    from nkpc_hsa.report.estimation_results import write_estimation_results_report
-    from nkpc_hsa.report.figures import plot_competition_path_comparison
+    from nkpc_hsa.reporting.data_model_report import write_data_model_report
+    from nkpc_hsa.reporting.estimation_results import write_estimation_results_report
+    from nkpc_hsa.reporting.figures import plot_competition_path_comparison
 
     model = str(metadata.get("model", ""))
     data_spec_dict = dict(data_spec or {})

@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from nkpc_hsa.data.build import add_hp_output_gap, add_labor_share_gap, hp_filter_series, load_labor_share_gap
-from nkpc_hsa.data.transforms import transform_competition_series
+from nkpc_hsa.dataprep.build import add_hp_output_gap, add_labor_share_gap, hp_filter_series, load_labor_share_gap
+from nkpc_hsa.dataprep.transforms import transform_competition_series
 
 
 def test_n_transform_default_centers_and_scales_log100() -> None:

@@ -1,7 +1,7 @@
 # Data dictionary
 
-Source of truth: `src/nkpc_hsa/data/func_data_build.py`, `src/nkpc_hsa/data/build.py`,
-`src/nkpc_hsa/data/transforms.py`, `src/nkpc_hsa/data/competition.py`, `configs/models.yaml`.
+Source of truth: `src/nkpc_hsa/dataprep/func_data_build.py`, `src/nkpc_hsa/dataprep/build.py`,
+`src/nkpc_hsa/dataprep/transforms.py`, `src/nkpc_hsa/dataprep/competition.py`, `configs/models.yaml`.
 Generated dataset: `data/processed/model_ready.csv` (451 rows; the estimation sample is the
 complete-case subset, **T = 124**, 1982Q1–2012Q4).
 
@@ -41,7 +41,7 @@ That is why every specification has T = 124 even though `model_ready.csv` has 45
 | **Economic meaning** | headline consumer-price inflation, the left-hand side of the NKPC |
 
 ⚠️ **Overlapping observations.** `π_t` is a *four-quarter* change sampled *quarterly*, so `π_t`
-and `π_{t-1}` share three of four months by construction. Every model's inflation-equation
+and `π_{t-1}` share three of four quarters by construction. Every model's inflation-equation
 likelihood nevertheless treats the residual `η_t` as i.i.d. Gaussian. This is a property of the
 data construction, not of the samplers; it is documented here because it is invisible from the
 sampler code alone.
@@ -91,8 +91,9 @@ available. Report §2 states this.
 |---|---|
 | **Symbol** | `x_t = u*_t − u_t` |
 | **Code name** | `unemp_gap`, lag `unemp_gap_prev` |
-| **Source** | `data/raw/unemp_gap/NROU.csv` (CBO natural rate) and `UNRATENSA.csv` (unemployment, NSA) |
-| **Construction** | `tt_gap["unemp_gap"] = tt_gap["NROU"] - tt_gap["UNRATENSA"]` — `func_data_build.py:222`, after `resample("QE").mean()` |
+| **Source** | `data/raw/unemp_gap/NROU.csv` (CBO natural rate) and `UNRATE.csv` (unemployment, **seasonally adjusted**) |
+| **Construction** | `tt_gap["unemp_gap"] = tt_gap["NROU"] - tt_gap["UNRATE"]` — `func_data_build.py:231`, after `resample("QE").mean()` |
+| **Seasonal adjustment** | Must be `UNRATE`, not `UNRATENSA`. `NROU` is a smooth trend with no seasonal of its own, so differencing it against the unadjusted rate leaves the unemployment seasonal in the gap: over 1982–2012 the NSA version has a 0.76-point peak-to-trough quarterly swing (F = 31.5, p = 4.5e-15), correlating −0.9998 with the raw `UNRATENSA` seasonal — nothing cancels. Every inflation series here is a four-quarter change, so the left-hand side carries no seasonal to match it and that component is pure measurement error in `x_t`, attenuating `κ`. The SA series leaves a swing of 0.02 (F = 0.03). `UNRATENSA.csv` is retained in `data/raw/` but is no longer read. |
 | **Units** | percentage points of unemployment |
 | **Sign convention** | **`u* − u`, i.e. the NEGATIVE unemployment gap.** Positive in booms, negative in slumps (≈ −4 in 2009). Co-moves positively with output gaps. A **positive** `κ` is therefore a conventionally-signed downward-sloping Phillips curve. |
 | **Used in** | `unemployment_gap`, `unemployment_gap_core`, `unemployment_gap_ppi` (+ TNIC variants) |
@@ -107,7 +108,7 @@ column `cycle` — a pre-computed Beveridge–Nelson decomposition of real GDP
 ### HP output gap
 
 `output_gap_HP`, lag `output_gap_HP_prev`. Constructed **inside** this repo:
-`add_hp_output_gap` (`src/nkpc_hsa/data/build.py:49-70`) applies a λ=1600 HP filter to
+`add_hp_output_gap` (`src/nkpc_hsa/dataprep/build.py:49-70`) applies a λ=1600 HP filter to
 `100 * output`, where `output = log(GDPC1_original_series * 0.01)`
 (`func_data_build.py:229`). The ×100 is explicit so HP and BN share 100-log-point units. The
 filter runs separately on each contiguous finite block (`hp_filter_series`, `build.py:26-47`), so

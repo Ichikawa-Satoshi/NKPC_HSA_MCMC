@@ -2,7 +2,7 @@
 
 **What this is.** A complete, code-verified description of what the production estimation code
 actually computes. The repository is the source of truth. Where the code and the report
-(`paper/nkpc_hsa_report.tex`) disagree, both are shown and the discrepancy is labelled; the
+(`report/nkpc_hsa_report.tex`) disagree, both are shown and the discrepancy is labelled; the
 documentation follows the **code**.
 
 **Companion documents**
@@ -40,10 +40,10 @@ wrappers.run_model(model, …)
 results/runs/<model>_<spec>_<prior>_<run_id>/{posterior.nc, metadata.json, priors.json}
     │  scripts/12_build_cpi_ppi_report.load_report_runs   (one call per observation design)
     ▼
-results/tables/cpi_ppi_report/             interpolated (PCHIP) tables
-results/tables/cpi_ppi_report/annual_q4/   mixed-frequency tables  ← MAIN results
+report/generated/tables/             interpolated (PCHIP) tables
+report/generated/tables/annual_q4/   mixed-frequency tables  ← MAIN results
     ▼
-paper/nkpc_hsa_report.tex
+report/nkpc_hsa_report.tex
     §4-§6, §9-§10 and Appendix A/C  read  annual_q4/   (main)
     §7 and Appendix B               read  the base dir (comparison)
 
@@ -135,7 +135,7 @@ and the state block reflects the **current** iteration's `φ_1`.
 
 **Mathematical form**  `N^obs_t = (100 log N_t − mean_t[100 log N_t]) / 10`
 
-**Actual code** (`data/transforms.py:44-46`)
+**Actual code** (`dataprep/transforms.py:44-46`)
 ```python
 if transform == "log100_centered10":
     raw = 100.0 * np.log(arr)
@@ -961,7 +961,7 @@ The prior comes from the run's own `priors.json`, injected as `idata.attrs["run_
 
 ### Economic magnitude
 The report's "start-to-end response differs by about 0.126 point" (§10) is a **hard-coded literal**
-in `paper/nkpc_hsa_report.tex`, not a macro. The macro-driven components are
+in `report/nkpc_hsa_report.tex`, not a macro. The macro-driven components are
 `\CoreUnempKappaStart` (+0.120) and `\CoreUnempKappaEnd` (−0.005), whose difference is 0.125.
 
 ---
@@ -976,7 +976,7 @@ See `docs/code_equation_crosswalk.md`.
 
 | Parameter | Appears in | Identifying variation | Posterior dependence / confounding |
 |---|---|---|---|
-| **α** | `α a_t` | covariance of `y_t` with `π_{t−1} − E_tπ_{t+1}` | Inflated by construction: `π` is a 4-quarter change sampled quarterly, so `π_t` and `π_{t−1}` overlap in 3 of 4 months. α ≈ 0.79 is partly a measurement artifact. |
+| **α** | `α a_t` | covariance of `y_t` with `π_{t−1} − E_tπ_{t+1}` | Inflated by construction: `π` is a 4-quarter change sampled quarterly, so `π_t` and `π_{t−1}` overlap in 3 of 4 quarters. α ≈ 0.79 is partly a measurement artifact. |
 | **κ / κ₀** | `κ x_t` | covariance of the inflation residual with `x_t` | **corr(mean N̄, κ₀) ≈ −0.55.** κ₀ is the slope at `N̄ = 0`, and the N̄ *level* is pinned largely by the `s₀ ~ N(0,10I)` prior, not by data. So κ₀ is identified only up to that normalisation. |
 | **δ** | `δ x_t N̄_t` | covariance of the inflation residual with the **interaction** `x_t·N̄_t`, given `a_t` and `x_t` | **corr(mean N̄, δ) ≈ −0.13** — a level shift in N̄ moves κ₀, not δ. This is why δ is the robust parameter. But `N̄_t` is near-collinear with a linear trend, so δ cannot be separated from anything else trending over 1982–2012 (report §8 says this). |
 | **θ / θ₀** | `−θ N̂_t` | covariance of the inflation residual with the *cycle* `N̂_t` | `N̂` is itself barely identified: corr(N̄₀, N̂₀) ≈ −0.999, and its dynamics change completely between observation schemes (ρ₁ ≈ 1.80 under PCHIP vs ≈ 0.20 under annual-Q4). Anything loading on `N̂` inherits that. Theory implies **θ > 0**; the report states the predicted sign for δ but never for θ. |
@@ -1015,7 +1015,10 @@ and leaves the interaction `x_t·N̄_t` unchanged. Under PCHIP the posterior mea
 configs/
   models.yaml ────────────► config.load_model_config / configured_data_specs
   priors_*.yaml ──────────► models.common.prior_specs_to_internal ──► every sampler
-  paths.yaml, periods*.yaml
+  periods.yaml ───────────► inference.period_robustness (subsample windows)
+  # paths.yaml and periods_tnic.yaml are gone: nothing read them, and paths.yaml's
+  # entries had gone stale (it still pointed at reports/main.tex and results/tables/).
+  # Output locations are module-level constants in the scripts that write them.
 
 src/nkpc_hsa/
   paths.py, config.py
@@ -1053,13 +1056,22 @@ src/nkpc_hsa/
     prior_sensitivity.py   calls run_model (:38)  — re-estimates under each prior set
     period_robustness.py   calls run_model (:124) — subsample re-estimation
     diagnostics.py, model_comparison.py, identification.py, prior_robustness.py
-  report/
+  reporting/
     cpi_ppi_spec.py        MODEL_ORDER, INFLATION_SPECS, report_run_keys()
-    tables.py, figures.py, latex.py, estimation_results.py, data_model_report.py
+    tables.py, figures.py, estimation_results.py, data_model_report.py
+    # latex.py is gone. It generated the superseded main.tex report and defaulted
+    # to paper/main.tex and results/report/, none of which exist; the fragments it
+    # \input-ed were deleted with scripts/07 and 08. Everything the surviving
+    # report needs is written by scripts/12 and the make_* scripts instead.
 
 scripts/
   # --- pipeline ---
-  01_build_data.py … 11_additional_report_evidence.py   data, estimation, figures
+  01_build_data.py … 06_model_comparison.py    data, estimation, robustness, comparison
+  09_identification_diagnostics.py
+  11_additional_report_evidence.py   -> results/evidence/tables/report_additions/; the report quotes
+                                     these numbers in prose rather than \input-ing them
+  # 07, 08 and 10 are gone: they built the superseded report (main.tex) and the HTML
+  # edition. The deliverable is report/nkpc_hsa_report.{tex,pdf} only.
   12_build_cpi_ppi_report.py  ★ load_report_runs, diagnostics, all table builders
   13_estimate_cpi_ppi_report.py    estimation driver (design default from models.yaml)
   make_headline_results_table.py   headline_results / ppi_results / model_comparison_unemp,
@@ -1069,21 +1081,35 @@ scripts/
   # --- estimation re-runs (each writes new run dirs; nothing is overwritten) ---
   rerun_hsa_full_particle_gibbs.py   all 30 hsa_full cells, Particle Gibbs, both designs
   rerun_const_theta_joint_ffbs.py    all 30 const-theta cells, exact joint FFBS
+  rerun_hsa_steady_no_inertia.py     all 9 annual-Q4 cells under the alpha == 0 restriction;
+                                     written with constraint_spec = "alpha_zero" so
+                                     load_report_runs cannot select them
   # --- model comparison / evidence ---
   predictive_comparison.py         prequential LPD1 + WAIC + PSIS-LOO + the plug-in score,
                                    both designs; CES shared across designs
   chib_marginal_likelihood.py      corrected conditional ML driver -> gibbs/conditional_ml.py
   appendix_particle_gibbs_hsa_full.py   PG validation / pilot / production summaries
-  # --- diagnostics for this revision's changes ---
-  const_theta_joint_ffbs_pilot.py  old-vs-new const-theta gate (run before the re-run)
-  prior_decomposition_rho_delta.py delta-prior x AR(2)-prior factorial (§J, §N)
-  fix_attribution.py               attributes each changed number to T1/T2/T3
-  report_artifact_diff.py          before/after artifact diff vs results/_review_baseline
-  # --- retired no-ops ---
-  build_english_tables.py          [RETIRED: tables are English at source]
-  appendix_pg_full_runs.py         [RETIRED: Particle Gibbs is the dispatched sampler]
-  appendix_pg_full_tables.py       [RETIRED: no table override step exists]
 ```
+
+Two groups of scripts that earlier revisions listed here are no longer under `scripts/`.
+
+**Deleted.** `build_english_tables.py`, `appendix_pg_full_runs.py` and
+`appendix_pg_full_tables.py` had already been reduced to no-op stubs — the tables are
+English at source, and Particle Gibbs is the dispatched sampler rather than a monkeypatch —
+so the stubs themselves were removed.
+
+**Moved to `archive/legacy_scripts/`** (git-ignored; nothing in `src/` or `scripts/` imports
+them). These drove the review of this revision rather than any artifact in the paper; no
+output of theirs is cited by `report/nkpc_hsa_report.tex`, which is what distinguishes them
+from the re-run drivers above. Their outputs moved with them, to
+`archive/legacy_results/`:
+
+| Script | Output | Purpose |
+|---|---|---|
+| `const_theta_joint_ffbs_pilot.py` | `const_theta_pilot/` | old-vs-new const-theta gate, run before the re-run |
+| `prior_decomposition_rho_delta.py` | `prior_decomposition/` | δ-prior × AR(2)-prior factorial |
+| `fix_attribution.py` | — | attributes each changed number to T1/T2/T3 |
+| `report_artifact_diff.py` | `_review_baseline/` | before/after artifact diff |
 
 ★ = the two files a reader should open first.
 
@@ -1201,7 +1227,7 @@ Both sides shown; the documentation follows the code.
 | 4 | headline CPI and PPI use `pct_yoy`; core CPI uses `log_yoy` | not mentioned | ⚠️ **open** — `data_dictionary.md` |
 | 5 | `λ_eζ` and `s₀` priors are hard-coded and identical across baseline/weak/tight | Table 3 lists `λ_eζ ~ N(0,0.5²)` among the "baseline priors" without saying it is not varied | ⚠️ **open** — §J here |
 | 6 | The "0.126" economic magnitude is a hard-coded literal; the macros give 0.120 − (−0.005) = 0.125 | §10 states "about 0.126 point" | ⚠️ **cosmetic** — §L here |
-| 7 | `π_t` is a four-quarter change sampled quarterly, so `π_t` and `π_{t−1}` overlap in three months; the likelihood assumes i.i.d. `η_t` | not mentioned | ⚠️ **open** — `data_dictionary.md`, §N |
+| 7 | `π_t` is a four-quarter change sampled quarterly, so `π_t` and `π_{t−1}` overlap in three quarters; the likelihood assumes i.i.d. `η_t` | not mentioned | ⚠️ **open** — `data_dictionary.md`, §N |
 
 None of these was silently reconciled.
 

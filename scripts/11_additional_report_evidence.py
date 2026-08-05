@@ -12,8 +12,10 @@ from _bootstrap import ROOT
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 
 DATA = ROOT / "data" / "processed" / "model_ready.csv"
-TABLE_DIR = ROOT / "results" / "tables" / "report_additions"
-FIGURE_DIR = ROOT / "results" / "figures" / "report"
+# Supporting evidence, not report inputs: the paper quotes these numbers in prose but
+# never \input-s them, so they live under results/evidence/ rather than report/generated/.
+TABLE_DIR = ROOT / "results" / "evidence" / "tables" / "report_additions"
+FIGURE_DIR = ROOT / "results" / "evidence" / "figures"
 
 
 def _current_posterior() -> Path:

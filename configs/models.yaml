@@ -17,10 +17,11 @@ defaults:
     frequency: annual_q4
     annual_timing: q4
   covariance_structure: e_zeta_only
-  # Particle count for the hsa_full Particle-Gibbs state update. The pilot
-  # (results/appendix_particle_gibbs/tables/pilot.json) shows ess-per-particle
-  # flat at ~0.38 from 128 to 512, i.e. returns had not begun to diminish;
-  # 512 is the operating point, not a demonstrated optimum.
+  # Particle count for the hsa_full Particle-Gibbs state update. A pilot over
+  # 128/256/512 particles found ess-per-particle flat at ~0.38 across the range,
+  # i.e. returns had not begun to diminish; 512 is the operating point, not a
+  # demonstrated optimum. Re-run scripts/appendix_particle_gibbs_hsa_full.py
+  # pilot to reproduce the sweep.
   n_particles: 512
   enforce_stationary: true
   ar2_max_tries: 2000

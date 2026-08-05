@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 
 from nkpc_hsa.gibbs.common.competition import finite_N_residuals
-from nkpc_hsa.data.competition import build_competition_observation, pchip_interpolate_annual_q4
+from nkpc_hsa.dataprep.competition import build_competition_observation, pchip_interpolate_annual_q4
 from nkpc_hsa.inference.wrappers import run_model
-from nkpc_hsa.report.data_model_report import write_data_model_report
-from nkpc_hsa.report.figures import plot_competition_path_comparison
+from nkpc_hsa.reporting.data_model_report import write_data_model_report
+from nkpc_hsa.reporting.figures import plot_competition_path_comparison
 
 
 def test_annual_q4_alignment() -> None:

@@ -10,9 +10,8 @@ from nkpc_hsa.inference.period_robustness import apply_period, run_period_robust
 from nkpc_hsa.inference.model_comparison import model_comparison_table
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.report.latex import write_default_report
-from nkpc_hsa.report.tables import write_latex_fragment
-from nkpc_hsa.report.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
+from nkpc_hsa.reporting.tables import write_latex_fragment
+from nkpc_hsa.reporting.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
 
 
 def test_latex_table_generation(tmp_path) -> None:
@@ -21,13 +20,6 @@ def test_latex_table_generation(tmp_path) -> None:
     text = out.read_text(encoding="utf-8")
     assert "\\begin{tabular}" in text
     assert "alpha" in text
-
-
-def test_report_source_has_expected_paths(tmp_path) -> None:
-    tex = write_default_report(tmp_path / "main.tex")
-    text = tex.read_text(encoding="utf-8")
-    assert "../tables/result_blocks.tex" in text
-    assert "prior specification, and sample period" in text
 
 
 def test_output_gap_hp_core_is_configured() -> None:

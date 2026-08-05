@@ -5,7 +5,7 @@ from typing import Mapping
 
 import pandas as pd
 
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
 from nkpc_hsa.paths import project_path
 

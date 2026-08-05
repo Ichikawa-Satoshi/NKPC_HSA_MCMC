@@ -6,7 +6,7 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
 
 

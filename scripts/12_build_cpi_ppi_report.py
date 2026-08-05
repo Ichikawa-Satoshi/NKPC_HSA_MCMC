@@ -16,7 +16,7 @@ from scipy.stats import gaussian_kde, norm
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
-from nkpc_hsa.report.cpi_ppi_spec import (
+from nkpc_hsa.reporting.cpi_ppi_spec import (
     annual_q4_run_keys,
     INFLATION_SPECS,
     MODEL_LABELS,
@@ -27,8 +27,8 @@ from nkpc_hsa.report.cpi_ppi_spec import (
 )
 
 
-OUT_TABLES = ROOT / "results" / "tables" / "cpi_ppi_report"
-OUT_FIGURES = ROOT / "results" / "figures" / "cpi_ppi_report"
+OUT_TABLES = ROOT / "results" / "tables"
+OUT_FIGURES = ROOT / "results" / "figures"
 RHAT_LIMIT = 1.01
 ESS_LIMIT = 400.0
 # Minimum effective number of draws contributing to the Rao-Blackwellised
@@ -178,7 +178,7 @@ def load_report_runs(
     production run directory. ``hsa_full`` is estimated by Particle Gibbs in that
     directory (``run_model`` dispatches to the Particle-Gibbs sampler), so no
     out-of-band merge is needed: an earlier revision routed the PCHIP
-    ``hsa_full`` cells through ``results/appendix_particle_gibbs/runs`` because
+    ``hsa_full`` cells through ``results/evidence/runs`` because
     Particle Gibbs was only reachable via a monkeypatch. Any script that builds a
     report table calls this rather than ``_load_runs`` directly.
     """
@@ -321,7 +321,18 @@ def _sigma_eta2_draws(idata) -> np.ndarray | None:
     return None
 
 
-def _rao_blackwell_ordinate(idata, parameter: str) -> float | None:
+def _rao_blackwell_terms(idata, parameter: str) -> np.ndarray | None:
+    """Per-draw mixture components of the Rao-Blackwellised ordinate at zero.
+
+    Split out from ``_rao_blackwell_ordinate`` so the report can also describe
+    how concentrated the average is, which is what justifies preferring it to a
+    kernel estimate. Returns ``None`` whenever the model or the run is missing
+    something the conditional needs.
+    """
+    return _rao_blackwell_ordinate(idata, parameter, _return_terms=True)
+
+
+def _rao_blackwell_ordinate(idata, parameter: str, _return_terms: bool = False):
     """Posterior density of ``parameter`` at zero, without density estimation.
 
     The Gibbs update for the inflation coefficients is an exact Gaussian
@@ -388,6 +399,8 @@ def _rao_blackwell_ordinate(idata, parameter: str) -> float | None:
         b1 = V1 @ (X.T @ y_adj / sigma_eta2[s] + V0_inv @ prior_mean)
         terms[s] = float(norm.pdf(0.0, loc=b1[index], scale=np.sqrt(V1[index, index])))
 
+    if _return_terms:
+        return terms
     total = float(terms.sum())
     if not np.isfinite(total) or total <= 0.0:
         return None
@@ -553,9 +566,47 @@ def _has_cjk(text: str) -> bool:
     return any("\u3040" <= ch <= "\u30ff" or "\u4e00" <= ch <= "\u9fff" for ch in text)
 
 
+# Coefficient names as the reader meets them in the equations. Tables used to
+# emit the bare identifier inside math mode -- "$kappa$" is k*a*p*p*a, five
+# italic variables multiplied together, which TeX typesets without complaint. The
+# body text said kappa_t = kappa_0 + delta*Nbar_t in symbols while the tables
+# under it said "kappa" and "delta" in words.
+_SYMBOL = {
+    "kappa": r"$\kappa$",
+    "kappa_0": r"$\kappa_0$",
+    "kappa_t": r"$\kappa_t$",
+    "delta": r"$\delta$",
+    "theta": r"$\theta$",
+    "theta_0": r"$\theta_0$",
+    "theta_t": r"$\theta_t$",
+    "gamma": r"$\gamma$",
+    "alpha": r"$\alpha$",
+    "n": "$n$",
+}
+# Column headings, which are phrases rather than bare names.
+_COLUMN_SYMBOL = {
+    "delta": r"$\delta$",
+    "gamma": r"$\gamma$",
+    "BF10": r"$\mathrm{BF}_{10}$",
+    "BF10(delta)": r"$\mathrm{BF}_{10}(\delta)$",
+    "kappa path": r"$\kappa_t$ path",
+    "CES kappa": r"CES $\kappa$",
+    "HSA kappa": r"HSA $\kappa$",
+    "max Rhat": r"max $\hat R$",
+    "state max Rhat": r"state max $\hat R$",
+    "path max Rhat": r"path max $\hat R$",
+}
+
+
+def _symbol(name: str) -> str:
+    """LaTeX for a coefficient name, for use inside a table cell."""
+    return _SYMBOL.get(name, name)
+
+
 def _write_latex(df: pd.DataFrame, name: str, columns: list[str]) -> None:
     OUT_TABLES.mkdir(parents=True, exist_ok=True)
     display = df.reindex(columns=columns).copy()
+    display.columns = [_COLUMN_SYMBOL.get(c, c) for c in display.columns]
     display.to_latex(
         OUT_TABLES / f"{name}.tex",
         index=False,
@@ -806,7 +857,7 @@ def build_prior_table(runs) -> pd.DataFrame:
                         "model": MODEL_LABELS[model],
                         "inflation": inflation,
                         "prior": prior,
-                        "parameter": f"${parameter}$",
+                        "parameter": _symbol(parameter),
                         "posterior": _marked(_fmt(_summary(idata, parameter)), bool(diagnostics["converged"])),
                         "BF10": _fmt_num(_bf10(idata, parameter)),
                         "converged": bool(diagnostics["converged"]),
@@ -930,11 +981,17 @@ def build_frequency_outputs(
     build_primary_parameter_state_diagnostics(runs)
     build_group_convergence_diagnostics(runs)
     build_run_manifest(runs)
+    build_delta_grid_table(runs)
     write_result_macros(runs, command_prefix=command_prefix)
     save_delta_forest(hsa_table)
     save_output_gap_delta_forest(hsa_table)
     save_additional_parameter_forests(runs)
     save_kappa_path_comparison(runs)
+    save_slope_prior_vs_posterior(runs)
+    save_prior_vs_posterior_grid(
+        runs,
+        design_label="mixed-frequency" if command_prefix == "Annual" else "interpolated",
+    )
     save_main_competition_decomposition(runs)
 
 
@@ -996,7 +1053,335 @@ def write_result_macros(
         _, idata = item
         lines.append(rf"\providecommand{{\{command_prefix}{prefix}Delta}}{{{_fmt(_summary(idata, 'delta'))}}}")
         lines.append(rf"\providecommand{{\{command_prefix}{prefix}DeltaBF}}{{{_fmt_num(_bf10(idata, 'delta'))}}}")
+    lines.extend(_convergence_macros(runs, command_prefix))
+    lines.extend(_state_space_macros(runs, command_prefix))
+    lines.extend(_variant_macros(runs, command_prefix))
+    lines.extend(_sddr_reliability_macros(runs, command_prefix))
     target = OUT_TABLES / filename
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return target
+
+
+# ---------------------------------------------------------------------------
+# Prose macros.
+#
+# Every number the report states in running text comes from one of the builders
+# below. Nothing quantitative is typed into the .tex by hand: a re-estimation
+# that moves a number moves the prose with it, which is what stopped the body
+# text from silently disagreeing with the tables after the UNRATE switch.
+# Specification constants (prior scales, the Rhat/ESS thresholds, the KAPPA_SCALE
+# rescale) are deliberately NOT macros -- they are inputs, not results, and
+# writing them literally is what makes the .tex readable.
+# ---------------------------------------------------------------------------
+
+
+def _param_fails(idata, name: str) -> bool | None:
+    """Whether one scalar misses the acceptance rule on its own diagnostics."""
+    if name not in idata.posterior:
+        return None
+    values = idata.posterior[name]
+    rhat = float(np.nanmax(np.asarray(az.rhat(values), dtype=float)))
+    ess = float(np.nanmin(np.asarray(az.ess(values, method="bulk"), dtype=float)))
+    return (rhat > RHAT_LIMIT) or (ess < ESS_LIMIT)
+
+
+def _steady_baseline_cells(runs) -> list:
+    """The nine HSA-steady baseline cells: three price indices x three activity gaps."""
+    out = []
+    for inflation, activity_specs in INFLATION_SPECS.items():
+        for activity, data_spec in activity_specs.items():
+            item = runs.get(("hsa_steady", data_spec, "baseline"))
+            if item is not None:
+                out.append(item[1])
+    return out
+
+
+def _convergence_macros(runs, prefix: str) -> list[str]:
+    hsa = [(key, idata) for key, (_, idata) in runs.items() if key[0] != "ces"]
+    failing = [
+        (key, _diagnostics(idata)["scalar"])
+        for key, idata in hsa
+        if not _diagnostics(idata)["scalar"]["converged"]
+    ]
+    ar2 = sum(1 for _, d in failing if d["worst_ess"] in {"rho_1", "rho_2"})
+    drift = sum(1 for _, d in failing if d["worst_ess"] == "n")
+    delta_fail = sum(1 for _, i in hsa if _param_fails(i, "delta") is True)
+    kappa0_fail = sum(1 for _, i in hsa if _param_fails(i, "kappa_0") is True)
+
+    steady = _steady_baseline_cells(runs)
+    ess = [
+        float(np.nanmin(np.asarray(az.ess(i.posterior["delta"], method="bulk"), dtype=float)))
+        for i in steady
+        if "delta" in i.posterior
+    ]
+    passing = sum(1 for i in steady if _param_fails(i, "delta") is False)
+
+    const_theta = [i for key, (_, i) in runs.items() if key[0] == "hsa_const_theta"]
+    ct_pass = sum(1 for i in const_theta if _diagnostics(i)["converged"])
+
+    out = [
+        # How many scalars the whole-run rule is a max/min over. The report leans on
+        # the contrast between that rule and the same thresholds applied to delta
+        # alone, so the width of the group has to be stated, not implied.
+        rf"\providecommand{{\ScalarParameterCount}}{{{len(SCALAR_PARAMETERS)}}}",
+        rf"\providecommand{{\{prefix}HsaCellCount}}{{{len(hsa)}}}",
+        rf"\providecommand{{\{prefix}HsaFailCount}}{{{len(failing)}}}",
+        rf"\providecommand{{\{prefix}ArTwoWorstCount}}{{{ar2}}}",
+        rf"\providecommand{{\{prefix}DriftWorstCount}}{{{drift}}}",
+        rf"\providecommand{{\{prefix}DeltaFailCount}}{{{delta_fail}}}",
+        rf"\providecommand{{\{prefix}KappaZeroFailCount}}{{{kappa0_fail}}}",
+        rf"\providecommand{{\{prefix}SteadyDeltaCellCount}}{{{len(steady)}}}",
+        rf"\providecommand{{\{prefix}SteadyDeltaPassCount}}{{{passing}}}",
+        rf"\providecommand{{\{prefix}ConstThetaCellCount}}{{{len(const_theta)}}}",
+        rf"\providecommand{{\{prefix}ConstThetaPassCount}}{{{ct_pass}}}",
+    ]
+    if ess:
+        out.append(rf"\providecommand{{\{prefix}SteadyDeltaMedianEss}}{{{_fmt_thousands(np.median(ess))}}}")
+
+    # Worst-scalar mixing of the main cell under each prior set. The report uses
+    # these to say which corner of the sweep breaks the sampler; stating it from
+    # the runs is how that claim got corrected from "tight" to "weak".
+    for prior_name in PRIOR_ORDER:
+        item = runs.get(("hsa_steady", PRIMARY_SPECS["Core CPI"], prior_name))
+        if item is None:
+            continue
+        scalar = _diagnostics(item[1])["scalar"]
+        label = prior_name.capitalize()
+        out.append(rf"\providecommand{{\{prefix}WorstEss{label}}}{{{_fmt_thousands(scalar['min_ess'])}}}")
+        out.append(rf"\providecommand{{\{prefix}WorstRhat{label}}}{{{scalar['max_rhat']:.3f}}}")
+    return out
+
+
+def _ar2_period(rho1: float, rho2: float) -> float | None:
+    """Period in quarters of the AR(2) cycle, or None when the roots are real."""
+    disc = rho1**2 + 4.0 * rho2
+    if disc >= 0.0:
+        return None
+    modulus_angle = np.arctan2(np.sqrt(-disc) / 2.0, rho1 / 2.0)
+    if modulus_angle <= 0.0:
+        return None
+    return float(2.0 * np.pi / modulus_angle)
+
+
+def _state_space_macros(runs, prefix: str) -> list[str]:
+    """Design-comparison quantities, all read off the main cell."""
+    item = runs.get(("hsa_steady", PRIMARY_SPECS["Core CPI"], "baseline"))
+    if item is None:
+        return []
+    idata = item[1]
+    post = idata.posterior
+    if not {"Nbar", "Nhat", "kappa_0", "rho_1", "rho_2", "sigma_N"}.issubset(set(post.data_vars)):
+        return []
+    mean = lambda name: float(np.asarray(post[name], dtype=float).mean())  # noqa: E731
+    rho1, rho2 = mean("rho_1"), mean("rho_2")
+    T = post["Nbar"].shape[-1]
+    nbar = np.asarray(post["Nbar"], dtype=float).reshape(-1, T)
+    nhat = np.asarray(post["Nhat"], dtype=float).reshape(-1, T)
+    kappa0 = np.asarray(post["kappa_0"], dtype=float).reshape(-1)
+
+    out = [
+        rf"\providecommand{{\{prefix}MainSigmaN}}{{{mean('sigma_N'):.3f}}}",
+        rf"\providecommand{{\{prefix}MainRhoOne}}{{{rho1:+.2f}}}",
+        rf"\providecommand{{\{prefix}MainRhoTwo}}{{{rho2:+.2f}}}",
+        rf"\providecommand{{\{prefix}MainRhoSum}}{{{rho1 + rho2:.3f}}}",
+        rf"\providecommand{{\{prefix}MainMeanReversion}}{{{1.0 - rho1 - rho2:.3f}}}",
+        rf"\providecommand{{\{prefix}MainStateCorr}}{{{np.corrcoef(nbar[:, 0], nhat[:, 0])[0, 1]:+.4f}}}",
+        rf"\providecommand{{\{prefix}MainLevelKappaCorr}}{{{np.corrcoef(nbar.mean(axis=1), kappa0)[0, 1]:+.2f}}}",
+    ]
+    period = _ar2_period(rho1, rho2)
+    if period is not None:
+        out.append(rf"\providecommand{{\{prefix}MainArTwoPeriod}}{{{period:.1f}}}")
+    path = _path_summary(idata, "kappa_t")
+    if path is not None:
+        out.append(rf"\providecommand{{\{prefix}CoreUnempKappaDrop}}{{{path['start'] - path['end']:.2f}}}")
+        # Response of inflation to a four-point negative unemployment gap at the
+        # start-of-sample slope, the illustration used in Section "Main results".
+        out.append(rf"\providecommand{{\{prefix}CoreUnempFourPointResponse}}{{{-4.0 * path['start']:+.2f}}}")
+    return out
+
+
+def _variant_macros(runs, prefix: str) -> list[str]:
+    """Prior-sweep and entry-channel numbers the prose quotes cell by cell."""
+    out: list[str] = []
+    core = PRIMARY_SPECS["Core CPI"]
+    for prior in ("weak", "tight"):
+        item = runs.get(("hsa_steady", core, prior))
+        if item is not None:
+            out.append(
+                rf"\providecommand{{\{prefix}CorePrior{prior.capitalize()}Delta}}"
+                rf"{{{_fmt(_summary(item[1], 'delta'))}}}"
+            )
+    for inflation, label in (("Headline CPI", "Headline"), ("Core CPI", "Core")):
+        item = runs.get(("hsa_const_theta", PRIMARY_SPECS[inflation], "baseline"))
+        if item is None:
+            continue
+        idata = item[1]
+        out.append(
+            rf"\providecommand{{\{prefix}ConstTheta{label}Delta}}{{{_fmt(_summary(idata, 'delta'))}}}"
+        )
+        theta = _summary(idata, "theta")
+        if theta is not None:
+            out.append(
+                rf"\providecommand{{\{prefix}ConstTheta{label}Theta}}{{{_fmt(theta)}}}"
+            )
+            out.append(
+                rf"\providecommand{{\{prefix}ConstTheta{label}ThetaProb}}{{{theta['p_gt_0']:.2f}}}"
+            )
+    # The BN output gap under core CPI is the cell whose entry-coefficient sign
+    # flips against the unemployment-gap cell; the prose contrasts the two.
+    item = runs.get(("hsa_const_theta", INFLATION_SPECS["Core CPI"]["BN output gap"], "baseline"))
+    if item is not None:
+        theta = _summary(item[1], "theta")
+        if theta is not None:
+            out.append(rf"\providecommand{{\{prefix}ConstThetaCoreBNTheta}}{{{_fmt(theta)}}}")
+            out.append(
+                rf"\providecommand{{\{prefix}ConstThetaCoreBNThetaProbNeg}}"
+                rf"{{{100.0 * (1.0 - theta['p_gt_0']):.0f}}}"
+            )
+    return out
+
+
+def _fmt_thousands(value: float) -> str:
+    return f"{int(round(float(value))):,}".replace(",", "{,}")
+
+
+def _sddr_reliability_macros(runs, prefix: str) -> list[str]:
+    """How much of the Rao-Blackwellised ordinate rests on how few draws.
+
+    The report argues that \\eqref{eq:sddr-rb} is trustworthy where a kernel
+    density estimate is not, and quotes the effective number of contributing
+    mixture components to back that up. Those figures are computed here so the
+    argument cannot drift away from the estimator it describes.
+    """
+    item = runs.get(("hsa_steady", PRIMARY_SPECS["Core CPI"], "baseline"))
+    if item is None:
+        return []
+    idata = item[1]
+    terms = _rao_blackwell_terms(idata, "delta")
+    if terms is None or terms.size == 0:
+        return []
+    total = float(terms.sum())
+    if not np.isfinite(total) or total <= 0.0:
+        return []
+    weights = terms / total
+    effective = 1.0 / float(np.sum(weights**2))
+    top3 = float(np.sort(weights)[-3:].sum()) * 100.0
+    # Monte Carlo standard error of the mean of the mixture components.
+    mcse = float(np.std(terms, ddof=1) / np.sqrt(terms.size) / (total / terms.size)) * 100.0
+    return [
+        rf"\providecommand{{\{prefix}SddrEffectiveTerms}}{{{_fmt_thousands(effective)}}}",
+        rf"\providecommand{{\{prefix}SddrTotalTerms}}{{{_fmt_thousands(terms.size)}}}",
+        rf"\providecommand{{\{prefix}SddrTopThreeShare}}{{{top3:.1f}}}",
+        rf"\providecommand{{\{prefix}SddrMcsePercent}}{{{mcse:.0f}}}",
+    ]
+
+
+def build_delta_grid_table(runs) -> pd.DataFrame:
+    """delta by activity measure x price index for the main model, with BF10.
+
+    Section "Does the time-varying slope improve fit" reads this as a single
+    grid. It used to be a hand-written tabular in the .tex filled with macros,
+    which is how its caption came to say "quarterly" while its cells were the
+    mixed-frequency numbers.
+    """
+    rows = []
+    for activity in ["Unemployment gap", "HP output gap", "BN output gap"]:
+        row = {"activity": "Negative unemployment gap" if activity == "Unemployment gap" else activity}
+        for inflation in INFLATION_SPECS:
+            item = runs.get(("hsa_steady", INFLATION_SPECS[inflation][activity], "baseline"))
+            if item is None:
+                row[inflation] = "--"
+                continue
+            _, idata = item
+            row[inflation] = f"{_fmt(_summary(idata, 'delta'))} ({_fmt_num(_bf10(idata, 'delta'))})"
+        rows.append(row)
+    table = pd.DataFrame(rows)
+    _write_latex(table, "delta_grid", ["activity"] + list(INFLATION_SPECS))
+    return table
+
+
+def write_design_comparison_table(quarterly, annual, filename: str = "pchip_vs_mixed.tex") -> Path:
+    """The side-by-side of what the interpolation changes.
+
+    Spans both designs, so like the cross-design macros it is written once from
+    main() rather than inside a per-design build.
+    """
+    def cell(runs, fn):
+        item = runs.get(("hsa_steady", PRIMARY_SPECS["Core CPI"], "baseline"))
+        return "--" if item is None else fn(item[1])
+
+    def scalars(idata):
+        post = idata.posterior
+        mean = lambda name: float(np.asarray(post[name], dtype=float).mean())  # noqa: E731
+        T = post["Nbar"].shape[-1]
+        nbar = np.asarray(post["Nbar"], dtype=float).reshape(-1, T)
+        nhat = np.asarray(post["Nhat"], dtype=float).reshape(-1, T)
+        kappa0 = np.asarray(post["kappa_0"], dtype=float).reshape(-1)
+        rho1, rho2 = mean("rho_1"), mean("rho_2")
+        period = _ar2_period(rho1, rho2)
+        return {
+            "sigma_N": f"${mean('sigma_N'):.3f}$",
+            "rho": f"${rho1:+.2f},\\,{rho2:+.2f}$",
+            "period": "--" if period is None else f"${period:.1f}$ quarters",
+            "reversion": f"${1.0 - rho1 - rho2:.3f}$",
+            "state_corr": f"${np.corrcoef(nbar[:, 0], nhat[:, 0])[0, 1]:+.4f}$",
+            "level_corr": f"${np.corrcoef(nbar.mean(axis=1), kappa0)[0, 1]:+.2f}$",
+            "delta": _fmt(_summary(idata, "delta")),
+            "kappa_path": (lambda p: "--" if p is None else f"${p['start']:+.3f} \\to {p['end']:+.3f}$")(
+                _path_summary(idata, "kappa_t")
+            ),
+        }
+
+    a, q = cell(annual, scalars), cell(quarterly, scalars)
+    labels = [
+        ("Firm-count observations used", "31 of 124", "124 of 124"),
+        (r"Estimated measurement error $\sigma_N$", a["sigma_N"], q["sigma_N"]),
+        (r"$\rho_1,\rho_2$", a["rho"], q["rho"]),
+        ("Implied AR(2) period", a["period"], q["period"]),
+        (r"Mean reversion $1-\rho_1-\rho_2$", a["reversion"], q["reversion"]),
+        (r"Posterior corr$(\bar N_0,\hat N_0)$", a["state_corr"], q["state_corr"]),
+        (r"Posterior corr$(\bar N$ level$,\kappa_0)$", a["level_corr"], q["level_corr"]),
+        (None, None, None),
+        (r"$\delta$", a["delta"], q["delta"]),
+        (r"$\kappa_t$ start $\to$ end", a["kappa_path"], q["kappa_path"]),
+    ]
+    lines = [r"\begin{tabular}{lcc}", r"\toprule",
+             r"& Mixed-frequency (main) & PCHIP-interpolated \\", r"\midrule"]
+    for name, left, right in labels:
+        lines.append(r"\midrule" if name is None else f"{name} & {left} & {right} \\\\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    target = ROOT / "results" / "tables" / "shared" / filename
+    target.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return target
+
+
+def write_cross_design_macros(*run_sets, filename: str = "cross_design_macros.tex") -> Path:
+    """Quantities defined across both observation designs at once.
+
+    The ridge diagnostic is the whole point of the PCHIP section: the weaker the
+    AR(2) mean reversion, the tighter the trend/cycle ridge. It is a correlation
+    over every estimated HSA cell in both designs, so it cannot live in a
+    per-design macro file.
+    """
+    points: list[tuple[float, float]] = []
+    for runs in run_sets:
+        for key, (_, idata) in runs.items():
+            post = idata.posterior
+            if key[0] == "ces" or not {"rho_1", "rho_2", "Nbar", "Nhat"}.issubset(set(post.data_vars)):
+                continue
+            rho1 = float(np.asarray(post["rho_1"], dtype=float).mean())
+            rho2 = float(np.asarray(post["rho_2"], dtype=float).mean())
+            T = post["Nbar"].shape[-1]
+            nbar = np.asarray(post["Nbar"], dtype=float).reshape(-1, T)
+            nhat = np.asarray(post["Nhat"], dtype=float).reshape(-1, T)
+            points.append((1.0 - rho1 - rho2, float(np.corrcoef(nbar[:, 0], nhat[:, 0])[0, 1])))
+    lines = ["% Generated by scripts/12_build_cpi_ppi_report.py; do not edit by hand."]
+    lines.append(rf"\providecommand{{\RidgeCellCount}}{{{len(points)}}}")
+    if len(points) > 2:
+        arr = np.asarray(points)
+        lines.append(rf"\providecommand{{\RidgeMechanismCorr}}{{{np.corrcoef(arr[:, 0], arr[:, 1])[0, 1]:+.2f}}}")
+    target = ROOT / "results" / "tables" / "shared" / filename
+    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return target
 
@@ -1332,38 +1717,221 @@ def save_additional_parameter_forests(runs) -> None:
         plt.close(fig)
 
 
-def save_kappa_path_comparison(runs) -> None:
-    colors = {"Headline CPI": "#4477AA", "Core CPI": "#228833", "PPI": "#CC6677"}
-    fig, ax = plt.subplots(figsize=(8.0, 4.6))
-    plotted = False
-    for inflation, data_spec in PRIMARY_SPECS.items():
-        item = runs.get(("hsa_steady", data_spec, "baseline"))
-        if item is None or "kappa_t" not in item[1].posterior:
+# Prior-vs-posterior grid. One panel column per economic quantity, not per
+# variable name: the slope level is ``kappa`` in the constant-slope models and
+# ``kappa_0`` in the time-varying ones, and the entry coefficient is ``theta`` or
+# ``theta_0``. Same object, different name, so one column each.
+_PP_PANELS: list[tuple[tuple[str, ...], str]] = [
+    (("kappa", "kappa_0"), "$\\kappa,\\kappa_0$\nslope level"),
+    (("delta",), "$\\delta$\nslope vs $\\bar N$"),
+    (("theta", "theta_0"), "$\\theta,\\theta_0$\nentry"),
+    (("gamma",), "$\\gamma$\nentry vs $\\bar N$"),
+]
+_PP_PRICE_COLORS = {"Headline CPI": "#4477AA", "Core CPI": "#228833", "PPI": "#CC6677"}
+
+
+def _prior_moments(idata, name: str) -> tuple[float, float] | None:
+    """The prior this run was actually estimated under, in physical units.
+
+    Read from the run's own saved priors rather than from ``configs/``: the
+    posterior was produced under the former, so overlaying the latter would draw
+    a prior the draws never saw. Same source the Savage-Dickey ordinate uses.
+    """
+    spec = (getattr(idata, "attrs", {}).get("run_priors", {}) or {}).get(name)
+    if spec is None:
+        return None
+    return (
+        (float(spec["mean"]), float(spec["sd"])) if isinstance(spec, dict)
+        else (float(spec[0]), float(spec[1]))
+    )
+
+
+def save_prior_vs_posterior_grid(runs, *, design_label: str) -> None:
+    """One figure per activity gap: models down the rows, coefficients across.
+
+    Reading a column shows what the model hierarchy does to a coefficient --
+    ``delta`` is nearly identical in HSA steady, const-theta and full, and
+    ``gamma`` sits on top of its own prior in every price index, which is the
+    visual form of the identification claim in the scope section.
+    """
+    for activity in ("Unemployment gap", "HP output gap", "BN output gap"):
+        nrow, ncol = len(MODEL_ORDER), len(_PP_PANELS)
+        fig, axes = plt.subplots(nrow, ncol, figsize=(13.0, 11.0))
+        drawn_any = False
+        for row, model in enumerate(MODEL_ORDER):
+            for col, (names, title) in enumerate(_PP_PANELS):
+                ax = axes[row, col]
+                prior, drawn = None, 0
+                for price, activity_specs in INFLATION_SPECS.items():
+                    item = runs.get((model, activity_specs[activity], "baseline"))
+                    if item is None:
+                        continue
+                    idata = item[1]
+                    name = next((n for n in names if n in idata.posterior), None)
+                    if name is None:
+                        continue
+                    values = _draws(idata, name)
+                    if values is None or values.size < 20 or float(np.std(values)) <= 0.0:
+                        continue
+                    if prior is None:
+                        prior = _prior_moments(idata, name)
+                    grid = np.linspace(values.min(), values.max(), 300)
+                    density = gaussian_kde(values)(grid)
+                    ax.plot(grid, density, color=_PP_PRICE_COLORS[price], lw=1.6)
+                    ax.fill_between(grid, density, color=_PP_PRICE_COLORS[price], alpha=0.13)
+                    drawn += 1
+                if not drawn:
+                    # The model restricts this coefficient away. The panel stays so
+                    # the columns line up across models.
+                    ax.text(0.5, 0.5, "—", transform=ax.transAxes, ha="center",
+                            va="center", fontsize=13, color="#CCCCCC")
+                    ax.set_xticks([])
+                else:
+                    drawn_any = True
+                    if prior is not None:
+                        lo, hi = ax.get_xlim()
+                        pad = 0.25 * (hi - lo)
+                        grid = np.linspace(lo - pad, hi + pad, 400)
+                        ax.plot(grid, norm.pdf(grid, *prior), color="#333333", lw=1.1, ls="--")
+                        ax.set_xlim(lo - 0.05 * (hi - lo), hi + 0.05 * (hi - lo))
+                    ax.axvline(0.0, color="#999999", lw=0.8, ls=":")
+                    ax.tick_params(labelsize=7.5)
+                ax.set_yticks([])
+                ax.spines[["top", "right", "left"]].set_visible(False)
+                if row == 0:
+                    ax.set_title(title, fontsize=10, pad=10)
+                if col == 0:
+                    ax.set_ylabel(MODEL_LABELS[model], fontsize=10, labelpad=10)
+        if not drawn_any:
+            plt.close(fig)
             continue
-        idata = item[1]
-        values = np.asarray(idata.posterior["kappa_t"], dtype=float)
-        paths = values.reshape(-1, values.shape[-1])
-        mean = np.nanmean(paths, axis=0)
-        lo = np.nanquantile(paths, 0.025, axis=0)
-        hi = np.nanquantile(paths, 0.975, axis=0)
-        attrs = getattr(idata, "attrs", {})
-        start = pd.Timestamp(str(attrs.get("sample_start", "1982-03-31"))).to_period("Q")
-        dates = pd.period_range(start, periods=len(mean), freq="Q").to_timestamp(how="end")
-        color = colors[inflation]
-        ax.plot(dates, mean, color=color, lw=2.0, label=inflation)
-        ax.fill_between(dates, lo, hi, color=color, alpha=0.13)
+        handles = [Line2D([], [], color=color, lw=2, label=price)
+                   for price, color in _PP_PRICE_COLORS.items()]
+        handles.append(Line2D([], [], color="#333333", lw=1.2, ls="--", label="prior"))
+        fig.legend(handles=handles, loc="lower center", ncol=4, frameon=False,
+                   fontsize=9.5, bbox_to_anchor=(0.5, -0.012))
+        fig.suptitle(
+            f"Prior vs posterior — {activity}, {design_label}, baseline priors",
+            fontsize=12.5, y=0.995,
+        )
+        fig.tight_layout(rect=(0, 0.022, 1, 0.985))
+        slug = INFLATION_SPECS["Core CPI"][activity].replace("_core", "")
+        OUT_FIGURES.mkdir(parents=True, exist_ok=True)
+        fig.savefig(OUT_FIGURES / f"prior_vs_posterior_{slug}.png", dpi=150, bbox_inches="tight")
+        plt.close(fig)
+
+
+def save_slope_prior_vs_posterior(runs) -> None:
+    """Prior against posterior for the slope level, CES kappa vs HSA steady kappa_0.
+
+    The figure the report calls ``fig:kappa_pp``. It previously existed only as a
+    PNG in the build directory with no code behind it anywhere in the history --
+    the one report input that could not be regenerated. Written here so a clean
+    rebuild produces the whole document.
+    """
+    core = PRIMARY_SPECS["Core CPI"]
+    series = [
+        ("ces", "kappa", "CES: constant $\\kappa$", "#4477AA"),
+        ("hsa_steady", "kappa_0", "HSA steady: $\\kappa_0$ at average competition", "#228833"),
+    ]
+    fig, ax = plt.subplots(figsize=(7.0, 4.2))
+    # Collect the priors per model rather than taking the first one found. The two
+    # models share a prior today, but calling it "common" without checking is how a
+    # figure comes to assert something the config no longer says.
+    priors: dict[tuple[float, float], list[str]] = {}
+    span: list[float] = []
+    plotted = False
+    for model, parameter, label, color in series:
+        item = runs.get((model, core, "baseline"))
+        if item is None:
+            continue
+        draws = _draws(item[1], parameter)
+        if draws is None or draws.size < 20 or float(np.std(draws)) <= 0.0:
+            continue
+        grid = np.linspace(draws.min(), draws.max(), 400)
+        density = gaussian_kde(draws)(grid)
+        ax.plot(grid, density, color=color, lw=2.0, label=label)
+        ax.fill_between(grid, density, color=color, alpha=0.16)
+        span += [draws.min(), draws.max()]
+        moments = _prior_moments(item[1], parameter)
+        if moments is not None:
+            priors.setdefault(moments, []).append(MODEL_LABELS[model])
         plotted = True
     if not plotted:
         plt.close(fig)
         return
-    ax.axhline(0.0, color="black", lw=0.8)
-    ax.set_ylabel(r"Implied NKPC slope $\kappa_t$")
-    ax.set_xlabel("Quarter")
-    ax.grid(alpha=0.22)
-    ax.legend(frameon=False)
+
+    # Draw the prior over a range wide enough to show its shape, not clipped to
+    # where the posterior happens to sit.
+    if priors and span:
+        lo, hi = min(span), max(span)
+        widest = max(sd for _, sd in priors)
+        centre = np.mean([mean for mean, _ in priors])
+        grid = np.linspace(min(lo, centre - 2.5 * widest), max(hi, centre + 2.5 * widest), 600)
+        shared = len(priors) == 1
+        for (mean, sd), models in priors.items():
+            who = "common" if shared else "/".join(models)
+            ax.plot(grid, norm.pdf(grid, loc=mean, scale=sd), color="#333333", lw=1.6,
+                    ls="--" if shared else ":",
+                    label=rf"{who} prior $\mathcal{{N}}({mean:g},{sd:g}^2)$")
+        ax.set_xlim(lo - 0.08 * (hi - lo), hi + 0.08 * (hi - lo))
+    ax.axvline(0.0, color="#888888", lw=1.0, ls=":")
+    ax.set_xlabel("slope (inflation points per point of the negative unemployment gap)")
+    ax.set_ylabel("density")
+    ax.legend(frameon=False, fontsize=9)
+    ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
-    fig.savefig(OUT_FIGURES / "kappa_t_unemployment_by_inflation.png", dpi=220, bbox_inches="tight")
+    OUT_FIGURES.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT_FIGURES / "pp_kappa_ces_vs_steady.png", dpi=200)
     plt.close(fig)
+
+
+def save_kappa_path_comparison(runs) -> None:
+    """Implied slope path by price index, one figure per activity measure.
+
+    The unemployment-gap panel is the one the main text shows; the two output-gap
+    panels are what the appendix compares it against, and they are built here so
+    the flattening claim can be checked against the activity measures that do not
+    support it rather than only the one that does.
+    """
+    colors = {"Headline CPI": "#4477AA", "Core CPI": "#228833", "PPI": "#CC6677"}
+    for activity, filename in (
+        ("Unemployment gap", "kappa_t_unemployment_by_inflation.png"),
+        ("HP output gap", "kappa_t_output_gap_hp_by_inflation.png"),
+        ("BN output gap", "kappa_t_output_gap_bn_by_inflation.png"),
+    ):
+        fig, ax = plt.subplots(figsize=(8.0, 4.6))
+        plotted = False
+        for inflation, activity_specs in INFLATION_SPECS.items():
+            item = runs.get(("hsa_steady", activity_specs[activity], "baseline"))
+            if item is None or "kappa_t" not in item[1].posterior:
+                continue
+            idata = item[1]
+            values = np.asarray(idata.posterior["kappa_t"], dtype=float)
+            paths = values.reshape(-1, values.shape[-1])
+            mean = np.nanmean(paths, axis=0)
+            lo = np.nanquantile(paths, 0.025, axis=0)
+            hi = np.nanquantile(paths, 0.975, axis=0)
+            attrs = getattr(idata, "attrs", {})
+            start = pd.Timestamp(str(attrs.get("sample_start", "1982-03-31"))).to_period("Q")
+            dates = pd.period_range(start, periods=len(mean), freq="Q").to_timestamp(how="end")
+            color = colors[inflation]
+            ax.plot(dates, mean, color=color, lw=2.0, label=inflation)
+            ax.fill_between(dates, lo, hi, color=color, alpha=0.13)
+            plotted = True
+        if not plotted:
+            plt.close(fig)
+            continue
+        ax.axhline(0.0, color="black", lw=0.8)
+        ax.set_ylabel(r"Implied NKPC slope $\kappa_t$")
+        ax.set_xlabel("Quarter")
+        ax.set_title(activity, fontsize=11)
+        ax.grid(alpha=0.22)
+        ax.legend(frameon=False)
+        fig.tight_layout()
+        OUT_FIGURES.mkdir(parents=True, exist_ok=True)
+        fig.savefig(OUT_FIGURES / filename, dpi=220, bbox_inches="tight")
+        plt.close(fig)
 
 
 def save_main_competition_decomposition(runs) -> None:
@@ -1456,12 +2024,15 @@ def main() -> None:
         samplers = sorted({_sampler_label(idata) for (m, _, _), (_, idata) in run_set.items() if m == "hsa_full"})
         print(f"  {label} hsa_full state sampler: {' / '.join(samplers) or 'n/a'}")
 
-    base_tables = ROOT / "results" / "tables" / "cpi_ppi_report"
-    base_figures = ROOT / "results" / "figures" / "cpi_ppi_report"
+    base_tables = ROOT / "results" / "tables"
+    base_figures = ROOT / "results" / "figures"
+    # One directory per observation design, symmetrically. Neither design lives at
+    # the top level: "the files without a subdirectory" is not a readable way to
+    # say "the interpolated comparison".
     build_frequency_outputs(
         quarterly_display,
-        tables_dir=base_tables,
-        figures_dir=base_figures,
+        tables_dir=base_tables / "quarterly_interpolated",
+        figures_dir=base_figures / "quarterly_interpolated",
         command_prefix="",
     )
     build_frequency_outputs(
@@ -1470,6 +2041,9 @@ def main() -> None:
         figures_dir=base_figures / "annual_q4",
         command_prefix="Annual",
     )
+    write_cross_design_macros(quarterly_display, annual_display)
+    write_design_comparison_table(quarterly_display, annual_display)
+    subprocess.run(["python", str(ROOT / "scripts" / "make_spec_tables.py")], cwd=ROOT, check=True)
     subprocess.run(["python", str(ROOT / "scripts" / "11_additional_report_evidence.py")], cwd=ROOT, check=True)
     print(f"Saved PCHIP and annual-Q4 report inputs under {base_tables} and {base_figures}")
 if __name__ == "__main__":

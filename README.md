@@ -1,405 +1,316 @@
 # NKPC HSA MCMC
 
-Bayesian state-space MCMC workflows for CES and Matsuyama-Fujiwara /
-Fujiwara-Matsuyama HSA New Keynesian Phillips Curve specifications.
+Bayesian state-space MCMC for New Keynesian Phillips Curves whose slope depends
+on **competition**. The competition channel follows the HSA (homothetic
+single-aggregator) demand system of Fujiwara–Matsuyama: when the effective
+number of firms falls, markups rise, pass-through falls, and the Phillips curve
+flattens.
 
-The canonical workflow is script-based. Notebooks are kept only for exploration.
+The empirical question is whether that flattening is visible in US data — that
+is, whether **δ > 0** in `κ_t = κ₀ + δ·N̄_t`, where `N̄_t` is a latent
+low-frequency firm-count trend estimated jointly with the Phillips curve.
 
----
-
-## Quick Start
-
-```bash
-cd /path/to/NKPC_HSA_MCMC   # move to the project root (all commands run from here)
-python -m pip install -e .   # first time only: install the package locally
-```
-
-Smoke test (completes in seconds):
-
-```bash
-python scripts/01_build_data.py
-python scripts/02_estimate_models.py --quick
-```
+The workflow is script-based and reproducible from the project root.
 
 ---
 
-## Full Pipeline (estimation to reports)
-
-Run the steps below in order from the project root.
-5 models (CES / hsa_steady / hsa_dynamic / hsa_full / hsa_const_theta)
-x 8 data specifications = 40 Gibbs sampling runs for the baseline pass
-(`n_iter=12000`, burn-in `4000`, `2` chains).
+## Quick start
 
 ```bash
-cd /path/to/NKPC_HSA_MCMC   # always move here first
+python -m pip install -e .
+```
 
-# 1. Build data (writes data/processed/model_ready.csv)
+The package lives under `src/`, so the editable install is what makes
+`import nkpc_hsa` work — `pytest` and every script rely on it.
+
+```bash
 python scripts/01_build_data.py
+python -m pytest -q
+```
 
-# 2. Full estimation (the slowest step: 40 Gibbs sampling runs)
-python scripts/02_estimate_models.py \
-    --config configs/models.yaml \
-    --priors configs/priors_baseline.yaml
+---
 
-# 2b. Constrained estimation (kappa >= 0, compared against the
-#     unrestricted runs in the report)
-python scripts/02_estimate_models.py \
-    --config configs/models.yaml \
-    --priors configs/priors_baseline.yaml \
-    --positive kappa
+## Repository structure
 
-# Same, imposing kappa_t >= 0 at every period in time-varying-kappa models
-python scripts/02_estimate_models.py \
-    --config configs/models.yaml \
-    --priors configs/priors_baseline.yaml \
-    --positive kappa_t
+```
+configs/          estimation settings — the knobs live here, not in code
+  models.yaml       defaults (12000 iters, 2 chains, annual_q4, 512 particles),
+                    14 data specs, 5 models
+  priors_*.yaml     baseline / tight / weak prior sets
+  periods.yaml      sub-sample windows for period robustness
 
-# 3. MCMC convergence diagnostics (R-hat, ESS -> results/diagnostics/)
-python scripts/03_run_diagnostics.py
+data/
+  raw/              source series; never written by scripts
+  processed/        model_ready.csv — built by scripts/01
 
-# 4. Prior robustness (re-estimates under baseline / weak / tight priors)
-python scripts/04_prior_robustness.py
+src/nkpc_hsa/     the package
+  dataprep/         raw series -> model_ready.csv
+  gibbs/            the sampler engine (one subpackage per model)
+  models/           thin public facade over gibbs/
+  inference/        run_model, diagnostics, robustness, identification
+  reporting/        tables, figures and LaTeX fragments
 
-# 5. Sub-sample robustness (re-estimates each period in configs/periods.yaml)
-python scripts/05_period_robustness.py
+scripts/          pipeline entry points, all runnable from the project root
 
-# 6. Model comparison (SDDR and predictive scores -> results/model_comparison/)
-python scripts/06_model_comparison.py
+results/          every generated output; git-ignored, reproducible
+  runs/             posterior draws, one directory per estimation cell
+  tables/           the LaTeX fragments the report \inputs (annual_q4/ = main design)
+  figures/          the PNGs the report \includegraphics
+  diagnostics/      per-run trace / autocorr plots, R-hat, ESS
+  evidence/         build intermediates (predictive comparison scores)
+  prior_decomposition/   the delta-vs-AR(2) prior factorial
 
-# 7. Tables and figures (-> results/tables/, results/figures/)
-python scripts/07_make_tables_figures.py
+report/           the deliverable only
+  nkpc_hsa_report.tex   the only report source; reads ../results/{tables,figures}
+  nkpc_hsa_report.pdf   compiled output
 
-# 8. Compile the PDF reports (-> results/report/*.pdf)
-python scripts/08_compile_report.py
+docs/             estimation specification, code/equation crosswalk,
+                  estimation flow, data dictionary
+references/       literature PDFs and research notes
+```
 
-# 9. (Optional) identification diagnostics (-> results/diagnostics/)
+Everything the PDF needs is generated under `results/`, so `report/` holds only
+the source and the output. Compile from inside `report/` — the `.tex` refers to
+`../results/{tables,figures}/` relatively.
+
+---
+
+## Running the estimation
+
+### Reproducing the report
+
+The headline result is **HSA steady, core CPI, negative unemployment gap,
+mixed-frequency**. End to end:
+
+```bash
+python scripts/01_build_data.py
+python scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency quarterly_interpolated --no-build
+python scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency annual_q4 --compile
+```
+
+Step 2 estimates the 77 interpolated cells, step 3 the 61 mixed-frequency ones,
+and step 3 then builds every report artifact and compiles the PDF. Both
+estimation steps are expensive — 12000 iterations × 2 chains per cell, about
+90 minutes each at `--jobs 6`. Use `--quick` for a smoke test. Existing runs of
+the current revision are reused; `--force` re-estimates them.
+
+`--no-build` on the first step is what keeps it from building a report while
+half the run set is still missing.
+
+### Rebuilding the report without re-estimating
+
+```bash
+python scripts/build_report.py --compile
+```
+
+`build_report.py` is the **single entry point for every report artifact**, and
+the only place that knows the order they must run in. It runs, in sequence:
+
+| script | produces |
+|---|---|
+| `12_build_cpi_ppi_report.py` | most tables, all result macros, most figures; itself chains `make_spec_tables.py` and `11_additional_report_evidence.py` |
+| `make_headline_results_table.py` | `headline_results.tex`, `model_comparison_unemp.tex`, `ppi_results.tex` |
+| `predictive_comparison.py` | `results/evidence/tables/predictive_comparison.csv` |
+| `make_fit_comparison_table.py` | `fit_comparison.tex` and its macros — **reads the CSV above, so order matters** |
+| `make_data_series_figure.py` | `data_series.png` (from `data/processed/`, not from the runs) |
+
+Add an artifact to `STEPS` in that script, not to a private habit of running
+things by hand. Before this existed, only the first of the five was wired into
+the estimation pipeline, so a re-estimation refreshed most tables and silently
+left the headline table, the fit comparison and the data figure at their
+previous vintage — no error, and a PDF that compiled cleanly while disagreeing
+with its own run set.
+
+`--compile` runs xelatex twice and then fails if the log contains any undefined
+control sequence, which is how a missing generated macro is caught rather than
+shipped. `--skip-predictive` reuses the existing scores instead of recomputing
+them. `12_build_cpi_ppi_report.py` fails loudly if a report cell is missing —
+pass `--allow-incomplete` to build partial tables anyway.
+
+`scripts/prior_decomposition_rho_delta.py` is deliberately **not** part of the
+build: it estimates 12 diagnostic cells of its own (~45 minutes) and writes
+`prior_decomposition_macros.tex`. Run it directly when the prior sweep changes.
+
+### The two observation designs
+
+The firm count is **annual**; inflation is quarterly. Two ways to reconcile them:
+
+| design | what it does | how to select |
+|---|---|---|
+| `annual_q4` | **main.** N is observed in Q4 only; in other quarters the Kalman filter drops that observation row | default, declared in `configs/models.yaml` |
+| `quarterly_interpolated` | N is PCHIP-interpolated to quarterly and treated as observed every quarter | `--competition-frequency quarterly_interpolated` |
+
+Interpolation manufactures information. It drives the AR(2) mean-reversion term
+`1−ρ₁−ρ₂` toward zero and induces a near-perfect negative correlation between
+the two firm-count states — `corr(N̄₀, N̂₀) = −0.9996`, against `+0.13` under
+`annual_q4`. The report keeps both designs so the artifact stays visible.
+
+### Supporting analyses (not part of the report build)
+
+```bash
+python scripts/03_run_diagnostics.py             # trace / autocorr plots, R-hat, ESS per run
 python scripts/09_identification_diagnostics.py
-
-# 10. Browsable HTML report (-> results/report.html)
-python scripts/10_build_html_report.py
-
-# 11. Integrate CPI/PPI, model, prior, and diagnostic results into the main report
-python scripts/12_build_cpi_ppi_report.py --compile
-
-# Re-estimate all 77 PCHIP report cells, generate TeX inputs, and compile the main report
-python scripts/13_estimate_cpi_ppi_report.py --jobs 4
-
-# Re-estimate the 61 HSA cells with annual N observed only in Q4
-# (the 16 CES cells contain no N state and are shared with the PCHIP comparison)
-python scripts/13_estimate_cpi_ppi_report.py --competition-frequency annual_q4 --jobs 8
+python scripts/chib_marginal_likelihood.py       # conditional marginal likelihood
+python scripts/appendix_particle_gibbs_hsa_full.py validate|pilot|produce
 ```
 
-Estimation output is saved under
-`results/runs/<model>_<data_spec>_<prior>_<timestamp>/posterior.nc`.
+`03_run_diagnostics.py` writes one directory per run under `results/diagnostics/`,
+matching the run directory names one-to-one. Re-run it after re-estimating, or
+its plots describe a previous vintage.
 
-To estimate selected data specifications only:
+Two older scripts are **superseded and should not be run casually**:
 
-```bash
-python scripts/02_estimate_models.py --data-spec inv_markup            # inverse markup gap only
-python scripts/02_estimate_models.py --data-spec output_gap_bn         # BN output gap only
-python scripts/02_estimate_models.py --data-spec output_gap_bn_core    # BN output gap (core CPI)
-python scripts/02_estimate_models.py --data-spec output_gap_hp         # HP output gap only
-python scripts/02_estimate_models.py --data-spec output_gap_hp_core    # HP output gap (core CPI)
-python scripts/02_estimate_models.py --data-spec labor_share_gap_hp    # HP labor-share gap only
-python scripts/02_estimate_models.py --data-spec unemployment_gap      # unemployment gap only
-python scripts/02_estimate_models.py --data-spec unemployment_gap_core # unemployment gap (core CPI)
-python scripts/02_estimate_models.py --data-spec unemployment_gap_ppi  # unemployment gap (PPI)
-python scripts/02_estimate_models.py --data-spec output_gap_hp_ppi     # HP output gap (PPI)
-python scripts/02_estimate_models.py --data-spec output_gap_bn_ppi     # BN output gap (PPI)
-```
+- `04_prior_robustness.py` re-estimates the prior sweep on its own. The sweep the
+  report uses is part of the main run set instead (weak and tight cells are 24 of
+  the 61 mixed-frequency cells), built into `prior_sensitivity_*.tex` by
+  `12_build_cpi_ppi_report.py`. Running script 04 produces a second, parallel set
+  of estimates that nothing reads.
+- `06_model_comparison.py` computes Chib marginal likelihoods. Section 11 of the
+  report states these are computed but not promoted into any table.
+
+`rerun_*.py` re-estimate specific model families into their own run directories.
+
+### What is in `results/`
+
+| directory | written by | notes |
+|---|---|---|
+| `runs/` | `13_estimate_cpi_ppi_report.py` | one directory per (model, data spec, prior, observation design). **No timestamp** — a cell is re-estimated in place, and the estimation time lives in `metadata.json` as `run_id`. The observation design is part of the name because without it the two designs of the same cell collide. |
+| `diagnostics/` | `03_run_diagnostics.py` | one directory per run |
+| `tables/`, `figures/` | `12_build_cpi_ppi_report.py`, the `make_*` scripts | what the report `\input`s and `\includegraphics`es; `annual_q4/` is the mixed-frequency design |
+| `evidence/tables/` | `predictive_comparison.py` | build intermediate: the scores `make_fit_comparison_table.py` reads. Recreated by every `build_report.py` run |
+| `prior_decomposition/` | `prior_decomposition_rho_delta.py` | 12 diagnostic cells, deliberately outside `runs/` so they cannot enter the report run-set |
+
+The whole tree is git-ignored and reproducible from the scripts. Runs from a
+superseded `ESTIMATION_REVISION` are deleted rather than accumulated; the
+revision string in each run's `metadata.json` records which vintage of the
+inputs produced it, and both the estimator and the report builder select on it.
 
 ---
 
-## Reproducible Pipeline
+## Data
 
-```bash
-python scripts/01_build_data.py
-python scripts/02_estimate_models.py --config configs/models.yaml
-python scripts/02_estimate_models.py --config configs/models.yaml --positive kappa
-python scripts/03_run_diagnostics.py
-python scripts/04_prior_robustness.py
-python scripts/05_period_robustness.py
-python scripts/06_model_comparison.py
-python scripts/07_make_tables_figures.py
-python scripts/08_compile_report.py
-```
+`scripts/01_build_data.py` turns `data/raw/` into
+`data/processed/model_ready.csv`. Each estimation cell selects six columns and
+drops missing values **jointly**, so every specification has **T = 124**
+quarters, 1982Q1–2012Q4.
 
-Smoke-test version:
+| role | series | source |
+|---|---|---|
+| `π_t` | headline CPI (`pi_cpi`), core CPI (`pi_cpi_core`), PPI (`pi_ppi`) | `CPIAUCSL`, `CPILFESL`, `PPIACO` |
+| `E_tπ_{t+1}` | `Epi` | Cleveland Fed inflation expectations |
+| `x_t` | negative unemployment gap (`unemp_gap`), BN output gap, HP output gap, HP labor-share gap, inverse markup | CBO `NROU` − `UNRATE` (SA); BN filter output; HP filter (λ=1600) computed in `dataprep/build.py` |
+| `N_t` | `N_Gustavo` (inverse HHI of US listed firms), `N_TNIC` | `BN_N_Gustavo_26.csv`, `BN_N_TNIC_26.csv` |
 
-```bash
-python scripts/01_build_data.py
-python scripts/02_estimate_models.py --quick
-python scripts/03_run_diagnostics.py
-python scripts/04_prior_robustness.py --quick
-python scripts/05_period_robustness.py --quick
-python scripts/06_model_comparison.py
-python scripts/07_make_tables_figures.py
-python scripts/08_compile_report.py
-```
+Two conventions that are easy to get wrong:
 
-## Structure
+- **`x_t` is the *negative* unemployment gap**, `u* − u`. It is positive in
+  booms, so a **positive κ is a conventionally-signed, downward-sloping**
+  Phillips curve.
+- **`N` is transformed to ten-log-point deviations**: `(100·log N − mean)/10`
+  (`n_transform="log100_centered10"`). `δ`, `θ`, `θ₀` and `γ` are therefore
+  *per ten log points*, and are already reported on that scale — do not rescale
+  them again.
 
-- `src/nkpc_hsa/`: reusable package code.
-- `src/nkpc_hsa/gibbs/`: Gibbs sampler backend used by the current adapters
-  (moved from `analysis/gibbs/func_gibbs/`).
-- `scripts/`: canonical pipeline entry points.
-- `configs/`: model, path, and prior YAML files.
-- `data/raw/`: raw input files, grouped by source/topic.
-- `data/processed/`: generated model-ready datasets.
-- `results/runs/`: one folder per estimation run with posterior draws, configs,
-  metadata, and run-level support files.
-- `results/tables/`, `results/figures/`, `results/model_comparison/`: report
-  inputs generated from saved runs.
-- `results/diagnostics/`, `results/prior_robustness/`,
-  `results/period_robustness/`: robustness and diagnostic outputs.
-- `results/report/`: primary PDF reports. LaTeX build byproducts are moved to
-  `results/report/build/`.
-- `paper/`: LaTeX report sources.
-- `references/`: literature PDFs and research notes (including
-  `references/notes/annual_q4_state_space.md`, the mixed-frequency methodology
-  note).
-- `archive/`: old notebooks, scripts, and generated outputs retained for
-  reference (git-ignored).
+Every column — construction, units, provenance, and the series that are loaded
+but unused — is documented in
+[`docs/data_dictionary.md`](docs/data_dictionary.md).
 
-Raw data should never be overwritten. Processed data and estimation outputs are
-regenerated under `data/processed/` and `results/`. Legacy outputs are retained
-under `archive/legacy_results/` and are not used by the pipeline.
+**Known caveat.** Every inflation series is a four-quarter change sampled
+quarterly, so `π_t` and `π_{t−1}` share three of four quarters. Even
+white-noise quarterly inflation would give `corr(π_t, π_{t−1}) = 0.75`; in the
+data it is 0.97. The lagged-inflation coefficient `α ≈ 0.79` therefore absorbs
+both genuine inertia and this overlap, and the likelihood treats the residual as
+i.i.d. when it cannot be (Ljung–Box(8) p = 0.00015).
+
+---
 
 ## Models
 
-All variants share the NKPC observation equation
+All five share the inflation equation
 
-```text
-pi_t = alpha*pi_{t-1} + (1-alpha)*E_t pi_{t+1} + kappa_t*x_t - theta_t*Nhat_t + e_t
+```
+π_t = α·π_{t−1} + (1−α)·E_tπ_{t+1} + κ_t·x_t − θ_t·N̂_t + λ_eζ·ζ_t + e_t
 ```
 
-and differ only in the slope restrictions:
+and differ in whether `κ_t` and `θ_t` move with competition. The HSA models
+decompose the firm count as `N^obs_t = N̄_t + N̂_t + ν_t`, with `N̄_t` a
+random-walk-with-drift trend and `N̂_t` an AR(2) cycle truncated to the
+stationary region.
 
-| Model | kappa_t | theta_t |
-|---|---|---|
-| `ces` | constant | 0 |
-| `hsa_steady` | `kappa_0 + delta*Nbar_t` | 0 |
-| `hsa_dynamic` | constant | constant |
-| `hsa_const_theta` | `kappa_0 + delta*Nbar_t` | constant |
-| `hsa_full` | `kappa_0 + delta*Nbar_t` | `theta_0 + gamma*Nbar_t` |
+| model | slope `κ_t` | cycle loading `θ_t` | state sampler | code |
+|---|---|---|---|---|
+| `ces` | `κ` | — | no firm-count state | [`gibbs/ces/`](src/nkpc_hsa/gibbs/ces) |
+| `hsa_steady` | `κ₀ + δ·N̄_t` | — | exact joint FFBS | [`gibbs/hsa_steady/`](src/nkpc_hsa/gibbs/hsa_steady) |
+| `hsa_const_theta` | `κ₀ + δ·N̄_t` | `θ` (constant) | exact joint FFBS | [`gibbs/hsa_const_theta/`](src/nkpc_hsa/gibbs/hsa_const_theta) |
+| `hsa_dynamic` | `κ` | `θ` (constant) | joint FFBS with shock covariance | [`gibbs/hsa_dynamic/`](src/nkpc_hsa/gibbs/hsa_dynamic) |
+| `hsa_full` | `κ₀ + δ·N̄_t` | `θ₀ + γ·N̄_t` | **Particle Gibbs** | [`gibbs/hsa_full_pg/`](src/nkpc_hsa/gibbs/hsa_full_pg) |
 
-HSA models decompose competition as `N_obs_t = Nbar_t + Nhat_t + nu_t`, with an
-AR(2) gap `Nhat_t` (truncated to the stationary region) and a random-walk
-trend `Nbar_t` with drift. `hsa_const_theta` restricts `hsa_full` by fixing
-`gamma = 0`; it exists because the `gamma` regressor (`Nhat*Nbar`) is nearly
-collinear with the `theta_0` regressor (`Nhat`) and `gamma` is not identified.
+`hsa_full` needs Particle Gibbs because the `γ·N̄_t·N̂_t` term makes the
+observation equation bilinear in the two states, so no exact linear-Gaussian
+FFBS exists. The particle count comes from `configs/models.yaml →
+defaults.n_particles` (512) and is recorded in each run's metadata.
+`hsa_const_theta` is `hsa_full` with `γ = 0`; it exists because the `γ`
+regressor `N̂·N̄` is nearly collinear with the `θ₀` regressor `N̂`.
 
-## Unit Conventions
+Shared machinery:
 
-Kappa-related priors in YAML files are specified in economic/physical units.
-Some Gibbs samplers use internal parameters multiplied by `KAPPA_SCALE = 100`
-because the regression column is divided by 100. Posterior draws saved to
-`InferenceData`, exported tables, figures, SDDR outputs, and Chib marginal
-likelihood inputs are in physical units.
+| what | where |
+|---|---|
+| exact 3-state Kalman/FFBS used by steady and const-θ | [`gibbs/common/joint_ffbs.py`](src/nkpc_hsa/gibbs/common/joint_ffbs.py) |
+| conditional marginal likelihood (corrected Chib) | [`gibbs/conditional_ml.py`](src/nkpc_hsa/gibbs/conditional_ml.py) |
+| dispatch, data prep, saving | [`inference/wrappers.py`](src/nkpc_hsa/inference/wrappers.py) — `run_model` |
+| public facade | [`models/`](src/nkpc_hsa/models) |
 
-The default HSA competition aggregator transform is:
+`inference/wrappers.py` and `scripts/12_build_cpi_ppi_report.py` are the two
+files to open first.
 
-```text
-N_model = (100 * log(N_level) - sample_mean(100 * log(N_level))) / 10
-```
+### Internal scaling
 
-If a supplied `N` series is already transformed, call the wrapper with
-`n_transform="identity"` and verify that the run metadata records this.
-Under the default transform, one unit of `N_model`, `Nhat`, or `Nbar` is a
-ten-log-point movement around the sample mean.
+`κ`, `κ₀` and `δ` are held internally multiplied by `KAPPA_SCALE = 100`, because
+the regression column is divided by 100. Priors in `configs/priors_*.yaml` are
+in **physical units**; the wrappers convert, and posterior draws are divided
+back before being saved. Everything you read — `InferenceData`, tables, figures,
+SDDR and Chib inputs — is in physical units. Never apply the factor yourself.
 
-Competition measurement frequency is configured under
-`defaults.competition_measurement` in `configs/models.yaml`:
+### Equation-to-code map
 
-```yaml
-competition_measurement:
-  frequency: quarterly_interpolated
-  annual_timing: q4
-```
+[`docs/code_equation_crosswalk.md`](docs/code_equation_crosswalk.md) maps every
+symbol to the file and line that computes it: regressor columns, state-space
+matrices, Kalman and FFBS recursions, the Particle Gibbs sweep, and each
+reported macro back to the posterior it came from.
+[`docs/estimation_flow.md`](docs/estimation_flow.md) walks one Gibbs iteration
+block by block.
 
-`quarterly_interpolated` is the default and preserves the existing behavior:
-annual competition data are transformed and PCHIP-interpolated to quarterly
-frequency, and the resulting quarterly `N_obs_t` enters the N measurement
-equation every quarter. `annual_q4` is a mixed-frequency robustness
-specification: annual competition data are transformed but not interpolated,
-the annual observation is loaded only in Q4, and Q1-Q3 are treated as missing
-in the N measurement equation. In `annual_q4` runs, quarterly latent
-competition states are inferred by the state-space model; the PCHIP series
-shown in comparison plots is not used in estimation. See
-`references/notes/annual_q4_state_space.md` for the full state-space
-formulation.
+---
 
-Use the CLI override when needed:
+## Conventions worth knowing before changing anything
 
-```bash
-python scripts/02_estimate_models.py --competition-frequency annual_q4
-```
+- **`results/` is git-ignored** and must never be committed; the whole tree is
+  reproducible from `scripts/`.
+- **`data/raw/` is never written by scripts.**
+- Run directories are named `model_spec_prior_frequency` with **no timestamp** —
+  one directory per cell, re-estimated in place. `load_report_runs` selects on
+  `metadata.json`, not on the name, but the frequency must stay in the name or the
+  two observation designs of the same cell collide. The classification
+  of every past run; `tests/test_observation_design_default.py` pins the rule.
+- Coefficient hard constraints (`κ ≥ 0`, `κ_t ≥ 0`, …) come from
+  `configs/models.yaml → defaults.coefficient_constraints` or the `--positive`
+  flag, are specified in physical units, and are enforced by rejection sampling.
+  Treat constrained runs as **restricted robustness specifications**, not the
+  baseline.
+- N-state variance priors are in **squared ten-log-point** units. Their scale
+  must stay near the 0.01 decade implied by the transformed series; resetting
+  them to O(1) silently changes the model.
 
-Each saved run also writes support artifacts under
-`results/runs/<run_name>/report/`, `results/runs/<run_name>/tables/`, and
-`results/runs/<run_name>/figures/`. The primary manuscript-style reports remain
-the PDFs under `results/report/`. To build report inputs from only
-mixed-frequency annual-Q4 runs:
+`CLAUDE.md` holds the full list.
 
-```bash
-python scripts/07_make_tables_figures.py --competition-frequency annual_q4
-python scripts/08_compile_report.py
-```
+---
 
-To include both the default quarterly-interpolated case and the annual-Q4
-mixed-frequency case in the same PDF report, estimate both cases and then build
-tables and figures without a competition-frequency filter:
+## Documentation
 
-```bash
-python scripts/02_estimate_models.py --competition-frequency quarterly_interpolated
-python scripts/02_estimate_models.py --competition-frequency annual_q4
-python scripts/07_make_tables_figures.py
-python scripts/08_compile_report.py
-```
-
-For annual-Q4 HSA runs, the PDF report includes a posterior decomposition of
-competition, `N_t = Nbar_t + Nhat_t`. The full quarterly decomposition is
-written to `results/tables/competition_decomposition.csv` and to the
-data-spec-specific table folders.
-
-The default HSA dynamic covariance convention is `e_zeta_only`: the sampler
-allows correlation between the NKPC shock `e_t` and output-gap shock `zeta_t`
-only. The covariance is sampled directly on that restricted block-diagonal
-space; it is not obtained by zeroing entries of an unrestricted inverse-Wishart
-draw. Set `covariance_structure: diagonal` or `covariance_structure: full` in
-`configs/models.yaml` only when that alternative is intentional and documented.
-
-Runs produced after the state-initialization and covariance corrections carry
-`estimation_revision=2026-08-state-initial-covariance-v2`. Report builders ignore
-older runs so that pre-correction posterior draws cannot be mixed into current
-tables. Existing result files are retained for auditability but must be rerun
-before they are used for conclusions.
-
-Reported `delta`, `theta`, `theta_0`, and `gamma` are already in the same
-ten-log-point units used during estimation. Do not multiply them by 10 again.
-
-Because the transformed `N` series is measured in ten-log-point units, the
-inverse-gamma hyperparameters for the N-state shock variances (`a_u`/`b_u`,
-`a_eps`/`b_eps`) and the N measurement-error variance (`a_N`/`b_N`) must be
-scaled to that unit: the observed quarterly variance of the transformed series
-is roughly 0.01, so the prior scales sit in that decade (see comments in
-`configs/priors_baseline.yaml`). The same applies to the `u` and `eps` entries
-of `S_Sigma` for the `hsa_dynamic` inverse-Wishart prior. Earlier IG(2, 2)
-settings forced these variances two orders of magnitude too large, which made
-the `Nbar`/`Nhat` decomposition spuriously volatile and attenuated `delta`.
-
-`hsa_full` includes an explicit N measurement error
-(`N_obs_t = Nhat_t + Nbar_t + nu_t`, `nu_t ~ N(0, sigma_N^2)`) like the other
-HSA models. Conditional on this measurement equation, its two-block state
-sampler (`Nhat | Nbar`, then `Nbar | Nhat`) is an exact Gibbs step; the old
-`target_scale`/`rw_scale` pseudo measurement variances have been removed.
-
-Real-activity specifications are configured in `configs/models.yaml`.
-`output_gap_BN` is the Baxter-King/BN-filtered cycle supplied in the raw output
-file. `output_gap_HP` is generated by `scripts/01_build_data.py`: the HP filter
-is applied to `100 * output`, where `output` is the log real-output level from
-the legacy raw-data builder. The resulting HP cycle is therefore in the same
-100-log-point unit as `output_gap_BN`.
-`labor_share_gap_HP` is generated from `data/raw/laborshare/PRS85006173.csv` by
-applying the HP filter to `100 * log(labor_share_index)`. It is treated as an
-additional real-activity proxy in the same script pipeline.
-The `*_core` data specifications re-estimate a given activity measure with core
-CPI inflation (`pi_cpi_core`) on the left-hand side instead of headline CPI;
-they exist because oil-driven headline swings in 2008Q3-2009Q4 contaminate the
-GDP-based specifications.
-`kappa_0` and `theta_0` are intercepts at average competition because the
-default `N` transform is centered.
-
-## Coefficient Sign Constraints
-
-By default, regression coefficients are sampled from their unconstrained
-Gaussian conditional posterior, except for the AR(2) stationarity restriction
-controlled by `enforce_stationary` inside the Gibbs samplers. To impose hard
-coefficient restrictions, set `defaults.coefficient_constraints` in
-`configs/models.yaml` or pass `--positive` to the estimation scripts.
-
-Example smoke run with nonnegative kappa and theta:
-
-```bash
-python scripts/02_estimate_models.py --quick --positive kappa,theta
-python scripts/02_estimate_models.py --quick --positive kappa_t
-```
-
-Example YAML:
-
-```yaml
-defaults:
-  coefficient_constraints:
-    enabled: true
-    max_tries: 1000
-    positive: [kappa, theta, kappa_t]
-    bounds:
-      alpha: [0.0, 1.0]
-```
-
-Bounds for `kappa`, `kappa_0`, `kappa_t`, and `delta` are specified in physical
-units and converted internally by the wrapper. Bounds for `theta`, `theta_0`,
-`gamma`, `alpha`, `rho_1`, and `rho_2` are used as written. In HSA steady/full
-models, `kappa_t` is a path restriction: each candidate draw must satisfy the
-bound for every sampled period of `kappa_t = kappa_0 + delta*Nbar_t`. A
-generic `--positive kappa` also applies to the time-varying kappa path in
-models that do not have a scalar `kappa`. These constraints define a different
-posterior with hard prior support; they should be reported as a restricted
-robustness specification rather than silently mixed with the unrestricted
-baseline.
-
-## Robustness And Comparison
-
-Prior robustness is controlled by `configs/priors_baseline.yaml`,
-`configs/priors_weak.yaml`, and `configs/priors_tight.yaml`. Data-period
-robustness is controlled by `configs/periods.yaml`; add a new named period
-there and rerun `scripts/05_period_robustness.py`.
-
-Model comparison reports SDDR for nested restrictions when posterior draws are
-available, posterior predictive scores when data can be matched, and Chib
-marginal likelihood when the legacy ordinate calculation is compatible with the
-model family and supplied data. For `hsa_full`, the Chib output is a
-conditional Chib calculation for the inflation equation, conditioning on
-posterior mean `Nhat` and `Nbar` paths, because the full observation equation
-contains the nonlinear term `gamma * Nbar_t * Nhat_t`. Chib log-ML is not
-computed for `hsa_const_theta`, and log-ML values for `annual_q4` blocks are
-currently invalid (the Chib routine does not handle missing N observations);
-use SDDR and predictive scores there. WAIC/LOO are not used as primary
-criteria for these latent-state models.
-
-## Adding A Model Variant
-
-1. Add the model implementation or adapter under `src/nkpc_hsa/models/`.
-2. Expose it in `src/nkpc_hsa/inference/wrappers.py`.
-3. Specify the model name in `configs/models.yaml`.
-4. Add focused tests for any new unit conversions or transforms.
-
-## Adding A Prior Specification
-
-Create a new YAML file under `configs/`. Keep kappa, kappa_0, and delta in
-physical units; the wrapper converts them to sampler-internal units.
-
-## Report
-
-`scripts/08_compile_report.py` uses `paper/main.tex` and compiles the main
-PDF report to `results/report/main.pdf`. It also writes one PDF per configured
-data specification, such as `results/report/inv_markup.pdf`,
-`results/report/output_gap_bn.pdf`, `results/report/output_gap_hp.pdf`,
-`results/report/output_gap_hp_core.pdf`,
-`results/report/labor_share_gap_hp.pdf`, and
-`results/report/unemployment_gap.pdf`. These PDFs are the primary report
-format.
-
-Table fragments are read from `results/tables/` and figures from
-`results/figures/`. Baseline model results are grouped by data specification,
-competition measurement frequency, prior, period, and coefficient-constraint
-condition, so the quarterly-interpolated and annual-Q4 cases can appear in the
-same PDF. Prior-set robustness, sample-period robustness, and annual-Q4 HSA
-competition decomposition are displayed in separate tables and figures. LaTeX
-auxiliary files are moved to `results/report/build/` after compilation so the
-report folder primarily contains PDFs.
-
-`scripts/10_build_html_report.py` builds a single browsable HTML version of
-the same content (`results/report.html`): a sidebar per activity measure, one
-section per result block with coefficient/SDDR/model-comparison tables, and a
-figure selector with click-to-enlarge.
+| file | what it answers |
+|---|---|
+| [`docs/estimation_specification.md`](docs/estimation_specification.md) | what is estimated, how, and what is known to be wrong or unverified |
+| [`docs/code_equation_crosswalk.md`](docs/code_equation_crosswalk.md) | which line of code implements which symbol |
+| [`docs/estimation_flow.md`](docs/estimation_flow.md) | one Gibbs iteration, block by block |
+| [`docs/data_dictionary.md`](docs/data_dictionary.md) | every column: source, construction, units, provenance |

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
@@ -12,9 +13,9 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, run_model
-from nkpc_hsa.report.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
+from nkpc_hsa.reporting.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
 
 
 PRIOR_FILES = {
@@ -66,7 +67,14 @@ def _estimate_one(job: dict[str, object]) -> tuple[tuple[str, str, str], float, 
     spec = {**config["data_specs"][data_spec_name], "name": data_spec_name}
     data = pd.read_csv(job["data"], parse_dates=["DATE"]).set_index("DATE")
     run_id = str(job["run_id"])
-    run_dir = Path(str(job["runs_dir"])) / f"{model}_{data_spec_name}_{prior}_{run_id}"
+    # One directory per (model, data spec, prior, observation design). The name
+    # deliberately carries no timestamp: a cell is re-estimated in place, so the
+    # directory is the cell rather than one attempt at it, and the estimation
+    # timestamp lives in metadata.json as run_id. The observation design MUST be
+    # in the name -- without it the interpolated and mixed-frequency runs of the
+    # same cell collide, which is what the old timestamped scheme was hiding.
+    frequency = str(job["competition_frequency"])
+    run_dir = Path(str(job["runs_dir"])) / f"{model}_{data_spec_name}_{prior}_{frequency}"
     run_model(
         model,
         data=data,
@@ -97,7 +105,11 @@ def main() -> None:
     parser.add_argument("--runs-dir", type=Path, default=ROOT / "results" / "runs")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--force", action="store_true", help="Re-estimate cells even when a complete current-revision run exists.")
-    parser.add_argument("--no-compile", action="store_true")
+    # The old --no-compile passed a --compile flag that scripts/12 does not accept,
+    # so every run without it died at the last line. Replaced by two honest flags:
+    # --no-build skips the report build entirely, --compile additionally runs xelatex.
+    parser.add_argument("--no-build", action="store_true", help="Estimate only; skip the report build.")
+    parser.add_argument("--compile", action="store_true", help="Also run xelatex after building the report.")
     parser.add_argument("--quick", action="store_true", help="Run 80 iterations per cell for pipeline testing only.")
     parser.add_argument(
         "--competition-frequency",
@@ -168,15 +180,21 @@ def main() -> None:
                     flush=True,
                 )
 
+    # Rebuild every report artifact, not just the ones script 12 owns. Calling
+    # 12 directly here is what left the headline table, the fit comparison and
+    # the data figure at their previous vintage after a re-estimation.
+    if args.no_build:
+        print("Skipping the report build (--no-build); run scripts/build_report.py when ready.")
+        return
     command = [
-        "python",
-        str(ROOT / "scripts" / "12_build_cpi_ppi_report.py"),
+        sys.executable,
+        str(ROOT / "scripts" / "build_report.py"),
         "--runs-dir",
         str(args.runs_dir),
         "--min-iter",
         str(n_iter),
     ]
-    if not args.no_compile:
+    if args.compile:
         command.append("--compile")
     subprocess.run(command, cwd=ROOT, check=True)
 

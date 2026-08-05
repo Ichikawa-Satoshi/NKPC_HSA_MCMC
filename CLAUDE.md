@@ -8,10 +8,14 @@
 - `configs/` stores path, model, and prior specifications.
 - `data/raw/` contains raw inputs and must not be overwritten by scripts.
 - `data/processed/` contains generated model-ready data.
-- `results/` contains generated run outputs, diagnostics, figures, tables, and report PDFs. The whole tree is git-ignored: it is reproducible from scripts and must never be committed.
-- `paper/` contains LaTeX source files only (formerly `reports/`).
-- `references/` contains literature PDFs and research notes (formerly `docs/`).
-- `archive/` is historical code and outputs, git-ignored. Active code must not import from it.
+- `results/` holds **every generated output**, git-ignored and reproducible from scripts; it must never be committed. One directory per producer:
+  - `results/runs/` — one directory per (model, data spec, prior, observation design). No timestamp in the name: a cell is re-estimated in place, and the estimation time lives in `metadata.json` as `run_id`. The observation design must be part of the name, or the two designs of the same cell collide.
+  - `results/tables/` and `results/figures/` — the tables and figures the report `\input`s and `\includegraphics`es. Written by `scripts/12_build_cpi_ppi_report.py` and the `make_*` scripts; `annual_q4/` subdirectories hold the mixed-frequency design, the top level the interpolated one.
+  - `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`, `results/prior_decomposition/` — each owned by the script of the same name. Do not write aggregates into `results/tables/`; that belongs to the report.
+- `report/` holds only the report source and the compiled PDF (formerly `reports/`, then `paper/`). `nkpc_hsa_report.tex` and `nkpc_hsa_report.pdf` are **the only report deliverable** — there is no HTML edition and no second LaTeX document. The `.tex` reads its inputs from `../results/{tables,figures}/`, so compile from inside `report/`.
+- `scripts/build_report.py` is the single entry point that regenerates every report artifact, and the only place that knows the order the producing scripts must run in. Add a new artifact to its `STEPS`, never to a habit of running things by hand.
+- `docs/` contains the human-readable estimation specification, the code/equation crosswalk, the estimation flow, and the data dictionary. It describes the current production code and must be updated whenever the code it cites moves.
+- `references/` contains literature PDFs and research notes (this is what the pre-2026 `docs/` directory held; do not confuse it with the `docs/` above).
 
 ## Gibbs Backend
 
@@ -23,7 +27,7 @@ code, not scrap. Pre-move history is preserved under the git tag
 ## Conventions
 
 - Kappa priors in config files are physical/economic units. Wrappers handle any internal `KAPPA_SCALE` conversion.
-- Output-gap data specs are configured in `configs/models.yaml`. `output_gap_BN`, `output_gap_HP`, and `labor_share_gap_HP` are all in 100-log-point units; the HP output version is generated from `100 * output`, and the labor-share version is generated from `100 * log(labor_share_index)` in `scripts/01_build_data.py` via `src/nkpc_hsa/data/build.py`.
+- Output-gap data specs are configured in `configs/models.yaml`. `output_gap_BN`, `output_gap_HP`, and `labor_share_gap_HP` are all in 100-log-point units; the HP output version is generated from `100 * output`, and the labor-share version is generated from `100 * log(labor_share_index)` in `scripts/01_build_data.py` via `src/nkpc_hsa/dataprep/build.py`.
 - HSA competition series use `n_transform="log100_centered10"` by default: `(100 * log(N) - sample mean) / 10`. Coefficients on `Nhat` and `Nbar` are therefore estimated per ten-log-point deviation from the sample mean.
 - Reported `delta`, `theta`, `theta_0`, and `gamma` are already on the ten-log-point `N` scale. Do not multiply these by 10 again in tables or prior/posterior plots.
 - HSA dynamic shock covariance uses `covariance_structure="e_zeta_only"` by default; this allows only `e_t` and `zeta_t` correlation.
@@ -32,5 +36,5 @@ code, not scrap. Pre-move history is preserved under the git tag
 - Chib marginal-likelihood calculations in `src/nkpc_hsa/gibbs/gibbs_marginal_likelihood.py` take a `priors` argument (physical units, `priors_*.yaml` shape); `model_comparison.py` passes each run's saved priors so prior and ordinate terms match the sampling priors.
 - Coefficient hard constraints are controlled by `defaults.coefficient_constraints` in `configs/models.yaml` or by the script `--positive` option. Bounds for `kappa`, `kappa_0`, and `delta` are specified in physical units and converted internally before rejection sampling in the coefficient block. Treat constrained runs as restricted robustness specifications.
 - `kappa_t` is also a supported hard constraint for HSA steady/full models. It is checked as a whole path, so candidate draws must satisfy the bound for every period of `kappa_t = kappa_0 + delta * Nbar_t`. In time-varying kappa models, a generic positive `kappa` constraint is interpreted as a `kappa_t` path constraint.
-- New outputs should go under `results/`, not `references/`, `paper/`, or `archive/`.
+- New outputs should go under `results/`, not `references/` or `report/`.
 - Do not commit `.DS_Store`, `__pycache__/`, `.pyc`, or LaTeX auxiliary files.

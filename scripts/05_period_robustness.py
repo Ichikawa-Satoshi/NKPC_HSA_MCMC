@@ -7,13 +7,13 @@ import yaml
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.period_robustness import (
     load_periods,
     run_period_robustness,
     save_period_robustness_table,
 )
-from nkpc_hsa.report.tables import write_latex_fragment
+from nkpc_hsa.reporting.tables import write_latex_fragment
 
 
 def main() -> None:
@@ -96,15 +96,15 @@ def main() -> None:
         save_period_robustness_table(table, out_dir / data_spec_name)
         write_latex_fragment(
             table if not table.empty else pd.DataFrame({"note": ["No period robustness output."]}),
-            ROOT / "results" / "tables" / data_spec_name / "period_robustness.tex",
+            ROOT / "results" / "period_robustness" / data_spec_name / "period_robustness.tex",
         )
     table = pd.concat(all_tables, ignore_index=True) if all_tables else pd.DataFrame()
     save_period_robustness_table(table, out_dir)
-    (ROOT / "results" / "tables").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "tables" / "period_robustness.csv", index=False)
+    (ROOT / "results" / "period_robustness").mkdir(parents=True, exist_ok=True)
+    table.to_csv(ROOT / "results" / "period_robustness" / "period_robustness.csv", index=False)
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No period robustness output."]}),
-        ROOT / "results" / "tables" / "period_robustness.tex",
+        ROOT / "results" / "period_robustness" / "period_robustness.tex",
     )
 
 

@@ -8,9 +8,9 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.diagnostics import save_diagnostics
-from nkpc_hsa.report.tables import write_latex_fragment
+from nkpc_hsa.reporting.tables import write_latex_fragment
 
 
 def main() -> None:
@@ -50,9 +50,9 @@ def main() -> None:
             summary.insert(5, "n_transform", getattr(idata, "attrs", {}).get("n_transform", ""))
             rows.append(summary)
     table = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
-    (ROOT / "results" / "tables").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "tables" / "mcmc_diagnostics.csv", index=False)
-    write_latex_fragment(table if not table.empty else pd.DataFrame({"note": ["No diagnostics available."]}), ROOT / "results" / "tables" / "mcmc_diagnostics.tex")
+    (ROOT / "results" / "diagnostics").mkdir(parents=True, exist_ok=True)
+    table.to_csv(ROOT / "results" / "diagnostics" / "mcmc_diagnostics.csv", index=False)
+    write_latex_fragment(table if not table.empty else pd.DataFrame({"note": ["No diagnostics available."]}), ROOT / "results" / "diagnostics" / "mcmc_diagnostics.tex")
 
 
 if __name__ == "__main__":

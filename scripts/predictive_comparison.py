@@ -34,10 +34,10 @@ from _bootstrap import ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, _coerce_model_data
-from nkpc_hsa.data import transform_competition_series
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep import transform_competition_series
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 
-TAB = ROOT / "results" / "appendix_particle_gibbs" / "tables"
+TAB = ROOT / "results" / "evidence" / "tables"
 TAB.mkdir(parents=True, exist_ok=True)
 
 MODELS = ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]
@@ -227,6 +227,11 @@ def main():
               if model == "ces":
                   base = lpd
               rows.append({"design": freq, "price": price, "model": model,
+                           # Which vintage of the runs these scores came from. The
+                           # scores are already filtered on it; recording it means a
+                           # consumer of this CSV can tell whether it is current
+                           # instead of silently reformatting a stale file.
+                           "estimation_revision": ESTIMATION_REVISION,
                            "plugin_score": round(plugin_score(post, d, model), 2),
                            "LPD_1step": round(lpd, 2), "WAIC": round(waic, 2),
                            "LOO": round(loo, 2), "max_pareto_k": round(kmax, 2),

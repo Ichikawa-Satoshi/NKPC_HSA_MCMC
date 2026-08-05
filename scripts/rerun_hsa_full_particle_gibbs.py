@@ -26,9 +26,9 @@ import _bootstrap  # noqa: F401
 from _bootstrap import ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
-from nkpc_hsa.report.cpi_ppi_spec import report_run_keys
+from nkpc_hsa.reporting.cpi_ppi_spec import report_run_keys
 
 
 def main() -> None:

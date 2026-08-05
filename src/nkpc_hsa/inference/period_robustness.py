@@ -7,11 +7,11 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.diagnostics import compute_diagnostics
 from nkpc_hsa.inference.wrappers import model_sample_index, run_model
 from nkpc_hsa.paths import project_path
-from nkpc_hsa.report.tables import posterior_summary_table
+from nkpc_hsa.reporting.tables import posterior_summary_table
 
 
 def load_periods(path: str | Path | None = None) -> dict[str, dict[str, Any]]:

@@ -1,4 +1,4 @@
-"""Regenerate Figure 1 (results/figures/report/data_series.png).
+"""Regenerate Figure 1 (report/generated/figures/data_series.png).
 
 Panel (a) inflation: headline CPI, core CPI, and PPI (no crisis shading).
 Panel (b) real-activity gaps: negative unemployment gap, BN and HP output gaps.
@@ -16,10 +16,10 @@ import pandas as pd
 
 import _bootstrap  # noqa: F401
 from _bootstrap import ROOT
-from nkpc_hsa.data import transform_competition_series
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep import transform_competition_series
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 
-OUT = ROOT / "results" / "figures" / "report" / "data_series.png"
+OUT = ROOT / "results" / "figures" / "shared" / "data_series.png"
 
 
 def main():

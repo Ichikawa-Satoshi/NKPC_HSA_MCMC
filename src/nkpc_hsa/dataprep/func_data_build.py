@@ -207,19 +207,28 @@ def load_markup_series(base: Path) -> list[pd.DataFrame]:
 
 
 def load_labor_market_series(base: Path) -> pd.DataFrame:
+    # UNRATE (seasonally adjusted), not UNRATENSA. NROU is a smooth trend with no
+    # seasonal of its own, so differencing it against the unadjusted rate leaves the
+    # unemployment seasonal in the gap: over 1982-2012 the NSA version carries a
+    # deterministic quarterly pattern with a 0.76-point peak-to-trough swing
+    # (F = 31.5, p = 4.5e-15) that correlates -0.9998 with the raw UNRATENSA
+    # seasonal, i.e. nothing cancels. Because every inflation series here is a
+    # four-quarter change, the left-hand side has no seasonal for it to line up
+    # with, so that component is pure measurement error in x_t and attenuates
+    # kappa. The SA series leaves a swing of 0.02 (F = 0.03).
     nairu = pd.read_csv(base / "unemp_gap" / "NROU.csv")
-    unemp = pd.read_csv(base / "unemp_gap" / "UNRATENSA.csv")
+    unemp = pd.read_csv(base / "unemp_gap" / "UNRATE.csv")
     dc1 = _detect_date_col(nairu)
     dc2 = _detect_date_col(unemp)
 
     n = nairu[[dc1, "NROU"]].rename(columns={dc1: "DATE"})
-    u = unemp[[dc2, "UNRATENSA"]].rename(columns={dc2: "DATE"})
+    u = unemp[[dc2, "UNRATE"]].rename(columns={dc2: "DATE"})
     n["DATE"] = pd.to_datetime(n["DATE"], errors="coerce")
     u["DATE"] = pd.to_datetime(u["DATE"], errors="coerce")
 
     tt_gap = n.merge(u, on="DATE", how="outer").set_index("DATE").sort_index().resample("QE").mean()
     tt_gap.index.freq = "QE"
-    tt_gap["unemp_gap"] = tt_gap["NROU"] - tt_gap["UNRATENSA"]
+    tt_gap["unemp_gap"] = tt_gap["NROU"] - tt_gap["UNRATE"]
     return tt_gap[["unemp_gap"]].dropna()
 
 

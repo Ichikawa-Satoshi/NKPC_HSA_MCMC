@@ -7,7 +7,7 @@ import pandas as pd
 
 from _bootstrap import ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.identification import load_posterior_runs, write_identification_outputs
 from nkpc_hsa.inference.period_robustness import load_periods
 

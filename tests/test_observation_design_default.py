@@ -17,7 +17,7 @@ from pathlib import Path
 
 import yaml
 
-from nkpc_hsa.data.competition import (
+from nkpc_hsa.dataprep.competition import (
     DEFAULT_COMPETITION_MEASUREMENT,
     normalize_competition_measurement,
 )
@@ -74,15 +74,19 @@ def test_run_directory_names_always_carry_the_design():
 
 def test_metadata_readers_still_fall_back_to_interpolated():
     """Runs saved before the field existed were interpolated; readers must say so."""
+    # reporting/tables.py used to belong here. Every one of its metadata-reading
+    # functions fed the superseded main.tex report and was removed with it in
+    # August 2026; the module no longer touches run metadata at all. These two are
+    # the readers that remain.
     readers = [
         ROOT / "scripts" / "12_build_cpi_ppi_report.py",
-        ROOT / "src" / "nkpc_hsa" / "report" / "tables.py",
-        ROOT / "src" / "nkpc_hsa" / "report" / "data_model_report.py",
+        ROOT / "src" / "nkpc_hsa" / "reporting" / "data_model_report.py",
     ]
     pattern = re.compile(
         r'get\(\s*["\']competition_measurement_frequency["\']\s*,\s*["\']quarterly_interpolated["\']'
     )
     for path in readers:
+        assert path.exists(), f"{path} moved; this test's path list is stale"
         assert pattern.search(path.read_text(encoding="utf-8")), (
             f"{path.name} no longer falls back to quarterly_interpolated when the field is absent"
         )

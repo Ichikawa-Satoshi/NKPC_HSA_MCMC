@@ -1,7 +1,7 @@
 """Appendix: Particle Gibbs (joint conditional-SMC) state update for PCHIP hsa_full.
 
 Stages (run via argv): validate | pilot | produce | all
-Outputs go to results/appendix_particle_gibbs/ and NEVER overwrite existing runs.
+Outputs go to results/evidence/ and NEVER overwrite existing runs.
 
   python scripts/appendix_particle_gibbs_hsa_full.py validate
   python scripts/appendix_particle_gibbs_hsa_full.py pilot
@@ -23,8 +23,8 @@ from _bootstrap import ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import _coerce_model_data
-from nkpc_hsa.data.transforms import DEFAULT_N_TRANSFORM
-from nkpc_hsa.data import transform_competition_series
+from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.dataprep import transform_competition_series
 from nkpc_hsa.models.common import prior_specs_to_internal
 from nkpc_hsa.gibbs.hsa_full.model import KAPPA_SCALE, _common_priors
 from nkpc_hsa.gibbs.hsa_full_pg.model import (
@@ -37,7 +37,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-OUT = ROOT / "results" / "appendix_particle_gibbs"
+OUT = ROOT / "results" / "evidence"
 FIG = OUT / "figures"
 TAB = OUT / "tables"
 DRAWS = OUT / "draws"
@@ -440,7 +440,7 @@ def stage_produce(cell, particles, from_cache=False, spec=CELL, existing_run=Non
     ax[0].axhline(np.mean(pg_ess_all), color="r", ls="--")
     ax[1].plot(np.concatenate(moved_all)); ax[1].set_title("state-path movement fraction per iter")
     fig.tight_layout(); fig.savefig(FIG / f"pg_particle_diag_{spec}_P{particles}.png", dpi=130); plt.close(fig)
-    log("Saved figures + tables + draws to results/appendix_particle_gibbs/", fh)
+    log("Saved figures + tables + draws to results/evidence/", fh)
     fh.close()
     return summary
 

@@ -27,7 +27,7 @@ from pathlib import Path
 import _bootstrap  # noqa: F401
 from _bootstrap import ROOT
 
-EN_ROOT = ROOT / "results" / "tables" / "cpi_ppi_report"
+EN_ROOT = ROOT / "results" / "tables"
 
 
 def _load12():
@@ -200,7 +200,7 @@ def main():
     # PCHIP is reported alongside it as the interpolate-then-estimate comparison.
     build(m, frequency="annual_q4", out_dir=EN_ROOT / "annual_q4",
           design="mixed-frequency annual-Q4", label_suffix="")
-    build(m, frequency="quarterly_interpolated", out_dir=EN_ROOT,
+    build(m, frequency="quarterly_interpolated", out_dir=EN_ROOT / "quarterly_interpolated",
           design="PCHIP-interpolated", label_suffix="-pchip")
 
 

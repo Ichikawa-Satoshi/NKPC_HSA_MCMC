@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 
 from _bootstrap import ROOT
-from nkpc_hsa.data.build import build_processed_dataset
+from nkpc_hsa.dataprep.build import build_processed_dataset
 
 
 def main() -> None:

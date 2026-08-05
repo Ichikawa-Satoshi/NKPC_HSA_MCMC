@@ -10,15 +10,15 @@ Paths are relative to the repository root. Line numbers are post-August-2026.
 
 | Mathematical object | Code expression | File | Function | Used by | Meaning |
 |---|---|---|---|---|---|
-| `π_t = 100(P_t/P_{t−4} − 1)` | `100 * (series_q / series_q.shift(4) - 1)` | `src/nkpc_hsa/data/func_data_build.py:22-25` | `yoy_pct` | headline CPI, PPI | four-quarter inflation |
+| `π_t = 100(P_t/P_{t−4} − 1)` | `100 * (series_q / series_q.shift(4) - 1)` | `src/nkpc_hsa/dataprep/func_data_build.py:22-25` | `yoy_pct` | headline CPI, PPI | four-quarter inflation |
 | `π_t = 100(log P_t − log P_{t−4})` | `100 * (np.log(series_q) - np.log(series_q).shift(4))` | `func_data_build.py:27-29` | `log_yoy` | **core CPI only** | four-quarter log inflation |
 | `π_{t−1}` | `out[f"{col}_prev"] = out[col].shift(1)` | `func_data_build.py:252` | `build_dataset` | all | one-quarter lag |
-| `x_t = u*_t − u_t` | `tt_gap["NROU"] - tt_gap["UNRATENSA"]` | `func_data_build.py:222` | `load_labor_market_series` | unemployment specs | **negative** unemployment gap |
-| HP gap | `hp_filter_series(100.0 * out["output"], lamb=1600)` | `src/nkpc_hsa/data/build.py:61-63` | `add_hp_output_gap` | HP specs | 100-log-point output gap |
+| `x_t = u*_t − u_t` | `tt_gap["NROU"] - tt_gap["UNRATE"]` | `func_data_build.py:231` | `load_labor_market_series` | unemployment specs | **negative** unemployment gap; `UNRATE` is the SA series (see data dictionary) |
+| HP gap | `hp_filter_series(100.0 * out["output"], lamb=1600)` | `src/nkpc_hsa/dataprep/build.py:61-63` | `add_hp_output_gap` | HP specs | 100-log-point output gap |
 | labor-share gap | `hp_filter_series(out["labor_share_100log"], lamb)` | `build.py:102` | `load_labor_share_gap` | `labor_share_gap_hp` | 100-log-point labor-share gap |
-| `N^obs_t = (100 log N_t − mean)/10` | `raw = 100.0*np.log(arr); (raw - np.mean(raw))/10.0` | `src/nkpc_hsa/data/transforms.py:44-46` | `transform_competition_series` | all HSA | ten-log-point firm count |
+| `N^obs_t = (100 log N_t − mean)/10` | `raw = 100.0*np.log(arr); (raw - np.mean(raw))/10.0` | `src/nkpc_hsa/dataprep/transforms.py:44-46` | `transform_competition_series` | all HSA | ten-log-point firm count |
 | annual → quarterly N | `PchipInterpolator(xx, yy)` | `func_data_build.py:63` | `annual_to_quarterly_pchip` | PCHIP design | interpolated firm count |
-| Q4-only N | `if int(period.quarter) == 4 …: out[i] = …` else `nan` | `src/nkpc_hsa/data/competition.py:131-141` | `build_competition_observation` | annual-Q4 design | mixed-frequency observation |
+| Q4-only N | `if int(period.quarter) == 4 …: out[i] = …` else `nan` | `src/nkpc_hsa/dataprep/competition.py:131-141` | `build_competition_observation` | annual-Q4 design | mixed-frequency observation |
 | annual N centered on PCHIP mean | `center = np.mean(100.0*np.log(reference))` | `src/nkpc_hsa/inference/wrappers.py:174-178` | `_transform_annual_competition_like_quarterly` | annual-Q4 | keeps units comparable |
 | complete-case sample | `data[[…]].dropna()` | `wrappers.py:123` | `_coerce_model_data` | all | T = 124 |
 
@@ -215,7 +215,7 @@ model cannot silently fall back to a superseded one.
 
 | Report value | Posterior variable | Run key | Summary | Builder | Output file |
 |---|---|---|---|---|---|
-| `\CoreUnempDelta` | `posterior["delta"]` | `(hsa_steady, unemployment_gap_core, baseline)`, PCHIP | mean, 2.5 %, 97.5 % — `_summary` `:244-254`; formatted `_fmt` `:287-290` as `%+.3f [%+.3f, %+.3f]` | `write_result_macros` `:784-830` | `results/tables/cpi_ppi_report/result_macros.tex` |
+| `\CoreUnempDelta` | `posterior["delta"]` | `(hsa_steady, unemployment_gap_core, baseline)`, PCHIP | mean, 2.5 %, 97.5 % — `_summary` `:244-254`; formatted `_fmt` `:287-290` as `%+.3f [%+.3f, %+.3f]` | `write_result_macros` `:784-830` | `report/generated/tables/result_macros.tex` |
 | `\CoreUnempDeltaBF` | `posterior["delta"]` + `priors.json` | same | Savage–Dickey, `_bf10` `:269-285`; `_fmt_num` 1 dp, `>999` above 1000 | `write_result_macros` | same |
 | `\CoreUnempKappaStart` | `posterior["kappa_t"][:, 0]` | same | `nanmean` of the first column — `_path_summary` `:256-267`; `%+.3f` | `write_result_macros` | same |
 | `\CoreUnempKappaEnd` | `posterior["kappa_t"][:, -1]` | same | `nanmean` of the last column | `write_result_macros` | same |
@@ -233,22 +233,24 @@ model cannot silently fall back to a superseded one.
 | `tab:model-comp` | slope, δ, BF | 5 models × 3 prices, **annual-Q4** | as above | `make_headline_results_table.py` `build()` | `cpi_ppi_report/annual_q4/model_comparison_unemp.tex` |
 | `tab:headline-pchip`, `tab:model-comp-pchip` | same, interpolated design | PCHIP | as above | same, second `build()` call | `cpi_ppi_report/*.tex` |
 | `\BiasDirect*` | `ces["kappa"]`, `hsa_dynamic["kappa"]`, `Nhat`, `theta`, `phi_1` | `inv_markup` cells | `_paired_difference` `:528-533`, `_hsa_implied_ovb` `:546-576` | `build_ces_hsa_bias_table` `:577-641` | `bias_macros.tex`, `ces_hsa_kappa_bias.tex` |
-| economic magnitude "0.126" | — | — | ⚠️ **hard-coded literal** in `paper/nkpc_hsa_report.tex`, not a macro. `\CoreUnempKappaStart − \CoreUnempKappaEnd` = 0.125 | — | — |
+| economic magnitude "0.126" | — | — | ⚠️ **hard-coded literal** in `report/nkpc_hsa_report.tex`, not a macro. `\CoreUnempKappaStart − \CoreUnempKappaEnd` = 0.125 | — | — |
 
 **No translation pass.** The report is English-only. The table builders write English
 directly and `_write_latex` raises if a table would contain CJK text, so the former
-`cpi_ppi_report_en/` mirror and `scripts/build_english_tables.py` are retired.
+`cpi_ppi_report_en/` mirror is gone and `scripts/build_english_tables.py`, which had been
+reduced to a no-op stub, has been deleted.
 
 **Two observation designs.** `load_report_runs` is called once per design.
 `competition_frequency="annual_q4"` produces the **main** tables into
-`results/tables/cpi_ppi_report/annual_q4/`; `"quarterly_interpolated"` produces the
+`report/generated/tables/annual_q4/`; `"quarterly_interpolated"` produces the
 comparison tables into the base directory. Report sections §4–§6, §9–§10 and
 Appendices A and C read the former; §7 and Appendix B read the latter.
 
-**Model comparison not in the report**: `results/appendix_particle_gibbs/tables/conditional_ml_corrected.csv`
+**Model comparison not in the report**: `results/evidence/tables/conditional_ml_corrected.csv`
 (from `scripts/chib_marginal_likelihood.py` → `gibbs/conditional_ml.py`) holds components of
 `log p(π | x, N^obs, M)`. It deliberately emits **no** Bayes factor; earlier defective outputs are
-quarantined as `DEFECTIVE_chib_*` with a README.
+quarantined in `results/evidence/tables/quarantine/`, with a `README.md` there listing the
+defects. Nothing reads that subdirectory.
 
 ---
 

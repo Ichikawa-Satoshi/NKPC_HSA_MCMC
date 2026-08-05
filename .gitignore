@@ -17,6 +17,15 @@ __pycache__/
 *.toc
 *.lyx~
 
-# generated outputs and dead code (kept on disk, not in git)
+# generated outputs (kept on disk, not in git)
 results/
+
+# The paper's own generated inputs. They sit next to report/nkpc_hsa_report.tex so that
+# everything the PDF needs is in one directory, but they are build products like anything
+# under results/ and must not be committed.
+report/generated/
+
+# archive/ no longer exists -- its contents were retired in August 2026 and the
+# recoverable ones live in history at d87417c. The rule stays as a guard so that
+# recreating the directory cannot commit a second copy of the results tree.
 archive/
