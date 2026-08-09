@@ -20,7 +20,7 @@ documentation follows the **code**.
 data/raw/*                     raw CSV/XLSX
     │  func_data_build.build_dataset  +  build.add_hp_output_gap / add_labor_share_gap
     ▼
-data/processed/model_ready.csv        451 quarters, 40 columns
+data/processed/model_ready.csv        454 quarters, 45 columns
     │  configs/models.yaml : data_specs.<name> picks 6 columns
     │  wrappers._coerce_model_data    joint dropna  →  T = 124 (1982Q1–2012Q4)
     ▼
@@ -1022,9 +1022,10 @@ The prior comes from the run's own `priors.json`, injected as `idata.attrs["run_
 δ has **no draws within 3 s.d. of zero**, so this is a tail extrapolation.
 
 ### Economic magnitude
-The report's "start-to-end response differs by about 0.126 point" (§10) is a **hard-coded literal**
-in `report/nkpc_hsa_report.tex`, not a macro. The macro-driven components are
-`\CoreUnempKappaStart` (+0.120) and `\CoreUnempKappaEnd` (−0.005), whose difference is 0.125.
+The report's start-to-end response is generated as `\CoreUnempKappaDrop` by
+`_state_space_macros`, directly from the first and last columns of the saved
+`kappa_t` posterior. It therefore moves with a re-estimation rather than remaining a
+typed literal in the prose.
 
 ---
 
@@ -1284,12 +1285,12 @@ Both sides shown; the documentation follows the code.
 |---|---|---|---|
 | 1 | `hsa_full` is Particle Gibbs for **both** designs | §3.1/§3.2 say so | ✅ **resolved** |
 | 1b | `configs/models.yaml`, `DEFAULT_COMPETITION_MEASUREMENT` and `scripts/13_estimate_cpi_ppi_report.py`'s CLI default all resolve to `annual_q4` | The report's main results are `annual_q4` | ✅ **resolved** — pinned by `tests/test_observation_design_default.py`. Metadata *readers* deliberately still fall back to `quarterly_interpolated` for runs predating the field. |
-| 2 | The `(α, 1−α)` weights on `π_{t−1}` and `E_tπ_{t+1}` are forced to sum to one | §1.4 says "we impose no cross-coefficient restrictions from the theory" and lists only "we add backward-looking inertia (α)" | ⚠️ **open** — §C.1 here |
-| 3 | Theory in §1.1 implies `θ > 0` for the entry channel | The report states the predicted sign for δ but never for θ | ⚠️ **open** — §N here |
-| 4 | headline CPI and PPI use `pct_yoy`; core CPI uses `log_yoy` | not mentioned | ⚠️ **open** — `data_dictionary.md` |
-| 5 | `λ_eζ` and `s₀` priors are hard-coded and identical across baseline/weak/tight | Table 3 lists `λ_eζ ~ N(0,0.5²)` among the "baseline priors" without saying it is not varied | ⚠️ **open** — §J here |
-| 6 | The "0.126" economic magnitude is a hard-coded literal; the macros give 0.120 − (−0.005) = 0.125 | §10 states "about 0.126 point" | ⚠️ **cosmetic** — §L here |
-| 7 | `π_t` is a four-quarter change sampled quarterly, so `π_t` and `π_{t−1}` overlap in three quarters; the likelihood assumes i.i.d. `η_t` | not mentioned | ⚠️ **open** — `data_dictionary.md`, §N |
+| 2 | The `(α, 1−α)` weights on `π_{t−1}` and `E_tπ_{t+1}` are forced to sum to one | The report now states this hybrid-NKPC normalization explicitly | ✅ **resolved** |
+| 3 | Theory in §1.1 implies `θ > 0` for the entry channel | The conclusion now states the predicted sign before reporting the null result | ✅ **resolved** |
+| 4 | headline CPI and PPI use `pct_yoy`; core CPI uses `log_yoy` | The data section now states the different transforms | ✅ **resolved** |
+| 5 | `λ_eζ` and `s₀` priors are code defaults identical across baseline/weak/tight | The prior section now says they are not varied by the YAML sweep | ✅ **resolved** |
+| 6 | The economic magnitude used to be a typed literal | It is now generated as `\CoreUnempKappaDrop` from the saved path | ✅ **resolved** |
+| 7 | Four-quarter inflation overlaps in three quarters while the main likelihood assumes i.i.d. `η_t` | The report now discloses the overlap and the pending MA(3) production sweep | ✅ **disclosed; MA(3) sweep pending** |
 
 None of these was silently reconciled.
 
@@ -1304,7 +1305,8 @@ None of these was silently reconciled.
 
 ### Q.5b Test inventory
 
-The suite is 84 tests. The ones that pin decisions made in this revision:
+The suite includes regression coverage for the model blocks, report wiring, and the
+production driver's declared sample window. The tests that pin the main decisions are:
 
 | Test file | Pins |
 |---|---|
@@ -1314,7 +1316,7 @@ The suite is 84 tests. The ones that pin decisions made in this revision:
 | `tests/test_conditional_ml.py` | the conditional marginal likelihood's identity, ordinate factors and truncation constant |
 | `tests/test_conditional_ml_comparison.py` | theta* invariance, seed stability, the shared `m(x)`, and the effective-draw guard |
 | `tests/test_report_inputs.py` | every `\input`/`\includegraphics` the report needs exists; macro names are letters only; the two designs stay in separate directories |
-| `tests/test_observation_design_default.py` | config, library default and the estimation driver all resolve to `annual_q4`; metadata *readers* still fall back to `quarterly_interpolated`; run directories always carry the design |
+| `tests/test_observation_design_default.py` | config, library default and the estimation driver all resolve to `annual_q4`; the driver injects the 1982Q1--2012Q4 window and refuses cached runs with a different sample signature; metadata *readers* still fall back to `quarterly_interpolated`; run directories always carry the design |
 | `tests/test_competition_measurement.py`, `test_transforms.py`, `test_common.py` | data-side transforms and the observation-vector construction |
 | `tests/test_wrappers_and_diagnostics.py`, `test_report_and_robustness.py`, `test_identification.py`, `test_statistical_updates.py` | wrapper plumbing, report builders, identification helpers |
 

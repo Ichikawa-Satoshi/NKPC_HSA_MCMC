@@ -35,6 +35,16 @@
 \input{../results/tables/shared/cross_design_macros.tex}
 \input{../results/tables/shared/fit_comparison_macros.tex}
 \input{../results/tables/shared/conditional_ml_macros.tex}
+% Sample metadata is generated from the selected main run. These fallbacks keep
+% the source compilable before the deferred re-estimation creates the new macros;
+% because the generated files are input first, their values take precedence.
+\providecommand{\AnnualReportSampleStart}{1982Q1}
+\providecommand{\AnnualReportSampleEnd}{2012Q4}
+\providecommand{\AnnualReportSampleStartYear}{1982}
+\providecommand{\AnnualReportSampleEndYear}{2012}
+\providecommand{\AnnualReportObservationCount}{124}
+\providecommand{\AnnualReportFirmObservationCount}{31}
+\providecommand{\AnnualReportFirmMissingCount}{93}
 % Written by scripts/prior_decomposition_rho_delta.py, which is a separate
 % diagnostic run-set. The file is \input FIRST and the ?? fallbacks come after:
 % every macro file here uses \providecommand, which does not overwrite an
@@ -137,15 +147,20 @@ series, so we pair observed PPI with a common external expectation series and th
 expectation term is not a matched structural object;
 \item the theoretical regressor is real marginal cost / the inverse markup, but the
 main results use the negative unemployment gap.
-\item we impose no cross-coefficient restrictions from the theory and approximate
-$\kt$ as a \emph{linear} function of $\bar N_t$;
+\item apart from the hybrid-NKPC normalization that puts weights $\alpha$ and
+$1-\alpha$ on lagged and expected inflation, we impose no structural
+cross-coefficient restrictions from the HSA theory and approximate $\kt$ as a
+\emph{linear} function of $\bar N_t$;
 \item we add backward-looking inertia ($\alpha$), which is absent from \eqref{eq:fm};
 \item expected inflation is an external survey measure (Section~\ref{sec:data});
 \end{itemize}
 
 \section{Data}
 \label{sec:data}
-\paragraph{Sample.} Quarterly, 1982Q1--2012Q4 ($T=124$) in the US.
+\paragraph{Sample.} Quarterly, \AnnualReportSampleStart{}--\AnnualReportSampleEnd{}
+($T=\AnnualReportObservationCount$) in the US. These labels and the observation count
+are read from the selected run's metadata when the report is rebuilt; they are not
+maintained independently in the prose.
 
 \paragraph{Inflation.} We compare headline CPI, core CPI, and PPI. Expected inflation $\mathbb{E}\pi$ is
 the same external survey series in all specifications. Because the Survey of
@@ -155,28 +170,42 @@ estimate matched through the expectation term, but a semi-structural external-va
 check that changes only the observed inflation index. A measurement mismatch with the
 expectation series also remains for core CPI.
 
+Headline CPI and PPI are simple four-quarter percentage changes; core CPI is a
+four-quarter log difference. All three are sampled quarterly, so adjacent observations
+overlap in three of four quarters. Consequently the backward-looking coefficient
+$\alpha$ mixes genuine inertia with mechanical overlap, while the production likelihood
+treats the remaining inflation disturbance as serially independent. The companion
+\code{error\_robustness} implementation replaces it with an invertible MA(3), the order
+implied by this overlap. Its full production sweep is deliberately not folded into the
+headline tables until those runs have been completed; the current headline posterior is
+therefore the i.i.d.-disturbance specification throughout, not a mixture of the two.
+
 \paragraph{Activity gaps (five).} Negative unemployment gap, BN output gap, HP output gap
 ($100\times$ log real output HP-filtered, in the same $100$-log-point units as BN),
 HP labor-share gap, and inverse markup. The unemployment measure enters as the \emph{negative} unemployment gap $x_t=-(u_t-u^*_t)$---labor-market tightness, positive in expansions and negative in downturns (e.g.\ $x_t\approx-4$ in 2009), co-moving positively with the output gaps. A positive slope $\kappa$ on $x_t$ is therefore a conventional downward-sloping Phillips curve.
 
 \paragraph{Competition proxy, and why the main results are mixed-frequency.} The
 competition series is Gustavo's firm-count measure, i.e.\ the inverse of the \emph{HHI of
-U.S.\ listed firms}. It is \textbf{annual}: over 1982--2012 there are 31 observations, not
-124.
+U.S.\ listed firms}. It is \textbf{annual}: over
+\AnnualReportSampleStartYear{}--\AnnualReportSampleEndYear{} there are
+\AnnualReportFirmObservationCount{} observations, not \AnnualReportObservationCount{}.
 
 The main results therefore use a \emph{mixed-frequency} observation scheme. The annual
-value enters the state-space model in that year's Q4 and the intervening 93 quarters are
+value enters the state-space model in that year's Q4 and the intervening
+\AnnualReportFirmMissingCount{} quarters are
 treated as \emph{missing}, so the sub-annual firm count is inferred rather than assumed
 (Section~\ref{sec:mixed-freq}). Alongside it we report the conventional alternative, in
 which the annual series is PCHIP-interpolated to a quarterly value and that interpolated
-value is then used \emph{as data} in all 124 quarters (Section~\ref{sec:pchip}).
+value is then used \emph{as data} in all \AnnualReportObservationCount{} quarters
+(Section~\ref{sec:pchip}).
 
 Earlier revisions of this paper took the interpolated version as the main result. We
 reversed that after finding that the interpolation is not innocuous. It manufactures
 within-year variation that does not exist, drives the estimated firm-count measurement
 error down to $\sigma_N\approx\MainSigmaN$ (versus $\AnnualMainSigmaN$ under mixed
 frequency), and through
-that pins $\bar N_t+\hat N_t$ so tightly at all 124 quarters that only the \emph{split}
+that pins $\bar N_t+\hat N_t$ so tightly at all \AnnualReportObservationCount{} quarters
+that only the \emph{split}
 between trend and cycle is left free. The consequence is a near-exact posterior ridge
 between the two states---posterior correlation $\MainStateCorr$ under interpolation against
 $\AnnualMainStateCorr$ under mixed frequency---which is the identification pathology
@@ -301,19 +330,21 @@ N_t^{\mathrm{obs}}=
 (100\log N_{y(t)}^{\mathrm{annual}}-\bar c)/10,&t\in\mathcal T_N\;(\mathrm{Q4}),\\
 \mathrm{missing},&t\notin\mathcal T_N\;(\mathrm{Q1--Q3}),
 \end{cases}
-\qquad |\mathcal T_N|=31,
+\qquad |\mathcal T_N|=\AnnualReportFirmObservationCount,
 \label{eq:annual-q4-observation}
 \end{equation}
 where $\bar c$ is a fixed centering constant, shared with the interpolated series so the
 coefficient units are comparable across designs. The alternative \emph{interpolated}
 design instead PCHIP-interpolates the annual series to quarterly and applies
-\eqref{eq:N-measurement} at all 124 quarters; Section~\ref{sec:pchip} reports it and
+\eqref{eq:N-measurement} at all \AnnualReportObservationCount{} quarters;
+Section~\ref{sec:pchip} reports it and
 documents what the interpolation costs. In Q4 the Kalman update uses two observation
 rows---the firm-count equation and the inflation equation---and in Q1--Q3 only the one
 inflation row. Because the state transition and prediction continue at every quarter,
 the Q1--Q3 $\bar N_t,\hat N_t$ are not simple interpolations but FFBS draws conditioned
 on the annual anchors, the state transition, and the inflation equation, updated every
-iteration. The inverse-gamma update of $\sigma_N^2$ likewise uses only the 31 finite
+iteration. The inverse-gamma update of $\sigma_N^2$ likewise uses only the
+\AnnualReportFirmObservationCount{} finite
 Q4 residuals.
 
 For the main HSA steady the state is
@@ -397,6 +428,11 @@ priors are common to the other models.}
 \small
 \input{../results/tables/shared/baseline_priors.tex}
 \end{table}
+
+The $\lambda_{e\zeta}\sim N(0,0.5^2)$ prior and the initial-state prior are code-level
+defaults shared by the baseline, weak, and tight sweeps; they are not varied by the
+three YAML prior sets. Table~\ref{tab:baseline-priors} lists the former for completeness,
+not because it is a baseline-only choice.
 
 \noindent For HSA dynamic the shock covariance takes
 $\Sigma\sim\operatorname{IW}(8,S_0)$ with $S_0=\operatorname{diag}(3,3,0.06,0.03)$.
@@ -547,8 +583,9 @@ quantiles of the saved draws; the plotted points are posterior means.
 
 \section{Main results}
 \label{sec:main}
-All results in this section use the \textbf{mixed-frequency} firm-count design: the 31
-annual observations enter in their own Q4 and the 93 intervening quarters are inferred
+All results in this section use the \textbf{mixed-frequency} firm-count design: the
+\AnnualReportFirmObservationCount{} annual observations enter in their own Q4 and the
+\AnnualReportFirmMissingCount{} intervening quarters are inferred
 inside the state-space model (Section~\ref{sec:mixed-freq}). Table~\ref{tab:headline}
 gives the main-model (HSA steady) estimates for every price index and activity measure,
 so each result can be read against the specification it comes from. The main
@@ -602,7 +639,8 @@ flattening to near zero rather than a strictly positive residual slope.
 \includegraphics[width=0.62\linewidth]{annual_q4/kappa_t_unemployment_by_inflation.png}
 \caption{Time-varying slope $\kt$ for the negative unemployment gap under the
 mixed-frequency design (posterior mean and $95\%$ band). The band includes the
-uncertainty from inferring the 93 unobserved quarterly firm counts. Under CPI it declines
+uncertainty from inferring the \AnnualReportFirmMissingCount{} unobserved quarterly firm
+counts. Under CPI it declines
 to near zero by the end of the sample, whereas the PPI band is wide.}
 \label{fig:kt_unemp}
 \end{figure}
@@ -613,7 +651,8 @@ end. This change is
 economically meaningful. For example, a four-point deterioration in the negative
 unemployment gap ($x_t=-4$) implies an inflation response of about
 $\AnnualCoreUnempFourPointResponse$ percentage
-point at the 1982 slope, but almost no response at the 2012 slope.
+point at the \AnnualReportSampleStartYear{} slope, but almost no response at the
+\AnnualReportSampleEndYear{} slope.
 
 \begin{figure}[H]
 \centering
@@ -899,7 +938,8 @@ shared across both designs.
 \subsection{The two designs, side by side}
 Setting $\mathcal T_N=\{1,\dots,T\}$ in \eqref{eq:annual-q4-observation}---every quarter
 observed---recovers the interpolated filter exactly; the mixed-frequency design is that
-same filter with 93 of the 124 firm-count rows removed. The estimator is not the issue.
+same filter with \AnnualReportFirmMissingCount{} of the
+\AnnualReportObservationCount{} firm-count rows removed. The estimator is not the issue.
 What differs is what is fed to it.
 
 \begin{table}[H]
@@ -912,7 +952,8 @@ What differs is what is fed to it.
 \end{table}
 
 Three things follow. First, the interpolated series is so smooth that the model drives
-$\sigma_N$ down to $\MainSigmaN$ to fit it, which pins $\bar N_t+\hat N_t$ at all 124 quarters
+$\sigma_N$ down to $\MainSigmaN$ to fit it, which pins $\bar N_t+\hat N_t$ at all
+\AnnualReportObservationCount{} quarters
 and leaves only the split free. Second, the AR(2) cycle is pushed to a near-unit root,
 $\rho_1+\rho_2=\MainRhoSum$, so its mean-reversion term $1-\rho_1-\rho_2$ collapses to
 $\MainMeanReversion$.
@@ -1088,7 +1129,7 @@ occurred together, with a sign consistent with the HSA theory}. We therefore avo
 
 \section{Robustness}
 \label{sec:robust}
-We judge robustness on three points: (i) how the sign, interval, and magnitude change
+We judge robustness on three completed points: (i) how the sign, interval, and magnitude change
 under alternative priors, (ii) whether the result survives switching the price index to
 PPI, and (iii) whether the same conclusion holds using only converged runs. The prior
 check re-estimates \emph{every cell} under baseline, weak, and tight priors
@@ -1106,7 +1147,7 @@ at the same implied mean while concentrating it, whereas ``weak'' sets the inver
 shape to $a=1$, for which the prior mean does not exist. That last choice is why the
 weak cells, not the tight ones, are where the sampler mixes worst.
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \caption{What the three prior sets change. Coefficient rows are $N(\text{mean},
 \text{sd}^2)$; variance rows are $\operatorname{IG}(a,b)$ with the implied prior mean
@@ -1117,7 +1158,7 @@ disagree with the priors the sampler loaded.}
 \resizebox{\linewidth}{!}{\input{../results/tables/shared/prior_sets.tex}}
 \end{table}
 
-\begin{table}[H]
+\begin{table}[htbp]
 \centering
 \caption{Three-prior sensitivity under the main mixed-frequency design
 (negative-unemployment-gap specification): $\delta$ under baseline, weak, and tight
@@ -1175,12 +1216,20 @@ the variance block are included in the rule.
 
 \paragraph{Period robustness.} The state equation assumes consecutive quarters. We do
 not use the old treatment that deletes an interior span and compresses what precedes and
-follows. The current 77 runs are full-sample comparisons; until a separate contiguous
+follows. The current \AnnualReportRunCount{} runs are full-sample comparisons; until a
+separate contiguous
 subsample estimation of the corrected revision is done, we do not include pre-2008 or
 post-1988 numbers in the conclusions.
 
+\paragraph{Error structure (pending).} A fourth robustness question is whether the
+conclusion survives replacing the i.i.d. inflation disturbance with the invertible MA(3)
+implied by overlapping four-quarter inflation. The companion implementation has
+smoke-tested cells but not yet the full production run-set, so it is not evidence used
+in the conclusions or headline tables.
+
 \section{Conclusion}
-Over 1982--2012 in the United States, the low-frequency decline in the number of listed
+Over \AnnualReportSampleStartYear{}--\AnnualReportSampleEndYear{} in the United States,
+the low-frequency decline in the number of listed
 firms and the decline in inflation's sensitivity to the negative unemployment gap moved together.
 We read this as theory-consistent time-series evidence, not a causal effect.
 \begin{itemize}
@@ -1240,11 +1289,15 @@ $\hat R\leq1.01$ and minimum bulk ESS $\geq400$ over every stored scalar). The
 interpolated comparison of Section~\ref{sec:pchip} uses \ReportRunCount{} runs, of which
 \ReportWarningCount{} fail the same rule. CES carries no latent firm-count state, so its
 16 cells are shared across both designs. All headline estimates, tables, and figures are
-generated automatically from the saved posteriors; no numbers from earlier revisions are
-read in. Section~\ref{sec:scope} states which failures bear on the conclusions and which
-do not.
+generated automatically from one complete saved run-set, revision
+\AnnualReportEstimationRevision. The sample-window correction intentionally advances the
+code revision before the long re-estimation is run; until that deferred run completes,
+the compiled numerical results remain the last complete run-set. A subsequent report
+build selects only the new revision and refreshes the macros, so revisions are never
+mixed within one table or claim. Section~\ref{sec:scope} states which failures bear on
+the conclusions and which do not.
 
-\paragraph{Settled in the current revision.} The positive $\delta$ and flattening $\kt$
+\paragraph{Settled in the displayed complete run-set.} The positive $\delta$ and flattening $\kt$
 for the CPI negative-unemployment-gap specification of HSA steady, and their insensitivity
 to the firm-count observation design; the positive sign of the core-CPI HP specification
 and the non-result of BN; the non-results of the three PPI activity specifications; the
@@ -1492,11 +1545,12 @@ per (model, data spec, prior) cell, with the run identifier, the sampler that dr
 state block, the estimation sample length, and the three convergence groups. Every number
 elsewhere in this paper is computed from exactly these runs and no others.
 
-The run directory holds exactly these runs and nothing else: one directory per
-(model, data spec, prior, observation design), named for that cell and carrying no
-timestamp, so the directory listing and the tables below are the same set. Superseded
-estimation revisions are deleted rather than accumulated; the revision string in each
-run's metadata records which vintage of the inputs produced it.
+The run directory uses one stable path per (model, data spec, prior, observation
+design), named for that cell and carrying no timestamp.  A superseded result can
+therefore remain on disk until that cell is re-estimated.  The report builder admits
+only a complete set matching the requested estimation revision and sample signature;
+the tables below list exactly that admitted set.  The revision string in each run's
+metadata records which vintage of the inputs produced it.
 
 \begin{table}[H]
 \centering

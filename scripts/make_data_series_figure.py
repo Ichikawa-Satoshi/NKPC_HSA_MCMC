@@ -15,20 +15,26 @@ import numpy as np
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
+from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep import transform_competition_series
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
+from nkpc_hsa.inference.wrappers import model_sample_index
 
-OUT = ROOT / "results" / "figures" / "shared" / "data_series.png"
+OUT = RESULTS_DIR / "figures" / "shared" / "data_series.png"
 
 
 def main():
-    df = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv")
-    df["DATE"] = pd.to_datetime(df["DATE"])
-    # estimation sample: 1982Q1-2012Q4
-    m = (df["DATE"].dt.year >= 1982) & (df["DATE"].dt.year <= 2012)
-    d = df.loc[m].copy()
-    yr = d["DATE"].dt.year + (d["DATE"].dt.quarter - 1) / 4.0
+    df = pd.read_csv(
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
+    ).set_index("DATE")
+    config = load_model_config(ROOT / "configs" / "models.yaml")
+    spec = configured_data_specs(config, ["unemployment_gap_core"])["unemployment_gap_core"]
+    sample_index = model_sample_index(df, spec)
+    if sample_index is None:
+        raise ValueError("Could not resolve the report's main estimation sample.")
+    d = df.loc[sample_index].copy()
+    yr = d.index.year + (d.index.quarter - 1) / 4.0
     N = transform_competition_series(d["N_Gustavo"].to_numpy(), transform=DEFAULT_N_TRANSFORM)
 
     fig, ax = plt.subplots(3, 1, figsize=(9, 10), sharex=True)

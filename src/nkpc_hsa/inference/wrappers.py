@@ -21,6 +21,7 @@ from nkpc_hsa.dataprep.competition import (
     to_quarter_period_index,
 )
 from nkpc_hsa.dataprep.load import load_processed_dataset
+from nkpc_hsa.dataprep.build import hp_filter_series
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, competition_transform_note, transform_competition_series
 from nkpc_hsa.models.common import (
     KAPPA_SCALE,
@@ -46,7 +47,12 @@ from nkpc_hsa.paths import project_path
 #                       change into it, so the weak-prior entry-coefficient
 #                       results were not comparable with the others. 0 also
 #                       matches delta and gamma, which were already centred there.
-ESTIMATION_REVISION = "2026-08-theta-centred"
+# 2026-08-sample-window-v1  the production report driver now resolves data specs
+#                       through configured_data_specs, so the declared
+#                       1982Q1--2012Q4 window is applied after the PCHIP date fix.
+#                       This deliberately invalidates runs whose revision label
+#                       predates the corrected input alignment / window wiring.
+ESTIMATION_REVISION = "2026-08-sample-window-v1"
 
 
 @dataclass(frozen=True)
@@ -157,14 +163,34 @@ def _coerce_model_data(
             "x_prev": spec.get("x_prev_col", "x_prev"),
             "N": spec.get("n_col", spec.get("N_col", "N")),
         }
+        if spec.get("e_hat_col") is not None:
+            cols["Ehat"] = spec["e_hat_col"]
+        elif spec.get("e_col") is not None:
+            cols["E"] = spec["e_col"]
         required = ["pi", "pi_prev", "pi_expect", "x", "x_prev"]
         if cols["N"] in data.columns:
             required.append("N")
+        if "Ehat" in cols:
+            required.append("Ehat")
+        elif "E" in cols:
+            required.append("E")
         missing = [cols[k] for k in required if cols[k] not in data.columns]
         if missing:
             raise KeyError(f"Missing model-ready columns: {missing}")
         sample = _apply_sample_window(data[[cols[k] for k in required]], spec).dropna()
-        return {k: sample[cols[k]].to_numpy(dtype=float) for k in required}
+        out = {k: sample[cols[k]].to_numpy(dtype=float) for k in required}
+        if "E" in out:
+            e_transform = str(spec.get("e_transform", "log100_centered10"))
+            e_model = transform_competition_series(out["E"], transform=e_transform)  # type: ignore[arg-type]
+            e_filter = str(spec.get("e_cycle_filter", "hp")).lower()
+            if e_filter != "hp":
+                raise ValueError(f"Unsupported establishment cycle filter: {e_filter!r}")
+            e_lambda = float(spec.get("e_hp_lambda", 1600.0))
+            ebar, ehat = hp_filter_series(pd.Series(e_model), lamb=e_lambda)
+            out["E_model"] = np.asarray(e_model, dtype=float)
+            out["Ebar"] = ebar.to_numpy(dtype=float)
+            out["Ehat"] = ehat.to_numpy(dtype=float)
+        return out
     return {k: np.asarray(v, dtype=float).reshape(-1) for k, v in data.items()}
 
 
@@ -180,9 +206,17 @@ def model_sample_index(data: pd.DataFrame | Mapping[str, Any] | None, data_spec:
         "x_prev": data_spec.get("x_prev_col", "x_prev"),
         "N": data_spec.get("n_col", data_spec.get("N_col", "N")),
     }
+    if data_spec.get("e_hat_col") is not None:
+        cols["Ehat"] = data_spec["e_hat_col"]
+    elif data_spec.get("e_col") is not None:
+        cols["E"] = data_spec["e_col"]
     required = ["pi", "pi_prev", "pi_expect", "x", "x_prev"]
     if cols["N"] in data.columns:
         required.append("N")
+    if "Ehat" in cols:
+        required.append("Ehat")
+    elif "E" in cols:
+        required.append("E")
     missing = [cols[k] for k in required if cols[k] not in data.columns]
     if missing:
         return None
@@ -590,6 +624,13 @@ def _run_sampler(
                 raise KeyError(f"{model} requires an N series.")
             else:
                 kwargs["N_data"] = transform_competition_series(model_data["N"], transform=n_transform)  # type: ignore[arg-type]
+        if "Ehat" in model_data:
+            if model not in {"hsa_steady", "hsa_const_theta"}:
+                raise ValueError(
+                    "The establishment-cycle observation is currently implemented only for "
+                    "hsa_steady and hsa_const_theta."
+                )
+            kwargs["Ehat_data"] = np.asarray(model_data["Ehat"], dtype=float)
         result = _call_sampler(funcs[model], kwargs, orth=orth)
         chain_draws.append(_extract_draws_from_result(result))
         chain_metadata.append({"chain": chain, "seed": chain_seed, "model_metadata": result.get("model", {})})
@@ -722,6 +763,14 @@ def run_model(
         "ar2_max_tries": ar2_max_tries,
         "n_particles": n_particles if model == "hsa_full" else None,
         "no_inertia": no_inertia,
+        "establishment_measurement": {
+            "enabled": bool("Ehat" in model_data_for_sampler),
+            "source_column": data_spec_dict.get("e_col", data_spec_dict.get("e_hat_col")),
+            "cycle_filter": data_spec_dict.get("e_cycle_filter") if "Ehat" in model_data_for_sampler else None,
+            "hp_lambda": data_spec_dict.get("e_hp_lambda") if "Ehat" in model_data_for_sampler else None,
+            "transform": data_spec_dict.get("e_transform") if "Ehat" in model_data_for_sampler else None,
+            "finite_Ehat_count": int(np.isfinite(model_data_for_sampler.get("Ehat", [])).sum()),
+        },
         "extra": extra_meta,
     }
     idata = _to_idata(posterior, meta)

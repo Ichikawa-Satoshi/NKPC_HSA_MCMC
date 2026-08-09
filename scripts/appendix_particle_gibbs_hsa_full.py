@@ -19,7 +19,7 @@ import pandas as pd
 import yaml
 
 import _bootstrap  # noqa: F401  (sets up sys.path / ROOT)
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import _coerce_model_data
@@ -37,7 +37,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-OUT = ROOT / "results" / "evidence"
+OUT = RESULTS_DIR / "evidence"
 FIG = OUT / "figures"
 TAB = OUT / "tables"
 DRAWS = OUT / "draws"
@@ -60,7 +60,7 @@ def find_existing_run(spec):
     import glob
     from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
     cands = []
-    for d in sorted(glob.glob(str(ROOT / "results" / "runs" / f"hsa_full_{spec}_baseline_*"))):
+    for d in sorted(glob.glob(str(RESULTS_DIR / "runs" / f"hsa_full_{spec}_baseline_*"))):
         mp = Path(d) / "metadata.json"
         if not mp.exists():
             continue
@@ -91,7 +91,7 @@ def log(msg: str, fh=None):
 def load_cell(spec_name=CELL, prior_name="baseline"):
     specs = configured_data_specs(load_model_config())
     spec = specs[spec_name]
-    df = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv")
+    df = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv")
     md = _coerce_model_data(df, data_spec=spec)
     N = transform_competition_series(md["N"], transform=DEFAULT_N_TRANSFORM)
     pri_dict = yaml.safe_load(open(ROOT / "configs" / f"priors_{prior_name}.yaml"))

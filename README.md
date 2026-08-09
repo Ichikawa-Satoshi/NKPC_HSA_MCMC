@@ -127,9 +127,10 @@ shipped. `--skip-predictive` reuses the existing scores instead of recomputing
 them. `12_build_cpi_ppi_report.py` fails loudly if a report cell is missing —
 pass `--allow-incomplete` to build partial tables anyway.
 
-`scripts/prior_decomposition_rho_delta.py` is deliberately **not** part of the
-build: it estimates 12 diagnostic cells of its own (~45 minutes) and writes
-`prior_decomposition_macros.tex`. Run it directly when the prior sweep changes.
+The 12 estimations behind `scripts/prior_decomposition_rho_delta.py` are deliberately
+**not** part of the report build (~45 minutes). `build_report.py` runs that script with
+`--macros-only`, which refreshes `prior_decomposition_macros.tex` from the existing
+factorial CSVs without re-estimating them. Run the script directly when the sweep changes.
 
 ### The two observation designs
 
@@ -145,6 +146,38 @@ Interpolation manufactures information. It drives the AR(2) mean-reversion term
 the two firm-count states — `corr(N̄₀, N̂₀) = −0.9996`, against `+0.13` under
 `annual_q4`. The report keeps both designs so the artifact stays visible.
 
+### Experimental quarterly-establishment identification
+
+The restored BDS/BED files support a separate HSA const-theta experiment aimed at
+the weakly identified quarterly `Nhat` AR(2) and `theta` blocks. BED establishment births and deaths
+are quarterly flows, so `scripts/01_build_data.py` reconstructs the end-of-quarter
+stock from 1993Q2 onward. The experimental data spec uses exactly 1993Q2–2012Q4
+(79 quarters), decomposes transformed `E` with an HP filter, and adds
+
+```text
+Ehat_obs_t = lambda_E * Nhat_t + omega_t
+```
+
+to the joint Kalman/FFBS update. `lambda_E`, `sigma_E`, and the inflation loading
+`theta` are sampled rather than fixed. HSA const-theta is used because HSA steady
+sets `theta=0` and would identify only a nuisance state. These runs are written
+outside the production report run set.
+
+The current pilot is initialization-sensitive because a second mode can set
+`lambda_E` near zero and absorb the entire establishment cycle in `sigma_E`.
+Treat it as a model-development diagnostic, not as identified evidence for
+`theta`; the competing regions are documented in the experiment note.
+
+```bash
+python scripts/01_build_data.py
+python scripts/14_estimate_establishment_augmented.py --quick --chains 1 --no-save
+python scripts/14_estimate_establishment_augmented.py
+```
+
+The first command is required after changing the raw BED/BDS inputs. See
+[`docs/establishment_identification.md`](docs/establishment_identification.md)
+for the stock convention, equations, and current limitations.
+
 ### Supporting analyses (not part of the report build)
 
 ```bash
@@ -152,6 +185,8 @@ python scripts/03_run_diagnostics.py             # trace / autocorr plots, R-hat
 python scripts/09_identification_diagnostics.py
 python scripts/chib_marginal_likelihood.py       # conditional marginal likelihood
 python scripts/appendix_particle_gibbs_hsa_full.py validate|pilot|produce
+python scripts/er_01_diagnose.py                  # overlapping-inflation error diagnostics
+python scripts/er_02_estimate.py --quick          # MA(3) error-structure smoke test
 ```
 
 `03_run_diagnostics.py` writes one directory per run under `results/diagnostics/`,
@@ -181,18 +216,41 @@ Two older scripts are **superseded and should not be run casually**:
 | `prior_decomposition/` | `prior_decomposition_rho_delta.py` | 12 diagnostic cells, deliberately outside `runs/` so they cannot enter the report run-set |
 
 The whole tree is git-ignored and reproducible from the scripts. Runs from a
-superseded `ESTIMATION_REVISION` are deleted rather than accumulated; the
-revision string in each run's `metadata.json` records which vintage of the
-inputs produced it, and both the estimator and the report builder select on it.
+superseded `ESTIMATION_REVISION` may remain on disk for comparison, but stay out of the
+current report: the revision string in each run's `metadata.json` records which vintage
+of the inputs produced it, and both the estimator and the report builder select on it.
+The estimator also verifies `n_obs`, `sample_start`, and `sample_end` before reusing a
+cell.
 
 ---
 
 ## Data
 
+Every user must explicitly configure the GitHub checkout and Dropbox storage
+roots before running any script:
+
+```bash
+export NKPC_HSA_PROJECT_DIR="/Users/satoshi/GitHub/NKPC_HSA_MCMC"
+export NKPC_HSA_DROPBOX_DIR="/Users/satoshi/Dropbox/NKPC_HSA_MCMC"
+```
+
+There is no path auto-detection or fallback. Code and configuration paths are
+resolved relative to `NKPC_HSA_PROJECT_DIR`; raw and processed data use
+`<NKPC_HSA_DROPBOX_DIR>/data`; sampling and report outputs use
+`<NKPC_HSA_DROPBOX_DIR>/results`.
+
+`scripts/build_report.py` creates or verifies the repository-local `results`
+symlink needed by the LaTeX source's relative paths.
+
 `scripts/01_build_data.py` turns `data/raw/` into
-`data/processed/model_ready.csv`. Each estimation cell selects six columns and
-drops missing values **jointly**, so every specification has **T = 124**
-quarters, 1982Q1–2012Q4.
+`data/processed/model_ready.csv`. Each production estimation cell selects six
+columns and drops missing values **jointly**, so the report specifications have
+**T = 124** quarters, 1982Q1–2012Q4. The establishment-augmented experimental
+specification is deliberately shorter: 79 quarters, 1993Q2–2012Q4.
+
+The committed model-ready file has 454 rows; the explicitly configured estimation
+window and complete-case selection reduce every production specification to those 124
+quarters.
 
 | role | series | source |
 |---|---|---|
@@ -200,6 +258,7 @@ quarters, 1982Q1–2012Q4.
 | `E_tπ_{t+1}` | `Epi` | Cleveland Fed inflation expectations |
 | `x_t` | negative unemployment gap (`unemp_gap`), BN output gap, HP output gap, HP labor-share gap, inverse markup | CBO `NROU` − `UNRATE` (SA); BN filter output; HP filter (λ=1600) computed in `dataprep/build.py` |
 | `N_t` | `N_Gustavo` (inverse HHI of US listed firms), `N_TNIC` | `BN_N_Gustavo_26.csv`, `BN_N_TNIC_26.csv` |
+| `E_t` (experiment) | reconstructed quarterly establishment stock | annual BDS `ESTAB` anchor plus quarterly BED births minus deaths |
 
 Two conventions that are easy to get wrong:
 

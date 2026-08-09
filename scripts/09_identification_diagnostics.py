@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.identification import load_posterior_runs, write_identification_outputs
@@ -21,9 +21,9 @@ def main() -> None:
     )
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
     parser.add_argument("--periods", default=str(ROOT / "configs" / "periods.yaml"))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
-    parser.add_argument("--runs-dir", default=str(ROOT / "results" / "runs"))
-    parser.add_argument("--out-dir", default=str(ROOT / "results" / "diagnostics" / "identification"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
+    parser.add_argument("--runs-dir", default=str(RESULTS_DIR / "runs"))
+    parser.add_argument("--out-dir", default=str(RESULTS_DIR / "diagnostics" / "identification"))
     parser.add_argument("--prior", default="baseline", help="Prior spec to diagnose. Use 'all' to include all priors.")
     parser.add_argument(
         "--constraint",

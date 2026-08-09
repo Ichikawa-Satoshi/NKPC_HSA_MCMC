@@ -8,19 +8,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from _bootstrap import ROOT
-from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
+from nkpc_hsa.config import configured_data_specs, load_model_config
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, model_sample_index
 
-DATA = ROOT / "data" / "processed" / "model_ready.csv"
+DATA = DATA_DIR / "processed" / "model_ready.csv"
 # Supporting evidence, not report inputs: the paper quotes these numbers in prose but
 # never \input-s them, so they live under results/evidence/ rather than report/generated/.
-TABLE_DIR = ROOT / "results" / "evidence" / "tables" / "report_additions"
-FIGURE_DIR = ROOT / "results" / "evidence" / "figures"
+TABLE_DIR = RESULTS_DIR / "evidence" / "tables" / "report_additions"
+FIGURE_DIR = RESULTS_DIR / "evidence" / "figures"
 
 
 def _current_posterior() -> Path:
     candidates: list[tuple[str, Path]] = []
-    for metadata_path in (ROOT / "results" / "runs").glob("*/metadata.json"):
+    for metadata_path in (RESULTS_DIR / "runs").glob("*/metadata.json"):
         posterior = metadata_path.parent / "posterior.nc"
         if not posterior.exists():
             continue
@@ -70,13 +71,16 @@ def _summary(draws: np.ndarray) -> tuple[float, float, float]:
 
 
 def _sample_data() -> pd.DataFrame:
-    data = pd.read_csv(DATA, parse_dates=["DATE"])
-    data["period"] = data["DATE"].dt.to_period("Q")
+    data = pd.read_csv(DATA, parse_dates=["DATE"]).set_index("DATE")
     for lag in range(5):
         data[f"ppi_lag_{lag}"] = data["pi_ppi"].shift(lag)
-    sample = data.loc[
-        data["period"].between(pd.Period("1982Q1"), pd.Period("2012Q4"))
-    ].copy()
+    config = load_model_config(ROOT / "configs" / "models.yaml")
+    spec = configured_data_specs(config, ["unemployment_gap_core"])["unemployment_gap_core"]
+    sample_index = model_sample_index(data, spec)
+    if sample_index is None:
+        raise ValueError("Could not resolve the report's main estimation sample.")
+    sample = data.loc[sample_index].copy().reset_index()
+    sample["period"] = sample["DATE"].dt.to_period("Q")
     required = [
         "pi_cpi_core",
         "pi_cpi_core_prev",
@@ -86,16 +90,19 @@ def _sample_data() -> pd.DataFrame:
         "N_Gustavo_BN_trend",
     ]
     sample = sample.dropna(subset=required).reset_index(drop=True)
-    if len(sample) != 124:
-        raise ValueError(f"Expected 124 complete quarters, found {len(sample)}")
+    expected = len(sample_index)
+    if len(sample) != expected:
+        raise ValueError(f"Expected {expected} complete quarters, found {len(sample)}")
     return sample
 
 
 def _posterior_arrays() -> tuple[np.ndarray, np.ndarray]:
     posterior = _current_posterior()
     idata = az.from_netcdf(posterior)
-    nbar = np.asarray(idata.posterior["Nbar"]).reshape(-1, 124)
-    kappa_t = np.asarray(idata.posterior["kappa_t"]).reshape(-1, 124)
+    nbar_raw = np.asarray(idata.posterior["Nbar"])
+    kappa_raw = np.asarray(idata.posterior["kappa_t"])
+    nbar = nbar_raw.reshape(-1, nbar_raw.shape[-1])
+    kappa_t = kappa_raw.reshape(-1, kappa_raw.shape[-1])
     (TABLE_DIR / "source_run.txt").write_text(str(posterior.parent) + "\n", encoding="utf-8")
     return nbar, kappa_t
 
@@ -430,6 +437,11 @@ def main() -> None:
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
     sample = _sample_data()
     nbar, kappa_t = _posterior_arrays()
+    if len(sample) != nbar.shape[1] or len(sample) != kappa_t.shape[1]:
+        raise ValueError(
+            f"Report data have T={len(sample)}, but the selected posterior has "
+            f"T={nbar.shape[1]}. Re-estimate before rebuilding the report."
+        )
     write_economic_magnitude(sample, kappa_t)
     nbar_mean, observed_n, source_bn = write_trend_identification(sample, nbar)
     write_mechanism_check(sample, kappa_t)

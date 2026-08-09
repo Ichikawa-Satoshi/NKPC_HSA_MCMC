@@ -77,6 +77,7 @@ def func_nkpc_hsa_const_theta(
     opts: Optional[dict[str, Any]] = None,
     *,
     orth: bool = False,
+    Ehat_data=None,
 ) -> dict[str, Any]:
     """Gibbs sampler for HSA const-theta with an exact joint FFBS state block.
 
@@ -92,9 +93,14 @@ def func_nkpc_hsa_const_theta(
     x_t = np.asarray(x_data, dtype=float).reshape(-1)
     x_tm1 = np.asarray(x_prev_data, dtype=float).reshape(-1)
     N_obs = np.asarray(N_data, dtype=float).reshape(-1)
+    Ehat_obs = None if Ehat_data is None else np.asarray(Ehat_data, dtype=float).reshape(-1)
     T = pi_t.size
     if not (pi_tm1.size == pi_expect.size == x_t.size == x_tm1.size == N_obs.size == T):
         raise ValueError("All input series must have the same length.")
+    if Ehat_obs is not None and Ehat_obs.size != T:
+        raise ValueError("Ehat_data must have the same length as the other model series.")
+    if Ehat_obs is not None and np.isfinite(Ehat_obs).sum() < 3:
+        raise ValueError("Ehat_data must contain at least three finite quarterly observations.")
     if T < 3:
         raise ValueError("Need T >= 3 for the AR(2) gap equation.")
 
@@ -108,6 +114,7 @@ def func_nkpc_hsa_const_theta(
     theta = float(_getd(opts, "theta00", pri["mu_theta"]))
     phi_1 = float(_getd(opts, "phi10", pri["mu_phi"]))
     lambda_ez = 0.0 if orth else float(_getd(opts, "lambda0", pri["mu_lambda"]))
+    lambda_E = float(_getd(opts, "lambda_E0", pri["mu_lambda_E"]))
     rho1 = float(_getd(opts, "rho10", pri["mu_rho1"]))
     rho2 = float(_getd(opts, "rho20", pri["mu_rho2"]))
     n_drift = float(_getd(opts, "n0", pri["mu_n"]))
@@ -117,6 +124,7 @@ def func_nkpc_hsa_const_theta(
     sigma_u2 = float(_getd(opts, "sigma_u20", 1.0))
     sigma_eps2 = float(_getd(opts, "sigma_eps20", 1.0))
     sigma_N2 = float(_getd(opts, "sigma_N20", _getd(opts, "sigma_m20", 1.0)))
+    sigma_E2 = float(_getd(opts, "sigma_E20", 0.01))
 
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
@@ -131,6 +139,18 @@ def func_nkpc_hsa_const_theta(
         raise ValueError("No draws would be stored. Use n_keep >= store_every.")
 
     Nbar, Nhat = _init_states(N_obs)
+    initialize_from_Ehat = bool(_getd(opts, "initialize_from_Ehat", Ehat_obs is not None))
+    if Ehat_obs is not None and initialize_from_Ehat:
+        finite_E = np.isfinite(Ehat_obs)
+        loading = lambda_E if abs(lambda_E) > 1e-8 else 1.0
+        target = np.empty(T, dtype=float)
+        target[finite_E] = Ehat_obs[finite_E] / loading
+        if not np.all(finite_E):
+            positions = np.arange(T)
+            target[~finite_E] = np.interp(positions[~finite_E], positions[finite_E], target[finite_E])
+        total = Nbar + Nhat
+        Nhat = target
+        Nbar = total - Nhat
     a_t = pi_tm1 - pi_expect
     y = pi_t - pi_expect
     lambda_prec0 = 0.0 if orth else 1.0 / pri["sigma_lambda"] ** 2
@@ -165,6 +185,7 @@ def func_nkpc_hsa_const_theta(
     theta_draws = np.zeros(n_store)
     phi_draws = np.zeros(n_store)
     lambda_draws = np.zeros(n_store)
+    lambda_E_draws = np.zeros(n_store) if Ehat_obs is not None else None
     rho1_draws = np.zeros(n_store)
     rho2_draws = np.zeros(n_store)
     n_draws = np.zeros(n_store)
@@ -174,6 +195,7 @@ def func_nkpc_hsa_const_theta(
     sigma_u_draws = np.zeros(n_store)
     sigma_eps_draws = np.zeros(n_store)
     sigma_N_draws = np.zeros(n_store)
+    sigma_E_draws = np.zeros(n_store) if Ehat_obs is not None else None
     rho_ez_draws = np.zeros(n_store)
     Nbar_draws = np.zeros((n_store, T))
     Nhat_draws = np.zeros((n_store, T))
@@ -304,7 +326,30 @@ def func_nkpc_hsa_const_theta(
             pri["a_N"] + 0.5 * resid_N.size, pri["b_N"] + 0.5 * float(np.sum(resid_N**2)), rng
         )
 
-        # --- 8. JOINT exact FFBS for the whole state path ---
+        # --- 8. lambda_E and sigma_E2 for the quarterly Ehat observation ---
+        if Ehat_obs is not None:
+            finite_E = np.isfinite(Ehat_obs)
+            e_obs = Ehat_obs[finite_E]
+            e_state = Nhat[finite_E]
+            prior_prec_E = 1.0 / pri["sigma_lambda_E"]**2
+            post_var_lambda_E = 1.0 / (
+                prior_prec_E + float(np.sum(e_state**2)) / sigma_E2
+            )
+            post_mean_lambda_E = post_var_lambda_E * (
+                pri["mu_lambda_E"] * prior_prec_E
+                + float(np.dot(e_state, e_obs)) / sigma_E2
+            )
+            lambda_E = float(
+                post_mean_lambda_E + np.sqrt(post_var_lambda_E) * rng.standard_normal()
+            )
+            resid_E = e_obs - lambda_E * e_state
+            sigma_E2 = _sample_invgamma(
+                pri["a_E"] + 0.5 * resid_E.size,
+                pri["b_E"] + 0.5 * float(np.sum(resid_E**2)),
+                rng,
+            )
+
+        # --- 9. JOINT exact FFBS for the whole state path ---
         # With gamma = 0 the inflation row is linear in s_t, loading
         # -theta on Nhat_t and delta*x_t/KAPPA_SCALE on Nbar_t.
         y_tilde_state = y - alpha * a_t - (kappa0 / KAPPA_SCALE) * x_t - lambda_ez * zeta
@@ -323,11 +368,14 @@ def func_nkpc_hsa_const_theta(
             m0=m0,
             P0=P0,
             rng=rng,
+            Ehat_obs=Ehat_obs,
+            lambda_E=lambda_E,
+            sigma_E2=sigma_E2,
         )
 
         kappa_t = kappa0 + delta * Nbar
 
-        # --- 9. store ---
+        # --- 10. store ---
         sigma_e = float(np.sqrt(lambda_ez**2 * sigma_zeta2 + sigma_eta2))
         rho_ez = (
             0.0
@@ -342,6 +390,8 @@ def func_nkpc_hsa_const_theta(
             theta_draws[store_idx] = theta
             phi_draws[store_idx] = phi_1
             lambda_draws[store_idx] = lambda_ez
+            if lambda_E_draws is not None:
+                lambda_E_draws[store_idx] = lambda_E
             rho1_draws[store_idx] = rho1
             rho2_draws[store_idx] = rho2
             n_draws[store_idx] = n_drift
@@ -351,6 +401,8 @@ def func_nkpc_hsa_const_theta(
             sigma_u_draws[store_idx] = np.sqrt(sigma_u2)
             sigma_eps_draws[store_idx] = np.sqrt(sigma_eps2)
             sigma_N_draws[store_idx] = np.sqrt(sigma_N2)
+            if sigma_E_draws is not None:
+                sigma_E_draws[store_idx] = np.sqrt(sigma_E2)
             rho_ez_draws[store_idx] = rho_ez
             Nbar_draws[store_idx] = Nbar
             Nhat_draws[store_idx] = Nhat
@@ -371,6 +423,7 @@ def func_nkpc_hsa_const_theta(
         "theta": _summary(theta_draws),
         "phi_1": _summary(phi_draws),
         "lambda_ez": _summary(lambda_draws),
+        **({"lambda_E": _summary(lambda_E_draws)} if lambda_E_draws is not None else {}),
         "rho": _summary(rho_ez_draws),
         "rho1": _summary(rho1_draws),
         "rho2": _summary(rho2_draws),
@@ -381,6 +434,7 @@ def func_nkpc_hsa_const_theta(
         "sigma_u": _summary(sigma_u_draws),
         "sigma_eps": _summary(sigma_eps_draws),
         "sigma_N": _summary(sigma_N_draws),
+        **({"sigma_E": _summary(sigma_E_draws)} if sigma_E_draws is not None else {}),
         "state_draws": {
             "Nbar": Nbar_draws,
             "Nhat": Nhat_draws,
@@ -392,6 +446,12 @@ def func_nkpc_hsa_const_theta(
         "model": {
             "N_measurement_error": True,
             "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + nu_t, nu_t ~ N(0, sigma_N^2)",
+            "establishment_measurement": Ehat_obs is not None,
+            "establishment_measurement_equation": (
+                "Ehat_obs_t = lambda_E * Nhat_t + omega_t"
+                if Ehat_obs is not None
+                else None
+            ),
             "state_sampler": "joint_ffbs",
             "state_blocks": (
                 "Exact joint Kalman/FFBS draw of s_t = [Nhat_t, Nhat_{t-1}, Nbar_t]'. "
@@ -403,6 +463,7 @@ def func_nkpc_hsa_const_theta(
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",
             "stored_units": "physical",
             "theta_specification": "static (theta_t = theta, gamma fixed at 0)",
+            "initialize_from_Ehat": initialize_from_Ehat,
             "coefficient_constraints": coefficient_constraints,
             "coefficient_constraint_stats": constraint_stats_summary(constraint_stats),
             "ar2_stationarity": {

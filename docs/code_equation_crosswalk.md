@@ -20,7 +20,9 @@ Paths are relative to the repository root. Line numbers are post-August-2026.
 | annual → quarterly N | `PchipInterpolator(xx, yy)` | `func_data_build.py:63` | `annual_to_quarterly_pchip` | PCHIP design | interpolated firm count |
 | Q4-only N | `if int(period.quarter) == 4 …: out[i] = …` else `nan` | `src/nkpc_hsa/dataprep/competition.py:131-141` | `build_competition_observation` | annual-Q4 design | mixed-frequency observation |
 | annual N centered on PCHIP mean | `center = np.mean(100.0*np.log(reference))` | `src/nkpc_hsa/inference/wrappers.py:174-178` | `_transform_annual_competition_like_quarterly` | annual-Q4 | keeps units comparable |
-| complete-case sample | `data[[…]].dropna()` | `wrappers.py:123` | `_coerce_model_data` | all | T = 124 |
+| complete-case sample | `data[[…]].dropna()` | `wrappers.py` | `_coerce_model_data` | production report | T = 124 |
+| establishment experiment sample | configured 1993Q2–2012Q4 window plus joint complete cases | `wrappers.py` | `_coerce_model_data` | HSA const-theta experiment | T = 79 |
+| quarterly establishment signal | `Ehat_obs_t = lambda_E*Nhat_t + omega_t` | `gibbs/common/joint_ffbs.py` | `sample_joint_competition_states_ffbs` | HSA const-theta experiment | theta, lambda_E and sigma_E sampled |
 
 ---
 
@@ -233,7 +235,7 @@ model cannot silently fall back to a superseded one.
 | `tab:model-comp` | slope, δ, BF | 5 models × 3 prices, **annual-Q4** | as above | `make_headline_results_table.py` `build()` | `cpi_ppi_report/annual_q4/model_comparison_unemp.tex` |
 | `tab:headline-pchip`, `tab:model-comp-pchip` | same, interpolated design | PCHIP | as above | same, second `build()` call | `cpi_ppi_report/*.tex` |
 | `\BiasDirect*` | `ces["kappa"]`, `hsa_dynamic["kappa"]`, `Nhat`, `theta`, `phi_1` | `inv_markup` cells | `_paired_difference` `:528-533`, `_hsa_implied_ovb` `:546-576` | `build_ces_hsa_bias_table` `:577-641` | `bias_macros.tex`, `ces_hsa_kappa_bias.tex` |
-| economic magnitude "0.126" | — | — | ⚠️ **hard-coded literal** in `report/nkpc_hsa_report.tex`, not a macro. `\CoreUnempKappaStart − \CoreUnempKappaEnd` = 0.125 | — | — |
+| `\CoreUnempKappaDrop` | `posterior["kappa_t"]` | main HSA-steady cell | posterior-mean start minus end | `_state_space_macros` | `result_macros.tex` |
 
 **No translation pass.** The report is English-only. The table builders write English
 directly and `_write_latex` raises if a table would contain CJK text, so the former

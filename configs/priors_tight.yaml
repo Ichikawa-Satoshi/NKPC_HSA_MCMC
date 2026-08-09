@@ -9,6 +9,7 @@ phi_1: [0.7, 0.1]
 rho_1: [0.5, 0.1]
 rho_2: [-0.5, 0.1]
 n: [0.0, 0.05]
+lambda_E: [1.0, 0.5]
 a_e: 4.0
 b_e: 4.0
 # See priors_baseline.yaml: N-state variances are in squared ten-log-point
@@ -19,6 +20,8 @@ a_eps: 4.0
 b_eps: 0.03
 a_N: 4.0
 b_N: 0.03
+a_E: 4.0
+b_E: 0.03
 a_z: 0.01
 b_z: 0.01
 nu_Sigma: 12.0

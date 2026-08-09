@@ -536,6 +536,8 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         "sigma_phi": _getd(priors, "sigma_phi_1", 0.2),
         "mu_lambda": _getd(priors, "mu_lambda", 0.0),
         "sigma_lambda": _getd(priors, "sigma_lambda", 0.5),
+        "mu_lambda_E": _getd(priors, "mu_lambda_E", 1.0),
+        "sigma_lambda_E": _getd(priors, "sigma_lambda_E", 1.0),
         "mu_rho1": _getd(priors, "mu_rho1", 0.5),
         "sigma_rho1": _getd(priors, "sigma_rho1", 0.2),
         "mu_rho2": _getd(priors, "mu_rho2", -0.5),
@@ -554,6 +556,8 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         #   N_obs_t = Nhat_t + Nbar_t + nu_t
         "a_N": _getd(priors, "a_N", _getd(priors, "a_m", 2.0)),
         "b_N": _getd(priors, "b_N", _getd(priors, "b_m", 2.0)),
+        "a_E": _getd(priors, "a_E", 2.0),
+        "b_E": _getd(priors, "b_E", 0.01),
         "m0_Nhat": _getd(priors, "m0_Nhat", 0.0),
         "m0_Nhat_lag": _getd(priors, "m0_Nhat_lag", 0.0),
         "m0_Nbar": _getd(priors, "m0_Nbar", 0.0),

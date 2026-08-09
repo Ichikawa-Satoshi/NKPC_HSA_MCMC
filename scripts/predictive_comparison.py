@@ -30,14 +30,14 @@ import pandas as pd
 from scipy.special import logsumexp
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, _coerce_model_data
 from nkpc_hsa.dataprep import transform_competition_series
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 
-TAB = ROOT / "results" / "evidence" / "tables"
+TAB = RESULTS_DIR / "evidence" / "tables"
 TAB.mkdir(parents=True, exist_ok=True)
 
 MODELS = ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]
@@ -48,7 +48,7 @@ UNEMP = {"Headline CPI": "unemployment_gap",
 
 def find_run(model, spec, freq="quarterly_interpolated"):
     best = None
-    for d in sorted(glob.glob(str(ROOT / "results" / "runs" / f"{model}_{spec}_baseline_*"))):
+    for d in sorted(glob.glob(str(RESULTS_DIR / "runs" / f"{model}_{spec}_baseline_*"))):
         mp = Path(d) / "metadata.json"
         if not mp.exists():
             continue
@@ -198,7 +198,7 @@ def main():
     args = ap.parse_args()
     designs = [args.frequency] if args.frequency else ["annual_q4", "quarterly_interpolated"]
     specs = configured_data_specs(load_model_config())
-    df = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv")
+    df = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv")
     import arviz as az
 
     rows = []

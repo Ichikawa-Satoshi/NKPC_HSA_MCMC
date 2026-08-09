@@ -26,7 +26,7 @@ import time
 from pathlib import Path
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 
 REPORT = ROOT / "report" / "nkpc_hsa_report.tex"
 
@@ -84,6 +84,24 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
 NOT_BUILT_HERE = "prior_decomposition_rho_delta.py"
 
 
+def ensure_report_results_link() -> None:
+    """Expose external results at ``<repo>/results`` for LaTeX relative paths."""
+    repo_results = ROOT / "results"
+    target = RESULTS_DIR.resolve()
+    if repo_results.is_symlink():
+        if repo_results.resolve() != target:
+            raise SystemExit(f"{repo_results} points to {repo_results.resolve()}, expected {target}")
+        return
+    if repo_results.exists():
+        if repo_results.resolve() == target:
+            return
+        raise SystemExit(
+            f"Cannot link external results: {repo_results} already exists. "
+            "Move or rename it, then rerun the report build."
+        )
+    repo_results.symlink_to(target, target_is_directory=True)
+
+
 def _run(script: str, args: list[str]) -> float:
     started = time.perf_counter()
     print(f"\n=== {script} {' '.join(args)}", flush=True)
@@ -118,7 +136,7 @@ def compile_pdf() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--runs-dir", type=Path, default=ROOT / "results" / "runs")
+    parser.add_argument("--runs-dir", type=Path, default=RESULTS_DIR / "runs")
     parser.add_argument("--min-iter", type=int, default=12000)
     parser.add_argument("--compile", action="store_true", help="Run xelatex twice after building.")
     parser.add_argument(
@@ -127,6 +145,7 @@ def main() -> None:
         help="Reuse the existing predictive_comparison.csv instead of recomputing the scores.",
     )
     args = parser.parse_args()
+    ensure_report_results_link()
 
     timings = []
     for script, extra, _, skippable in STEPS:

@@ -15,11 +15,11 @@ import pandas as pd
 import yaml
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 
 from nkpc_hsa.reporting.cpi_ppi_spec import MODEL_LABELS, MODEL_ORDER
 
-TABLES = ROOT / "results" / "tables" / "shared"
+TABLES = RESULTS_DIR / "tables" / "shared"
 
 MODEL_VARIANTS = {
     "ces": ("constant", "$0$", "Textbook NKPC benchmark"),

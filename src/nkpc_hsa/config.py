@@ -35,7 +35,13 @@ def configured_data_specs(
     # function gets the same window, and the window is recorded in each run's
     # saved data_spec.json.
     defaults = dict(config.get("defaults", {}) or {})
-    window = {k: defaults[k] for k in ("sample_start", "sample_end") if defaults.get(k) is not None}
+    # PyYAML resolves ISO dates to ``datetime.date``. Keep the public data-spec
+    # payload JSON-serializable because it is saved verbatim as data_spec.json.
+    window = {
+        k: str(defaults[k])
+        for k in ("sample_start", "sample_end")
+        if defaults.get(k) is not None
+    }
     out: dict[str, dict[str, Any]] = {}
     for name in names:
         if name not in all_specs:

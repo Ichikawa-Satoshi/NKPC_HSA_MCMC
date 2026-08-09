@@ -21,6 +21,8 @@ PARAMETER_UNITS = {
     "phi_1": "AR(1) coefficient",
     "n": "Nbar drift in ten-log-point units",
     "lambda_ez": "shock loading",
+    "lambda_E": "establishment-cycle loading on Nhat",
+    "sigma_E": "establishment-cycle measurement standard deviation",
 }
 
 
@@ -67,6 +69,7 @@ COEFFICIENT_PARAMETERS = (
     "rho_2",
     "n",
     "lambda_ez",
+    "lambda_E",
 )
 
 

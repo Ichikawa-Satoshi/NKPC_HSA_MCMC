@@ -18,11 +18,11 @@ import numpy as np
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 
-SRC = ROOT / "results" / "evidence" / "tables" / "conditional_ml.csv"
-OUT = ROOT / "results" / "tables" / "annual_q4"
-MACROS = ROOT / "results" / "tables" / "shared" / "conditional_ml_macros.tex"
+SRC = RESULTS_DIR / "evidence" / "tables" / "conditional_ml.csv"
+OUT = RESULTS_DIR / "tables" / "annual_q4"
+MACROS = RESULTS_DIR / "tables" / "shared" / "conditional_ml_macros.tex"
 
 PRICES = ["Headline CPI", "Core CPI", "PPI"]
 ACTIVITIES = ["Unemployment gap", "HP output gap", "BN output gap"]

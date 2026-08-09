@@ -11,6 +11,7 @@ import pandas as pd
 from nkpc_hsa.config import configured_data_specs
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
 from nkpc_hsa.inference.period_robustness import apply_period
+from nkpc_hsa.inference.wrappers import model_sample_index
 
 
 def _safe_corr(a: np.ndarray, b: np.ndarray) -> float:
@@ -144,7 +145,10 @@ def model_sample(
     if missing:
         raise KeyError(f"Missing model-ready columns for {spec.get('name', '')}: {missing}")
 
-    sample = df[required].dropna().rename(columns={v: k for k, v in cols.items()})
+    sample_index = model_sample_index(df, spec)
+    if sample_index is None:
+        raise ValueError(f"Could not resolve the sample for {spec.get('name', '')!r}.")
+    sample = df.loc[sample_index, required].rename(columns={v: k for k, v in cols.items()})
     sample["y"] = sample["pi"] - sample["pi_expect"]
     sample["a"] = sample["pi_prev"] - sample["pi_expect"]
     sample["N_model"] = transform_competition_series(sample["N_raw"].to_numpy(dtype=float), transform=n_transform)

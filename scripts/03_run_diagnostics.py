@@ -6,7 +6,7 @@ from pathlib import Path
 import arviz as az
 import pandas as pd
 
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.diagnostics import save_diagnostics
@@ -15,8 +15,8 @@ from nkpc_hsa.reporting.tables import write_latex_fragment
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--runs-dir", default=str(ROOT / "results" / "runs"))
-    parser.add_argument("--out-dir", default=str(ROOT / "results" / "diagnostics"))
+    parser.add_argument("--runs-dir", default=str(RESULTS_DIR / "runs"))
+    parser.add_argument("--out-dir", default=str(RESULTS_DIR / "diagnostics"))
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
     parser.add_argument(
         "--data-spec",
@@ -50,9 +50,9 @@ def main() -> None:
             summary.insert(5, "n_transform", getattr(idata, "attrs", {}).get("n_transform", ""))
             rows.append(summary)
     table = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
-    (ROOT / "results" / "diagnostics").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "diagnostics" / "mcmc_diagnostics.csv", index=False)
-    write_latex_fragment(table if not table.empty else pd.DataFrame({"note": ["No diagnostics available."]}), ROOT / "results" / "diagnostics" / "mcmc_diagnostics.tex")
+    (RESULTS_DIR / "diagnostics").mkdir(parents=True, exist_ok=True)
+    table.to_csv(RESULTS_DIR / "diagnostics" / "mcmc_diagnostics.csv", index=False)
+    write_latex_fragment(table if not table.empty else pd.DataFrame({"note": ["No diagnostics available."]}), RESULTS_DIR / "diagnostics" / "mcmc_diagnostics.tex")
 
 
 if __name__ == "__main__":

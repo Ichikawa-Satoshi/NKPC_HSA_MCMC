@@ -25,9 +25,9 @@ import sys
 from pathlib import Path
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 
-EN_ROOT = ROOT / "results" / "tables"
+EN_ROOT = RESULTS_DIR / "tables"
 
 
 def _load12():
@@ -50,6 +50,10 @@ def build(m, *, frequency: str, out_dir: Path, design: str, label_suffix: str):
     const_sampler = " / ".join(sorted(
         {m._sampler_label(idata) for (mod, _, _), (_, idata) in runs.items() if mod == "hsa_const_theta"}
     )) or "n/a"
+    sample_sizes = {int(idata.attrs.get("n_obs", 0) or 0) for _, idata in runs.values()}
+    if len(sample_sizes) != 1:
+        raise ValueError(f"Report cells do not share one sample size: {sorted(sample_sizes)}")
+    sample_size = sample_sizes.pop()
 
     EN = out_dir  # local alias so the writer lines below stay unchanged
     ACT = [("Negative unemployment gap", "Unemployment gap"),
@@ -78,7 +82,7 @@ def build(m, *, frequency: str, out_dir: Path, design: str, label_suffix: str):
     lines = [
         r"\begin{table}[H]", r"\centering",
         (r"\caption{Headline results (main model: HSA steady, baseline priors, " + design +
-         r", $T=124$), by price index and activity measure. $\delta$ is the competition "
+         f", $T={sample_size}$), by price index and activity measure. $\\delta$ is the competition "
          r"dependence of the slope (a positive $\delta$ means the slope flattens as the "
          r"firm count falls); $\mathrm{BF}_{10}$ is the Savage--Dickey Bayes factor "
          r"against $\delta=0$; $\kappa_0$ is the slope at average competition; the last "

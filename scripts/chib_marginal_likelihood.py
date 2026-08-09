@@ -39,7 +39,7 @@ import pandas as pd
 import yaml
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
@@ -56,7 +56,7 @@ from nkpc_hsa.inference.wrappers import (
 )
 from nkpc_hsa.models.common import prior_specs_to_internal
 
-TAB = ROOT / "results" / "evidence" / "tables"
+TAB = RESULTS_DIR / "evidence" / "tables"
 TAB.mkdir(parents=True, exist_ok=True)
 
 UNEMP = {
@@ -141,7 +141,7 @@ def main() -> None:
     # DATE must be the index: the annual-Q4 scheme needs a quarterly period
     # index to place each annual observation in its own Q4.
     df = pd.read_csv(
-        ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
     ).set_index("DATE")
     prior_spec = yaml.safe_load((ROOT / "configs" / "priors_baseline.yaml").read_text())
     priors_internal = prior_specs_to_internal(prior_spec)

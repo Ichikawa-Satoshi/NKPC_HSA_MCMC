@@ -19,10 +19,10 @@ from pathlib import Path
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import RESULTS_DIR, ROOT
 
-SRC = ROOT / "results" / "evidence" / "tables" / "predictive_comparison.csv"
-OUT = ROOT / "results" / "tables" / "annual_q4"
+SRC = RESULTS_DIR / "evidence" / "tables" / "predictive_comparison.csv"
+OUT = RESULTS_DIR / "tables" / "annual_q4"
 LABELS = {"ces": "CES", "hsa_steady": "HSA steady", "hsa_dynamic": "HSA dynamic",
           "hsa_full": "HSA full"}
 ORDER = ["ces", "hsa_steady", "hsa_dynamic", "hsa_full"]
@@ -112,7 +112,7 @@ def main() -> None:
     if ratios:
         macros.append(rf"\providecommand{{\FitPluginOverstateMin}}{{{min(ratios):.1f}}}")
         macros.append(rf"\providecommand{{\FitPluginOverstateMax}}{{{max(ratios):.1f}}}")
-    macro_path = ROOT / "results" / "tables" / "shared" / "fit_comparison_macros.tex"
+    macro_path = RESULTS_DIR / "tables" / "shared" / "fit_comparison_macros.tex"
     macro_path.parent.mkdir(parents=True, exist_ok=True)
     macro_path.write_text("\n".join(macros) + "\n", encoding="utf-8")
     print(f"wrote {macro_path.relative_to(ROOT)}")

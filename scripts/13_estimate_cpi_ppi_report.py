@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from _bootstrap import ROOT
-from nkpc_hsa.config import load_model_config
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
+from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
-from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, run_model
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, model_sample_index, run_model
 from nkpc_hsa.reporting.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
 
 
@@ -30,6 +30,7 @@ def _existing_keys(
     *,
     min_iter: int,
     competition_frequency: str,
+    expected_samples: dict[str, tuple[int, str, str]],
 ) -> set[tuple[str, str, str]]:
     keys: set[tuple[str, str, str]] = set()
     for metadata_path in runs_dir.glob("*/metadata.json"):
@@ -50,21 +51,52 @@ def _existing_keys(
             continue
         if str(metadata.get("competition_measurement_frequency", "quarterly_interpolated")) != competition_frequency:
             continue
+        data_spec = str(metadata.get("data_spec", ""))
+        expected = expected_samples.get(data_spec)
+        if expected is None:
+            continue
+        expected_n, expected_start, expected_end = expected
+        if int(metadata.get("n_obs", 0) or 0) != expected_n:
+            continue
+        if str(metadata.get("sample_start", "")) != expected_start:
+            continue
+        if str(metadata.get("sample_end", "")) != expected_end:
+            continue
         keys.add(
             (
                 str(metadata.get("model", "")),
-                str(metadata.get("data_spec", "")),
+                data_spec,
                 str(metadata.get("prior_spec", "baseline") or "baseline"),
             )
         )
     return keys
 
 
+def _resolved_data_spec(config: dict[str, object], data_spec_name: str) -> dict[str, object]:
+    """Resolve one cell through the same helper used by every other production entry point."""
+    return configured_data_specs(config, [data_spec_name])[data_spec_name]
+
+
+def _sample_signature(data: pd.DataFrame, spec: dict[str, object]) -> tuple[int, str, str]:
+    sample_index = model_sample_index(data, spec)
+    if not isinstance(sample_index, pd.DatetimeIndex) or not len(sample_index):
+        raise ValueError(f"Could not resolve a dated sample for {spec.get('name', '')!r}.")
+    return (
+        len(sample_index),
+        sample_index.min().date().isoformat(),
+        sample_index.max().date().isoformat(),
+    )
+
+
 def _estimate_one(job: dict[str, object]) -> tuple[tuple[str, str, str], float, str]:
     started = time.perf_counter()
     model, data_spec_name, prior = job["key"]
     config = load_model_config(job["config"])
-    spec = {**config["data_specs"][data_spec_name], "name": data_spec_name}
+    # Resolve through the canonical helper so the study-wide sample window in
+    # defaults.sample_start / defaults.sample_end is injected into every cell.
+    # Building the dict directly used to bypass that window and, after the PCHIP
+    # date fix extended model_ready.csv, silently changed T from 124 to 128.
+    spec = _resolved_data_spec(config, str(data_spec_name))
     data = pd.read_csv(job["data"], parse_dates=["DATE"]).set_index("DATE")
     run_id = str(job["run_id"])
     # One directory per (model, data spec, prior, observation design). The name
@@ -101,8 +133,8 @@ def _estimate_one(job: dict[str, object]) -> tuple[tuple[str, str, str], float, 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Estimate every current-revision run required by the CPI/PPI report.")
     parser.add_argument("--config", type=Path, default=ROOT / "configs" / "models.yaml")
-    parser.add_argument("--data", type=Path, default=ROOT / "data" / "processed" / "model_ready.csv")
-    parser.add_argument("--runs-dir", type=Path, default=ROOT / "results" / "runs")
+    parser.add_argument("--data", type=Path, default=DATA_DIR / "processed" / "model_ready.csv")
+    parser.add_argument("--runs-dir", type=Path, default=RESULTS_DIR / "runs")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--force", action="store_true", help="Re-estimate cells even when a complete current-revision run exists.")
     # The old --no-compile passed a --compile flag that scripts/12 does not accept,
@@ -132,10 +164,16 @@ def main() -> None:
             (defaults.get("competition_measurement", {}) or {}).get("frequency", "annual_q4")
         )
     required = report_run_keys() if args.competition_frequency == "quarterly_interpolated" else annual_q4_run_keys()
+    data = pd.read_csv(args.data, parse_dates=["DATE"]).set_index("DATE")
+    expected_samples = {
+        name: _sample_signature(data, _resolved_data_spec(config, name))
+        for name in sorted({data_spec for _, data_spec, _ in required})
+    }
     existing = set() if args.force else _existing_keys(
         args.runs_dir,
         min_iter=n_iter,
         competition_frequency=args.competition_frequency,
+        expected_samples=expected_samples,
     )
     missing = [key for key in required if key not in existing]
     print(

@@ -19,10 +19,12 @@ from pathlib import Path
 
 import pytest
 
+from nkpc_hsa.paths import results_root
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "report" / "nkpc_hsa_report.tex"
-TABLES = ROOT / "results" / "tables"
-FIGURES = ROOT / "results" / "figures"
+TABLES = results_root(ROOT) / "tables"
+FIGURES = results_root(ROOT) / "figures"
 
 pytestmark = pytest.mark.skipif(
     not REPORT.exists() or not TABLES.exists(),

@@ -30,7 +30,7 @@ from pathlib import Path
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
@@ -49,7 +49,7 @@ def main() -> None:
     defaults = config.get("defaults", {})
     specs = configured_data_specs(config, list(config.get("data_specs", {})))
     data = pd.read_csv(
-        ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
     ).set_index("DATE")
 
     n_iter = 200 if args.quick else int(defaults.get("n_iter", 12000))
@@ -65,7 +65,7 @@ def main() -> None:
     t0 = time.time()
     for i, spec in enumerate(cells, 1):
         run_id = f"{stamp}_alphazero"
-        run_dir = ROOT / "results" / "runs" / f"hsa_steady_{spec}_baseline_alpha_zero_{FREQ}_{run_id}"
+        run_dir = RESULTS_DIR / "runs" / f"hsa_steady_{spec}_baseline_alpha_zero_{FREQ}_{run_id}"
         print(f"[{i}/{len(cells)}] {spec}", flush=True)
         run_model(
             "hsa_steady",

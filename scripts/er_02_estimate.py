@@ -22,7 +22,7 @@ from pathlib import Path
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_yaml
 from nkpc_hsa.error_robustness.runner import ERROR_ROBUSTNESS_RUNS, run_model_ma3
 
@@ -42,7 +42,7 @@ def _resolve_priors(prior_name: str, config: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default=str(CONFIG))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument("--model", action="append", dest="models")
     parser.add_argument("--data-spec", action="append", dest="data_specs")
     parser.add_argument("--prior", action="append", dest="priors")

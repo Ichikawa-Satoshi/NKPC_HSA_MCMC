@@ -314,6 +314,7 @@ def _opts_defaults(func) -> dict[str, str]:
 # unreachable -- unlike the Sigma0 default, which was reachable and wrong.
 _ALLOWED_TO_DIFFER = {"ma_order", "n_psi_steps", "psi_init_scale", "psi0",
                       "sigma_e20", "sigma_v20", "sigma_eta20"}
+_STEADY_ALLOWED_TO_DIFFER = _ALLOWED_TO_DIFFER | {"lambda_E0", "sigma_E20"}
 
 
 @pytest.mark.parametrize(
@@ -327,7 +328,7 @@ _ALLOWED_TO_DIFFER = {"ma_order", "n_psi_steps", "psi_init_scale", "psi0",
         (
             "nkpc_hsa.error_robustness.hsa_steady_ma3", "func_nkpc_hsa_steady_ma3",
             "nkpc_hsa.gibbs.hsa_steady.model", "func_nkpc_hsa_decomp_tv_kappa_kalman",
-            _ALLOWED_TO_DIFFER,
+            _STEADY_ALLOWED_TO_DIFFER,
         ),
         (
             "nkpc_hsa.error_robustness.hsa_full_ma3", "func_nkpc_hsa_full_ma3",

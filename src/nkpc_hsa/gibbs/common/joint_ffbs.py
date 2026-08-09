@@ -67,6 +67,9 @@ def sample_joint_competition_states_ffbs(
     m0: np.ndarray,
     P0: np.ndarray,
     rng: np.random.Generator,
+    Ehat_obs: np.ndarray | None = None,
+    lambda_E: float = 0.0,
+    sigma_E2: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Draw ``s_{0:T-1}`` jointly from its exact smoothing posterior.
 
@@ -98,15 +101,25 @@ def sample_joint_competition_states_ffbs(
     ----------------
         N_obs_t   = [1, 0, 1] s_t + nu_t                     var sigma_N^2
         y_tilde_t = [h_nhat_t, 0, h_nbar_t] s_t + eta_t      var sigma_eta^2
+        Ehat_obs_t = [lambda_E, 0, 0] s_t + omega_t           var sigma_E^2
+
+    The optional third row is the experimental establishment-cycle measurement
+    equation.  Omitting ``Ehat_obs`` preserves the production two-row filter
+    exactly, including its random-number stream.
     """
     N_obs = np.asarray(N_obs, dtype=float).reshape(-1)
     y_tilde = np.asarray(y_tilde, dtype=float).reshape(-1)
     h_nhat = np.broadcast_to(np.asarray(h_nhat, dtype=float), N_obs.shape)
     h_nbar = np.broadcast_to(np.asarray(h_nbar, dtype=float), N_obs.shape)
+    Ehat = None if Ehat_obs is None else np.asarray(Ehat_obs, dtype=float).reshape(-1)
 
     T = N_obs.size
     if not (y_tilde.size == T):
         raise ValueError("All input series must have the same length.")
+    if Ehat is not None and Ehat.size != T:
+        raise ValueError("Ehat_obs must have the same length as N_obs.")
+    if Ehat is not None and (not np.isfinite(sigma_E2) or sigma_E2 <= 0.0):
+        raise ValueError("sigma_E2 must be finite and positive when Ehat_obs is supplied.")
 
     F = np.array(
         [
@@ -136,10 +149,29 @@ def sample_joint_competition_states_ffbs(
 
         pi_row = np.array([h_nhat[t], 0.0, h_nbar[t]], dtype=float)
 
-        if np.isfinite(N_obs[t]):
+        if Ehat is None:
+            # Keep the production path byte-for-byte identical when the
+            # experimental establishment row is absent.
+            if np.isfinite(N_obs[t]):
+                y_obs = np.array([N_obs[t], y_tilde[t]], dtype=float)
+                H = np.vstack([[1.0, 0.0, 1.0], pi_row])
+                R = np.diag([sigma_N2, sigma_eta2])
+            else:
+                y_obs = np.array([y_tilde[t]], dtype=float)
+                H = pi_row.reshape(1, 3)
+                R = np.array([[sigma_eta2]], dtype=float)
+        elif np.isfinite(N_obs[t]) and np.isfinite(Ehat[t]):
+            y_obs = np.array([N_obs[t], y_tilde[t], Ehat[t]], dtype=float)
+            H = np.vstack([[1.0, 0.0, 1.0], pi_row, [lambda_E, 0.0, 0.0]])
+            R = np.diag([sigma_N2, sigma_eta2, sigma_E2])
+        elif np.isfinite(N_obs[t]):
             y_obs = np.array([N_obs[t], y_tilde[t]], dtype=float)
             H = np.vstack([[1.0, 0.0, 1.0], pi_row])
             R = np.diag([sigma_N2, sigma_eta2])
+        elif np.isfinite(Ehat[t]):
+            y_obs = np.array([y_tilde[t], Ehat[t]], dtype=float)
+            H = np.vstack([pi_row, [lambda_E, 0.0, 0.0]])
+            R = np.diag([sigma_eta2, sigma_E2])
         else:
             y_obs = np.array([y_tilde[t]], dtype=float)
             H = pi_row.reshape(1, 3)

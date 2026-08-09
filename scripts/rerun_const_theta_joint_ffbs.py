@@ -21,7 +21,7 @@ from datetime import datetime
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import run_model
@@ -49,7 +49,7 @@ def main() -> None:
         else [args.frequency]
     )
     specs = configured_data_specs(load_model_config())
-    df = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]).set_index("DATE")
+    df = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]).set_index("DATE")
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     todo = [(f, s, p) for f in freqs for s, p in cells()]

@@ -4,7 +4,7 @@ import argparse
 
 import pandas as pd
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.prior_robustness import (
@@ -24,7 +24,7 @@ def main() -> None:
         help="Model name to run. Repeat to run multiple. Defaults to all models in configs/models.yaml.",
     )
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument(
         "--data-spec",
         action="append",
@@ -63,7 +63,7 @@ def main() -> None:
     )
     models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full", "hsa_const_theta"]))
 
-    out_dir = ROOT / "results" / "prior_robustness"
+    out_dir = RESULTS_DIR / "prior_robustness"
     out_dir.mkdir(parents=True, exist_ok=True)
     all_tables = []
     for data_spec_name, data_spec in data_specs.items():
@@ -90,24 +90,24 @@ def main() -> None:
                 model_table["data_spec"] = data_spec_name
                 spec_tables.append(model_table)
                 all_tables.append(model_table)
-            save_prior_robustness_overlays(idata_map, ROOT / "results" / "figures" / data_spec_name / model)
+            save_prior_robustness_overlays(idata_map, RESULTS_DIR / "figures" / data_spec_name / model)
         table = pd.concat(spec_tables, ignore_index=True) if spec_tables else pd.DataFrame()
         spec_dir = out_dir / data_spec_name
         spec_dir.mkdir(parents=True, exist_ok=True)
         spec_table = table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]})
         spec_table.to_csv(spec_dir / "prior_robustness.csv", index=False)
-        write_latex_fragment(spec_table, ROOT / "results" / "prior_robustness" / data_spec_name / "prior_robustness.tex")
+        write_latex_fragment(spec_table, RESULTS_DIR / "prior_robustness" / data_spec_name / "prior_robustness.tex")
     table = pd.concat(all_tables, ignore_index=True) if all_tables else pd.DataFrame()
     table.to_csv(out_dir / "prior_robustness.csv", index=False)
-    (ROOT / "results" / "prior_robustness").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "prior_robustness" / "prior_robustness.csv", index=False)
+    (RESULTS_DIR / "prior_robustness").mkdir(parents=True, exist_ok=True)
+    table.to_csv(RESULTS_DIR / "prior_robustness" / "prior_robustness.csv", index=False)
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]}),
-        ROOT / "results" / "prior_robustness" / "prior_robustness.tex",
+        RESULTS_DIR / "prior_robustness" / "prior_robustness.tex",
     )
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No prior robustness output."]}),
-        ROOT / "results" / "prior_robustness" / "prior_sensitivity.tex",
+        RESULTS_DIR / "prior_robustness" / "prior_sensitivity.tex",
     )
 
 

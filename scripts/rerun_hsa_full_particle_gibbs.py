@@ -23,7 +23,7 @@ from pathlib import Path
 import pandas as pd
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
@@ -40,7 +40,7 @@ def main() -> None:
     defaults = config.get("defaults", {})
     specs = configured_data_specs(config, list(config.get("data_specs", {})))
     data = pd.read_csv(
-        ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
     ).set_index("DATE")
 
     n_iter = 80 if args.quick else int(defaults.get("n_iter", 12000))
@@ -66,7 +66,7 @@ def main() -> None:
         if freq != "quarterly_interpolated":
             parts.append(freq)
         parts.append(run_id)
-        run_dir = ROOT / "results" / "runs" / "_".join(parts)
+        run_dir = RESULTS_DIR / "runs" / "_".join(parts)
         print(f"[{i}/{len(jobs)}] {spec} / {prior} / {freq}", flush=True)
         run_model(
             "hsa_full",

@@ -13,9 +13,9 @@ import pandas as pd
 from matplotlib.lines import Line2D
 from scipy.stats import gaussian_kde, norm
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, model_sample_index
 from nkpc_hsa.reporting.cpi_ppi_spec import (
     annual_q4_run_keys,
     INFLATION_SPECS,
@@ -27,8 +27,8 @@ from nkpc_hsa.reporting.cpi_ppi_spec import (
 )
 
 
-OUT_TABLES = ROOT / "results" / "tables"
-OUT_FIGURES = ROOT / "results" / "figures"
+OUT_TABLES = RESULTS_DIR / "tables"
+OUT_FIGURES = RESULTS_DIR / "figures"
 RHAT_LIMIT = 1.01
 ESS_LIMIT = 400.0
 # Minimum effective number of draws contributing to the Rao-Blackwellised
@@ -182,7 +182,7 @@ def load_report_runs(
     Particle Gibbs was only reachable via a monkeypatch. Any script that builds a
     report table calls this rather than ``_load_runs`` directly.
     """
-    runs_dir = ROOT / "results" / "runs" if runs_dir is None else runs_dir
+    runs_dir = RESULTS_DIR / "runs" if runs_dir is None else runs_dir
     runs = _load_runs(runs_dir, min_iter=min_iter, competition_frequency=competition_frequency)
     if verbose:
         samplers = sorted({_sampler_label(d) for (m, _, _), (_, d) in runs.items() if m == "hsa_full"})
@@ -279,7 +279,7 @@ def _model_ready() -> pd.DataFrame:
     global _MODEL_READY
     if _MODEL_READY is None:
         _MODEL_READY = pd.read_csv(
-            ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+            DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
         ).set_index("DATE")
     return _MODEL_READY
 
@@ -300,7 +300,16 @@ def _run_series(idata) -> dict[str, np.ndarray] | None:
     needed = [c for c in cols.values() if c in data.columns]
     if len(needed) < 6:
         return None
-    sample = data[needed].dropna()
+    sample_index = model_sample_index(data, spec)
+    if sample_index is None:
+        return None
+    sample = data.loc[sample_index, needed]
+    expected = int(getattr(idata, "attrs", {}).get("n_obs", 0) or 0)
+    if expected and len(sample) != expected:
+        raise ValueError(
+            f"Saved posterior has T={expected}, but its saved data specification "
+            f"selects T={len(sample)} from model_ready.csv. Re-estimate the cell."
+        )
     return {
         "y": (sample[cols["pi"]] - sample[cols["pi_expect"]]).to_numpy(float),
         "a": (sample[cols["pi_prev"]] - sample[cols["pi_expect"]]).to_numpy(float),
@@ -765,7 +774,10 @@ def _hsa_implied_ovb(idata, data_spec: dict[str, object], data: pd.DataFrame) ->
         "x_prev": str(data_spec["x_prev_col"]),
         "N": str(data_spec["n_col"]),
     }
-    sample = data[list(cols.values())].dropna()
+    sample_index = model_sample_index(data, data_spec)
+    if sample_index is None:
+        raise ValueError("Could not reconstruct the estimation sample for the OVB diagnostic.")
+    sample = data.loc[sample_index, list(cols.values())]
     x = sample[cols["x"]].to_numpy(dtype=float)
     x_prev = sample[cols["x_prev"]].to_numpy(dtype=float)
     a = (sample[cols["pi_prev"]] - sample[cols["pi_expect"]]).to_numpy(dtype=float)
@@ -790,7 +802,7 @@ def build_ces_hsa_bias_table(runs, *, command_prefix: str = "") -> pd.DataFrame:
     """Compare naive CES and HSA-dynamic slopes and the HSA-implied OVB."""
     config = load_model_config(ROOT / "configs" / "models.yaml")
     specs = configured_data_specs(config, list(config.get("data_specs", {})))
-    data = pd.read_csv(ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]).set_index("DATE")
+    data = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]).set_index("DATE")
     comparisons = [
         ("Inverse markup (theory)", "inv_markup"),
         ("Headline CPI / negative unemployment gap", PRIMARY_SPECS["Headline CPI"]),
@@ -1026,6 +1038,7 @@ def write_result_macros(
         rf"\providecommand{{\{command_prefix}HsaFullSampler}}{{{' / '.join(full_samplers) or 'n/a'}}}",
         rf"\providecommand{{\{command_prefix}HsaConstThetaSampler}}{{{' / '.join(const_theta_samplers) or 'n/a'}}}",
     ]
+    lines.extend(_sample_metadata_macros(runs, command_prefix))
     prefixes = {"Headline CPI": "HeadlineUnemp", "Core CPI": "CoreUnemp", "PPI": "PPIUnemp"}
     for inflation, data_spec in PRIMARY_SPECS.items():
         prefix = prefixes[inflation]
@@ -1077,6 +1090,45 @@ def write_result_macros(
 # rescale) are deliberately NOT macros -- they are inputs, not results, and
 # writing them literally is what makes the .tex readable.
 # ---------------------------------------------------------------------------
+
+
+def _sample_metadata(runs) -> dict[str, object]:
+    """Sample labels and observation counts from the main run's saved metadata."""
+    item = runs.get(("hsa_steady", PRIMARY_SPECS["Core CPI"], "baseline"))
+    if item is None:
+        return {}
+    posterior_path, idata = item
+    attrs = getattr(idata, "attrs", {})
+    metadata_path = posterior_path.parent / "metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8")) if metadata_path.exists() else {}
+    start = pd.Timestamp(str(attrs.get("sample_start", metadata.get("sample_start", "")))).to_period("Q")
+    end = pd.Timestamp(str(attrs.get("sample_end", metadata.get("sample_end", "")))).to_period("Q")
+    n_obs = int(attrs.get("n_obs", metadata.get("n_obs", 0)) or 0)
+    competition = dict(metadata.get("competition_measurement", {}) or {})
+    return {
+        "start": str(start),
+        "end": str(end),
+        "start_year": int(start.year),
+        "end_year": int(end.year),
+        "n_obs": n_obs,
+        "firm_obs": int(competition.get("finite_N_obs_count", n_obs) or 0),
+        "firm_missing": int(competition.get("missing_N_obs_count", 0) or 0),
+    }
+
+
+def _sample_metadata_macros(runs, prefix: str) -> list[str]:
+    sample = _sample_metadata(runs)
+    if not sample:
+        return []
+    return [
+        rf"\providecommand{{\{prefix}ReportSampleStart}}{{{sample['start']}}}",
+        rf"\providecommand{{\{prefix}ReportSampleEnd}}{{{sample['end']}}}",
+        rf"\providecommand{{\{prefix}ReportSampleStartYear}}{{{sample['start_year']}}}",
+        rf"\providecommand{{\{prefix}ReportSampleEndYear}}{{{sample['end_year']}}}",
+        rf"\providecommand{{\{prefix}ReportObservationCount}}{{{sample['n_obs']}}}",
+        rf"\providecommand{{\{prefix}ReportFirmObservationCount}}{{{sample['firm_obs']}}}",
+        rf"\providecommand{{\{prefix}ReportFirmMissingCount}}{{{sample['firm_missing']}}}",
+    ]
 
 
 def _param_fails(idata, name: str) -> bool | None:
@@ -1337,8 +1389,14 @@ def write_design_comparison_table(quarterly, annual, filename: str = "pchip_vs_m
         }
 
     a, q = cell(annual, scalars), cell(quarterly, scalars)
+    annual_sample = _sample_metadata(annual)
+    quarterly_sample = _sample_metadata(quarterly)
     labels = [
-        ("Firm-count observations used", "31 of 124", "124 of 124"),
+        (
+            "Firm-count observations used",
+            f"{annual_sample['firm_obs']} of {annual_sample['n_obs']}",
+            f"{quarterly_sample['firm_obs']} of {quarterly_sample['n_obs']}",
+        ),
         (r"Estimated measurement error $\sigma_N$", a["sigma_N"], q["sigma_N"]),
         (r"$\rho_1,\rho_2$", a["rho"], q["rho"]),
         ("Implied AR(2) period", a["period"], q["period"]),
@@ -1354,7 +1412,7 @@ def write_design_comparison_table(quarterly, annual, filename: str = "pchip_vs_m
     for name, left, right in labels:
         lines.append(r"\midrule" if name is None else f"{name} & {left} & {right} \\\\")
     lines += [r"\bottomrule", r"\end{tabular}"]
-    target = ROOT / "results" / "tables" / "shared" / filename
+    target = RESULTS_DIR / "tables" / "shared" / filename
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return target
 
@@ -1384,7 +1442,7 @@ def write_cross_design_macros(*run_sets, filename: str = "cross_design_macros.te
     if len(points) > 2:
         arr = np.asarray(points)
         lines.append(rf"\providecommand{{\RidgeMechanismCorr}}{{{np.corrcoef(arr[:, 0], arr[:, 1])[0, 1]:+.2f}}}")
-    target = ROOT / "results" / "tables" / "shared" / filename
+    target = RESULTS_DIR / "tables" / "shared" / filename
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return target
@@ -1984,7 +2042,7 @@ def save_main_competition_decomposition(runs) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--runs-dir", type=Path, default=ROOT / "results" / "runs")
+    parser.add_argument("--runs-dir", type=Path, default=RESULTS_DIR / "runs")
     parser.add_argument("--min-iter", type=int, default=1000)
     parser.add_argument("--allow-incomplete", action="store_true", help="Generate partial tables instead of failing on missing report cells.")
     args = parser.parse_args()
@@ -2028,8 +2086,8 @@ def main() -> None:
         samplers = sorted({_sampler_label(idata) for (m, _, _), (_, idata) in run_set.items() if m == "hsa_full"})
         print(f"  {label} hsa_full state sampler: {' / '.join(samplers) or 'n/a'}")
 
-    base_tables = ROOT / "results" / "tables"
-    base_figures = ROOT / "results" / "figures"
+    base_tables = RESULTS_DIR / "tables"
+    base_figures = RESULTS_DIR / "figures"
     # One directory per observation design, symmetrically. Neither design lives at
     # the top level: "the files without a subdirectory" is not a readable way to
     # say "the interpolated comparison".

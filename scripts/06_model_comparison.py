@@ -7,25 +7,28 @@ from pathlib import Path
 import arviz as az
 import pandas as pd
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM, transform_competition_series
 from nkpc_hsa.inference.model_comparison import model_comparison_table, save_model_comparison
+from nkpc_hsa.inference.wrappers import model_sample_index
 
 
 def _comparison_data(data_path: Path, config: dict, spec: dict) -> dict[str, object]:
     defaults = config.get("defaults", {})
     df = pd.read_csv(data_path, parse_dates=["DATE"]).set_index("DATE")
-    sample = df[
-        [
-            spec.get("pi_col", "pi"),
-            spec.get("pi_prev_col", "pi_prev"),
-            spec.get("pi_expect_col", "pi_expect"),
-            spec.get("x_col", "x"),
-            spec.get("x_prev_col", "x_prev"),
-            spec.get("n_col", spec.get("N_col", "N")),
-        ]
-    ].dropna()
+    columns = [
+        spec.get("pi_col", "pi"),
+        spec.get("pi_prev_col", "pi_prev"),
+        spec.get("pi_expect_col", "pi_expect"),
+        spec.get("x_col", "x"),
+        spec.get("x_prev_col", "x_prev"),
+        spec.get("n_col", spec.get("N_col", "N")),
+    ]
+    sample_index = model_sample_index(df, spec)
+    if sample_index is None:
+        raise ValueError(f"Could not resolve the sample for {spec.get('name', '')!r}.")
+    sample = df.loc[sample_index, columns]
     n_raw = sample[spec.get("n_col", spec.get("N_col", "N"))].to_numpy(dtype=float)
     return {
         "pi": sample[spec.get("pi_col", "pi")].to_numpy(dtype=float),
@@ -62,9 +65,9 @@ def _load_idata(path: Path):
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--runs-dir", default=str(ROOT / "results" / "runs"))
+    parser.add_argument("--runs-dir", default=str(RESULTS_DIR / "runs"))
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument(
         "--data-spec",
         action="append",
@@ -100,7 +103,7 @@ def main() -> None:
         for run, idata in results.items()
     }
     table = model_comparison_table(results, data_by_model=data_by_run)
-    save_model_comparison(table, ROOT / "results" / "model_comparison")
+    save_model_comparison(table, RESULTS_DIR / "model_comparison")
     for data_spec_name in data_specs:
         spec_results = {
             run: idata
@@ -112,7 +115,7 @@ def main() -> None:
             spec_results,
             data_by_model={run: spec_data for run in spec_results} if spec_data else None,
         )
-        save_model_comparison(spec_table, ROOT / "results" / "model_comparison" / data_spec_name)
+        save_model_comparison(spec_table, RESULTS_DIR / "model_comparison" / data_spec_name)
 
 
 if __name__ == "__main__":

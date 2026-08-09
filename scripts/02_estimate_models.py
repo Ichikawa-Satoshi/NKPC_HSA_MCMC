@@ -4,7 +4,7 @@ import argparse
 
 import pandas as pd
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
@@ -14,7 +14,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
     parser.add_argument("--priors", default=str(ROOT / "configs" / "priors_baseline.yaml"))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument(
         "--data-spec",
         action="append",

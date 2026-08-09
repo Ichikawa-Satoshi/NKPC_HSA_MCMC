@@ -39,10 +39,11 @@ from scipy.linalg import toeplitz, cho_factor, cho_solve
 from scipy.optimize import minimize
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.error_robustness.ma_error import is_invertible
+from nkpc_hsa.inference.wrappers import model_sample_index
 
-OUT = ROOT / "results" / "error_robustness"
+OUT = RESULTS_DIR / "error_robustness"
 MAX_LAG = 8
 LB_LAG = 4
 
@@ -151,7 +152,10 @@ def residual_evidence(runs_glob: str, data: pd.DataFrame) -> tuple[pd.DataFrame,
         posterior = az.from_netcdf(Path(run) / "posterior.nc").posterior
         spec = json.loads((Path(run) / "data_spec.json").read_text())
         cols = [spec["pi_col"], spec["pi_prev_col"], spec["pi_expect_col"], spec["x_col"]]
-        frame = data[cols + [spec["n_col"]]].dropna()
+        sample_index = model_sample_index(data, spec)
+        if sample_index is None:
+            raise ValueError(f"Could not reconstruct the sample for {spec.get('name', run)!r}.")
+        frame = data.loc[sample_index, cols + [spec["n_col"]]]
 
         alpha = float(posterior["alpha"].mean())
         kappa = float(posterior["kappa"].mean())
@@ -236,10 +240,10 @@ def bias_monte_carlo(n_reps: int, n_obs: int = 124) -> pd.DataFrame:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument(
         "--runs-glob",
-        default=str(ROOT / "results" / "runs" / "ces_*_baseline_quarterly_interpolated"),
+        default=str(RESULTS_DIR / "runs" / "ces_*_baseline_quarterly_interpolated"),
         help="Production CES runs to take plug-in coefficients from. Read only.",
     )
     parser.add_argument("--monte-carlo-reps", type=int, default=12)

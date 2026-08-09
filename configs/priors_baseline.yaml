@@ -9,6 +9,7 @@ phi_1: [0.7, 0.2]
 rho_1: [0.5, 0.2]
 rho_2: [-0.5, 0.2]
 n: [0.0, 0.1]
+lambda_E: [1.0, 1.0]
 a_e: 2.0
 b_e: 2.0
 # State-shock and N-measurement variances are in squared ten-log-point units.
@@ -22,6 +23,8 @@ a_eps: 2.0
 b_eps: 0.01
 a_N: 2.0
 b_N: 0.01
+a_E: 2.0
+b_E: 0.01
 a_z: 0.001
 b_z: 0.001
 # S_Sigma rows follow the shock order [e, zeta, u, eps]. With nu_Sigma = 8 the

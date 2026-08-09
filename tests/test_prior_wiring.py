@@ -39,8 +39,12 @@ NORMAL_PRIORS = {
     "rho_1": ("mu_rho1", "sigma_rho1", False),
     "rho_2": ("mu_rho2", "sigma_rho2", False),
     "n": ("mu_n", "sigma_n", False),
+    "lambda_E": ("mu_lambda_E", "sigma_lambda_E", False),
 }
-SCALAR_PRIORS = ["a_e", "b_e", "a_z", "b_z", "a_u", "b_u", "a_eps", "b_eps", "a_N", "b_N", "nu_Sigma"]
+SCALAR_PRIORS = [
+    "a_e", "b_e", "a_z", "b_z", "a_u", "b_u", "a_eps", "b_eps",
+    "a_N", "b_N", "a_E", "b_E", "nu_Sigma",
+]
 
 
 def _load(path: Path) -> dict:
@@ -114,7 +118,14 @@ def test_all_models_receive_the_configured_hyperparameters(path):
     # inverse-gamma scales, so a_u/b_u/a_eps/b_eps are deliberately absent from
     # its resolver. That is a modelling choice, not a dropped prior.
     for resolver, label, keys in (
-        (steady_priors, "hsa_steady", ["mu_n", "sigma_n", "a_u", "b_u", "a_eps", "b_eps", "a_N", "b_N"]),
+        (
+            steady_priors,
+            "hsa_steady",
+            [
+                "mu_n", "sigma_n", "a_u", "b_u", "a_eps", "b_eps", "a_N", "b_N",
+                "mu_lambda_E", "sigma_lambda_E", "a_E", "b_E",
+            ],
+        ),
         (
             full_priors,
             "hsa_full/hsa_const_theta",

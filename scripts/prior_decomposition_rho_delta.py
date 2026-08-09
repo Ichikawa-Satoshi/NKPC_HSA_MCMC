@@ -32,12 +32,12 @@ import pandas as pd
 import yaml
 
 import _bootstrap  # noqa: F401
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.inference.wrappers import run_model
 
-OUT = ROOT / "results" / "prior_decomposition"
+OUT = RESULTS_DIR / "prior_decomposition"
 DELTA_SD = {"baseline": 0.02, "tight": 0.01}
 RHO_SD = {"weak": 0.5, "baseline": 0.2, "tight": 0.1}
 
@@ -68,7 +68,7 @@ def main() -> None:
     defaults = config.get("defaults", {})
     specs = configured_data_specs(config, list(config.get("data_specs", {})))
     data = pd.read_csv(
-        ROOT / "data" / "processed" / "model_ready.csv", parse_dates=["DATE"]
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
     ).set_index("DATE")
     base_priors = yaml.safe_load((ROOT / "configs" / "priors_baseline.yaml").read_text())
 
@@ -195,7 +195,7 @@ def write_decomposition_macros(*, model: str = "hsa_steady") -> Path | None:
             lines.append(rf"\providecommand{{\PriorDecomp{label}{name}}}{{{shares[channel]:.0f}}}")
     if not found:
         return None
-    target = ROOT / "results" / "tables" / "shared" / "prior_decomposition_macros.tex"
+    target = RESULTS_DIR / "tables" / "shared" / "prior_decomposition_macros.tex"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"saved -> {target}")

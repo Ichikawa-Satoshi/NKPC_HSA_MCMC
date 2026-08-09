@@ -21,6 +21,7 @@ KEY_PARAMETERS = (
     "rho_2",
     "n",
     "lambda_ez",
+    "lambda_E",
     "rho",
     "sigma_eta",
     "sigma_e",
@@ -28,6 +29,7 @@ KEY_PARAMETERS = (
     "sigma_u",
     "sigma_eps",
     "sigma_N",
+    "sigma_E",
 )
 
 

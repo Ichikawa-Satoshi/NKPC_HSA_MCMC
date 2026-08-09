@@ -2,8 +2,9 @@
 
 Source of truth: `src/nkpc_hsa/dataprep/func_data_build.py`, `src/nkpc_hsa/dataprep/build.py`,
 `src/nkpc_hsa/dataprep/transforms.py`, `src/nkpc_hsa/dataprep/competition.py`, `configs/models.yaml`.
-Generated dataset: `data/processed/model_ready.csv` (451 rows; the estimation sample is the
-complete-case subset, **T = 124**, 1982Q1–2012Q4).
+Generated dataset: `data/processed/model_ready.csv` (454 rows; the production-report sample is
+the complete-case subset, **T = 124**, 1982Q1–2012Q4). The separate establishment experiment
+uses **T = 79**, 1993Q2–2012Q4.
 
 Anything not recoverable from code/config is marked **UNVERIFIED**.
 
@@ -16,10 +17,12 @@ Anything not recoverable from code/config is marked **UNVERIFIED**.
 so the estimation sample is the complete-case intersection of all six series:
 
 ```python
-sample = data[[cols[k] for k in required]].dropna()
+sample = _apply_sample_window(data[[cols[k] for k in required]], spec).dropna()
 ```
 
-That is why every specification has T = 124 even though `model_ready.csv` has 451 rows.
+That is why every production-report specification has T = 124 even though
+`model_ready.csv` has 454 rows. A data spec may override the window; the establishment
+experiment does so explicitly.
 
 ---
 
@@ -197,6 +200,26 @@ likelihood.
 `N_TNIC` (from `HHI_TNIC`) feeds `unemployment_gap_tnic` and `unemployment_gap_core_tnic`. These
 specs exist in `configs/models.yaml` but are **absent from `run_data_specs`**, so they are not
 estimated by the production pipeline.
+
+### Quarterly establishment series (experimental)
+
+| Column | Construction | Units / range |
+|---|---|---|
+| `establishment_births` | BED quarterly establishment births, series `...120007LQ5` | establishments; source values multiplied by 1,000 |
+| `establishment_deaths` | BED quarterly establishment deaths, series `...120008LQ5` | establishments; source values multiplied by 1,000 |
+| `establishment_net_entry` | births minus deaths | establishments per quarter |
+| `establishment_stock` | 1993 BDS `ESTAB` anchor plus cumulative quarterly net entry | establishments |
+
+The annual anchor is 5,682,098 establishments. Treating it as the 1993Q1 level,
+1993Q2 births of 181,000 minus deaths of 160,000 produce a first quarter-end stock
+of 5,703,098. Both flows are finite from 1993Q2 through 2023Q3; the configured
+estimation window stops at 2012Q4.
+
+Inside `_coerce_model_data`, the 79-quarter stock is transformed as
+`(100*log(E) - sample mean)/10` and HP-filtered with `lambda=1600`. The resulting
+`Ehat` is the observation in `Ehat_obs_t = lambda_E*Nhat_t + omega_t` for the
+HSA const-theta experiment. It is not a production-report input and is not added
+to `run_data_specs`.
 
 ---
 

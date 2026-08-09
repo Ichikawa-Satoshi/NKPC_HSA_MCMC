@@ -236,6 +236,11 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         "mu_lambda": _getd(priors, "mu_lambda", 0.0),
         "sigma_lambda": _getd(priors, "sigma_lambda", 0.5),
 
+        # Quarterly establishment-cycle measurement:
+        #   Ehat_obs_t = lambda_E * Nhat_t + omega_t
+        "mu_lambda_E": _getd(priors, "mu_lambda_E", 1.0),
+        "sigma_lambda_E": _getd(priors, "sigma_lambda_E", 1.0),
+
         "mu_rho1": _getd(priors, "mu_rho1", 0.5),
         "sigma_rho1": _getd(priors, "sigma_rho1", 0.2),
         "mu_rho2": _getd(priors, "mu_rho2", -0.5),
@@ -264,6 +269,10 @@ def _common_priors(priors: dict[str, Any]) -> dict[str, float]:
         #   N_obs_t = Nhat_t + Nbar_t + measurement_error_t
         "a_N": _getd(priors, "a_N", _getd(priors, "a_m", 2.0)),
         "b_N": _getd(priors, "b_N", _getd(priors, "b_m", 2.0)),
+
+        # omega variance in the optional establishment-cycle measurement.
+        "a_E": _getd(priors, "a_E", 2.0),
+        "b_E": _getd(priors, "b_E", 0.01),
 
         # Initial state prior for:
         #   s_0 = [Nhat_0, Nhat_{-1}, Nbar_0]'
@@ -338,6 +347,9 @@ def _sample_states_kalman_ffbs(
     m0: np.ndarray,
     P0: np.ndarray,
     rng: np.random.Generator,
+    Ehat_obs: np.ndarray | None = None,
+    lambda_E: float = 0.0,
+    sigma_E2: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Kalman filter + FFBS for the joint state vector:
@@ -402,6 +414,9 @@ def _sample_states_kalman_ffbs(
         m0=m0,
         P0=P0,
         rng=rng,
+        Ehat_obs=Ehat_obs,
+        lambda_E=lambda_E,
+        sigma_E2=sigma_E2,
     )
 
 
@@ -418,6 +433,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     opts: Optional[dict[str, Any]] = None,
     *,
     orth: bool = False,
+    Ehat_data=None,
 ) -> dict[str, Any]:
     """
     Gibbs sampler with Kalman/FFBS state draw for:
@@ -435,6 +451,8 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
 
         Nbar_t = n + Nbar_{t-1} + epsilon_t
 
+        Ehat_obs_t = lambda_E*Nhat_t + omega_t   (optional)
+
         kappa_t = kappa_0 + delta*Nbar_t
 
     Optional correlation representation:
@@ -449,11 +467,16 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     x_t = _as_1d(x_data)
     x_tm1 = _as_1d(x_prev_data)
     N_obs = _as_1d(N_data)
+    Ehat_obs = None if Ehat_data is None else _as_1d(Ehat_data)
 
     T = pi_t.size
 
     if not (pi_tm1.size == pi_expect.size == x_t.size == x_tm1.size == N_obs.size == T):
         raise ValueError("All input series must have the same length.")
+    if Ehat_obs is not None and Ehat_obs.size != T:
+        raise ValueError("Ehat_data must have the same length as the other model series.")
+    if Ehat_obs is not None and np.isfinite(Ehat_obs).sum() < 3:
+        raise ValueError("Ehat_data must contain at least three finite quarterly observations.")
 
     if T < 3:
         raise ValueError("Need T >= 3 for the AR(2) gap equation.")
@@ -473,6 +496,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             pri["sigma_delta"],
             pri["sigma_phi"],
             pri["sigma_lambda"],
+            pri["sigma_lambda_E"],
             pri["sigma_rho1"],
             pri["sigma_rho2"],
             pri["sigma_n"],
@@ -486,6 +510,8 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             pri["b_z"],
             pri["a_N"],
             pri["b_N"],
+            pri["a_E"],
+            pri["b_E"],
             pri["P0_Nhat"],
             pri["P0_Nhat_lag"],
             pri["P0_Nbar"],
@@ -502,6 +528,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     phi_1 = float(_getd(opts, "phi10", pri["mu_phi"]))
 
     lambda_ez = 0.0 if orth else float(_getd(opts, "lambda0", pri["mu_lambda"]))
+    lambda_E = float(_getd(opts, "lambda_E0", pri["mu_lambda_E"]))
 
     rho1 = float(_getd(opts, "rho10", pri["mu_rho1"]))
     rho2 = float(_getd(opts, "rho20", pri["mu_rho2"]))
@@ -512,9 +539,10 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     sigma_u2 = float(_getd(opts, "sigma_u20", 1.0))
     sigma_eps2 = float(_getd(opts, "sigma_eps20", 1.0))
     sigma_N2 = float(_getd(opts, "sigma_N20", _getd(opts, "sigma_m20", 1.0)))
+    sigma_E2 = float(_getd(opts, "sigma_E20", 0.01))
 
     _assert_all_pos(
-        [sigma_eta2, sigma_zeta2, sigma_u2, sigma_eps2, sigma_N2],
+        [sigma_eta2, sigma_zeta2, sigma_u2, sigma_eps2, sigma_N2, sigma_E2],
         "Initial variances must be positive.",
     )
 
@@ -537,11 +565,11 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     # named blocks to supplied values and skips their draw, so the reduced runs
     # reuse these exact production conditionals instead of a reimplementation.
     # Recognised block names: beta, lambda_ez, phi_1, sigma_zeta2, sigma_eta2,
-    # rho, sigma_u2, n, sigma_eps2, sigma_N2.
+    # rho, sigma_u2, n, sigma_eps2, sigma_N2, lambda_E, sigma_E2.
     fixed = dict(_getd(opts, "fixed", {}) or {})
     unknown_fixed = set(fixed) - {
         "beta", "lambda_ez", "phi_1", "sigma_zeta2", "sigma_eta2",
-        "rho", "sigma_u2", "n", "sigma_eps2", "sigma_N2",
+        "rho", "sigma_u2", "n", "sigma_eps2", "sigma_N2", "lambda_E", "sigma_E2",
     }
     if unknown_fixed:
         raise ValueError(f"Unknown fixed block(s): {sorted(unknown_fixed)}")
@@ -563,6 +591,10 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         sigma_eps2 = float(fixed["sigma_eps2"])
     if "sigma_N2" in fixed:
         sigma_N2 = float(fixed["sigma_N2"])
+    if "lambda_E" in fixed:
+        lambda_E = float(fixed["lambda_E"])
+    if "sigma_E2" in fixed:
+        sigma_E2 = float(fixed["sigma_E2"])
     if "n" in fixed:
         n_drift = float(fixed["n"])
 
@@ -608,6 +640,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     delta_draws = np.zeros(n_store)
     phi_draws = np.zeros(n_store)
     lambda_draws = np.zeros(n_store)
+    lambda_E_draws = np.zeros(n_store) if Ehat_obs is not None else None
 
     rho1_draws = np.zeros(n_store)
     rho2_draws = np.zeros(n_store)
@@ -619,6 +652,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     sigma_u_draws = np.zeros(n_store)
     sigma_eps_draws = np.zeros(n_store)
     sigma_N_draws = np.zeros(n_store)
+    sigma_E_draws = np.zeros(n_store) if Ehat_obs is not None else None
 
     rho_ez_draws = np.zeros(n_store)
 
@@ -823,7 +857,36 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             )
 
         # ------------------------------------------------------------
-        # 8. Draw latent states jointly by Kalman filter + FFBS.
+        # 8. Draw lambda_E and establishment measurement variance.
+        # ------------------------------------------------------------
+        if Ehat_obs is not None:
+            finite_E = np.isfinite(Ehat_obs)
+            e_obs = Ehat_obs[finite_E]
+            e_state = Nhat[finite_E]
+            if "lambda_E" not in fixed:
+                prior_prec_E = 1.0 / pri["sigma_lambda_E"]**2
+                post_var_lambda_E = 1.0 / (
+                    prior_prec_E + float(np.sum(e_state**2)) / sigma_E2
+                )
+                post_mean_lambda_E = post_var_lambda_E * (
+                    pri["mu_lambda_E"] * prior_prec_E
+                    + float(np.dot(e_state, e_obs)) / sigma_E2
+                )
+                lambda_E = float(
+                    post_mean_lambda_E
+                    + np.sqrt(post_var_lambda_E) * rng.standard_normal()
+                )
+
+            resid_E = e_obs - lambda_E * e_state
+            if "sigma_E2" not in fixed:
+                sigma_E2 = _sample_invgamma(
+                    pri["a_E"] + 0.5 * resid_E.size,
+                    pri["b_E"] + 0.5 * float(np.sum(resid_E**2)),
+                    rng,
+                )
+
+        # ------------------------------------------------------------
+        # 9. Draw latent states jointly by Kalman filter + FFBS.
         # ------------------------------------------------------------
         obs_offset = lambda_ez * zeta
 
@@ -847,12 +910,15 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             m0=m0,
             P0=P0,
             rng=rng,
+            Ehat_obs=Ehat_obs,
+            lambda_E=lambda_E,
+            sigma_E2=sigma_E2,
         )
 
         kappa_t = kappa0 + delta * Nbar
 
         # ------------------------------------------------------------
-        # 9. Store posterior draws.
+        # 10. Store posterior draws.
         # ------------------------------------------------------------
         sigma_e = float(np.sqrt(lambda_ez**2 * sigma_zeta2 + sigma_eta2))
 
@@ -871,6 +937,8 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             delta_draws[store_idx] = delta / KAPPA_SCALE
             phi_draws[store_idx] = phi_1
             lambda_draws[store_idx] = lambda_ez
+            if lambda_E_draws is not None:
+                lambda_E_draws[store_idx] = lambda_E
 
             rho1_draws[store_idx] = rho1
             rho2_draws[store_idx] = rho2
@@ -882,6 +950,8 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
             sigma_u_draws[store_idx] = np.sqrt(sigma_u2)
             sigma_eps_draws[store_idx] = np.sqrt(sigma_eps2)
             sigma_N_draws[store_idx] = np.sqrt(sigma_N2)
+            if sigma_E_draws is not None:
+                sigma_E_draws[store_idx] = np.sqrt(sigma_E2)
 
             rho_ez_draws[store_idx] = rho_ez
 
@@ -901,7 +971,8 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
                 f"rho1={rho1:.3f}, "
                 f"rho2={rho2:.3f}, "
                 f"n={n_drift:.3f}, "
-                f"sigma_N={np.sqrt(sigma_N2):.3f}"
+                f"sigma_N={np.sqrt(sigma_N2):.3f}, "
+                f"lambda_E={lambda_E:.3f}"
             )
 
     return {
@@ -910,6 +981,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         "delta": _summary(delta_draws),
         "phi_1": _summary(phi_draws),
         "lambda_ez": _summary(lambda_draws),
+        **({"lambda_E": _summary(lambda_E_draws)} if lambda_E_draws is not None else {}),
         "rho": _summary(rho_ez_draws),
         "rho1": _summary(rho1_draws),
         "rho2": _summary(rho2_draws),
@@ -920,6 +992,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         "sigma_u": _summary(sigma_u_draws),
         "sigma_eps": _summary(sigma_eps_draws),
         "sigma_N": _summary(sigma_N_draws),
+        **({"sigma_E": _summary(sigma_E_draws)} if sigma_E_draws is not None else {}),
         "state_draws": {
             "Nbar": Nbar_draws,
             "Nhat": Nhat_draws,
@@ -935,6 +1008,12 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
         "model": {
             "N_measurement_error": True,
             "N_measurement_equation": "N_obs_t = Nhat_t + Nbar_t + measurement_error_t",
+            "establishment_measurement": Ehat_obs is not None,
+            "establishment_measurement_equation": (
+                "Ehat_obs_t = lambda_E * Nhat_t + omega_t"
+                if Ehat_obs is not None
+                else None
+            ),
             "state_sampler": "joint_ffbs",
             "theta_sampled": False,
             "inflation_equation": (

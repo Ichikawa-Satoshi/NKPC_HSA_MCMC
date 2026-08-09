@@ -5,7 +5,7 @@ import argparse
 import pandas as pd
 import yaml
 
-from _bootstrap import ROOT
+from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import coefficient_constraints_from_config, configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.period_robustness import (
@@ -27,7 +27,7 @@ def main() -> None:
     parser.add_argument("--config", default=str(ROOT / "configs" / "models.yaml"))
     parser.add_argument("--periods", default=str(ROOT / "configs" / "periods.yaml"))
     parser.add_argument("--priors", default=str(ROOT / "configs" / "priors_baseline.yaml"))
-    parser.add_argument("--data", default=str(ROOT / "data" / "processed" / "model_ready.csv"))
+    parser.add_argument("--data", default=str(DATA_DIR / "processed" / "model_ready.csv"))
     parser.add_argument(
         "--data-spec",
         action="append",
@@ -63,7 +63,7 @@ def main() -> None:
     ar2_max_tries = int(args.ar2_max_tries or defaults.get("ar2_max_tries", 2000))
     models = list(args.models or config.get("models", ["ces", "hsa_steady", "hsa_dynamic", "hsa_full", "hsa_const_theta"]))
 
-    out_dir = ROOT / "results" / "period_robustness"
+    out_dir = RESULTS_DIR / "period_robustness"
     all_tables = []
     for data_spec_name, data_spec in data_specs.items():
         spec_tables = []
@@ -96,15 +96,15 @@ def main() -> None:
         save_period_robustness_table(table, out_dir / data_spec_name)
         write_latex_fragment(
             table if not table.empty else pd.DataFrame({"note": ["No period robustness output."]}),
-            ROOT / "results" / "period_robustness" / data_spec_name / "period_robustness.tex",
+            RESULTS_DIR / "period_robustness" / data_spec_name / "period_robustness.tex",
         )
     table = pd.concat(all_tables, ignore_index=True) if all_tables else pd.DataFrame()
     save_period_robustness_table(table, out_dir)
-    (ROOT / "results" / "period_robustness").mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROOT / "results" / "period_robustness" / "period_robustness.csv", index=False)
+    (RESULTS_DIR / "period_robustness").mkdir(parents=True, exist_ok=True)
+    table.to_csv(RESULTS_DIR / "period_robustness" / "period_robustness.csv", index=False)
     write_latex_fragment(
         table if not table.empty else pd.DataFrame({"note": ["No period robustness output."]}),
-        ROOT / "results" / "period_robustness" / "period_robustness.tex",
+        RESULTS_DIR / "period_robustness" / "period_robustness.tex",
     )
 
 

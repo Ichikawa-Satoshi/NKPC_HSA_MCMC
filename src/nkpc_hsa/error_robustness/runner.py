@@ -59,10 +59,11 @@ from nkpc_hsa.inference.wrappers import (
     model_sample_index,
     prior_specs_to_internal,
 )
+from nkpc_hsa.paths import results_root
 
 __all__ = ["ERROR_ROBUSTNESS_RUNS", "MA3_MODELS", "run_model_ma3"]
 
-ERROR_ROBUSTNESS_RUNS = Path(__file__).resolve().parents[3] / "results" / "error_robustness" / "runs"
+ERROR_ROBUSTNESS_RUNS = results_root() / "error_robustness" / "runs"
 
 MA3_MODELS: dict[str, Callable[..., Mapping[str, Any]]] = {
     "ces": func_nkpc_ces_ma3,
