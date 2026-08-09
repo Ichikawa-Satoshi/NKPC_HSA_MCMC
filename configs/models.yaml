@@ -1,4 +1,11 @@
 defaults:
+  # Estimation window, applied before complete-case selection. Stated explicitly
+  # because otherwise the sample is whatever dropna leaves, i.e. an accident of
+  # how far each input series runs -- the 2026-08 fix to the annual-to-quarterly
+  # interpolation extended the firm count by four quarters and would have moved
+  # the sample to 2013Q4 without anyone choosing that.
+  sample_start: 1982-01-01
+  sample_end: 2012-12-31
   n_iter: 12000
   burn: 4000
   thin: 5

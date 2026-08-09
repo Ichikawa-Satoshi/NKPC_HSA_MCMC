@@ -34,6 +34,7 @@
 \input{../results/tables/annual_q4/bias_macros.tex}
 \input{../results/tables/shared/cross_design_macros.tex}
 \input{../results/tables/shared/fit_comparison_macros.tex}
+\input{../results/tables/shared/conditional_ml_macros.tex}
 % Written by scripts/prior_decomposition_rho_delta.py, which is a separate
 % diagnostic run-set. The file is \input FIRST and the ?? fallbacks come after:
 % every macro file here uses \providecommand, which does not overwrite an
@@ -827,15 +828,62 @@ there is no inflation signal, so constant and time-varying slopes fit equally we
 stress that this is an in-sample fit comparison, not evidence of out-of-sample
 predictive gains.
 
-\paragraph{Limits of the model comparison.} We read the Savage--Dickey ratios only as
+\paragraph{Limits of the Savage--Dickey ratios.} We read them only as
 the point null $\delta=0$ \emph{within the HSA state model}; they are not a CES-vs-HSA
 marginal-likelihood ratio. The in-sample LPPD and RMSE conditioned on the latent states
 are likewise not out-of-sample predictions, so they are not used as grounds to select a
-more complex model. A corrected conditional marginal likelihood
-$p(\pi\mid x,N^{\mathrm{obs}},M)$---states integrated out exactly by the Kalman filter,
-Chib ordinate with explicit reduced Gibbs runs---now exists in the repository
-(Section~\ref{sec:status}), but its numbers are not promoted into this table until they
-have been reviewed.
+more complex model. The model-versus-model question is answered separately, below.
+
+\subsection{Conditional marginal likelihood: CES versus HSA steady}
+\label{sec:cml}
+The Savage--Dickey ratio asks whether $\delta=0$ inside one model; the fit scores ask
+which model tracks this sample better. Neither is a model comparison in the Bayesian
+sense. That requires the two models to be densities of the same data given the same
+conditioning set,
+\begin{equation}
+\log p(\pi\mid x,N^{\mathrm{obs}},M)
+ = \log m(\pi,N^{\mathrm{obs}},x\mid M) - \log m(N^{\mathrm{obs}}\mid M) - \log m(x),
+\label{eq:cml}
+\end{equation}
+with the latent states integrated out exactly by the Kalman filter and the static
+parameters integrated out by Chib's (1995) identity, using the production sampler's own
+block conditionals and explicit reduced Gibbs runs.
+
+The two subtracted terms matter. The Gibbs posterior conditions on $\pi$, $N^{\mathrm{obs}}$
+\emph{and} $x$: $\sigma_\zeta^2$ is drawn from the activity-equation residuals, and both
+$\phi_1$ and $\sigma_\zeta^2$ are ordinate blocks. So the conditioning set is
+$(x,N^{\mathrm{obs}})$, and both Occam factors have to be refunded rather than charged.
+They separate because $p(N\mid\theta)$ touches only the firm-count block and
+$p(x\mid\phi_1,\sigma_\zeta^2)$ only the activity block. $\log m(x)$ is the same number for
+both models; we compute it once per cell and debit both with it, rather than cancelling it
+by assertion, so that Table~\ref{tab:conditional-ml} shows the two models conditioned on the
+identical quantity. CES has no firm-count block and therefore no $\log m(N)$ term.
+
+\input{../results/tables/annual_q4/conditional_ml.tex}
+
+For the main cell the comparison favours HSA steady by
+$\Delta\log m=\CmlMainDelta$, a Bayes factor of about \CmlMainBF{}. Across
+\CmlMainSeeds{} seeds the Monte Carlo standard error is \CmlMainMcse{}, which moves the
+Bayes factor within \CmlMainBFLow{}--\CmlMainBFHigh{} without touching its sign or its
+evidence class. That uncertainty is almost entirely the firm-count block: the standard
+deviation of $\log m(N)$ across seeds is \CmlSdMN{} against \CmlSdCes{} for the CES term,
+the same slow mixing of the AR(2) state that Section~\ref{sec:scope} describes, now
+showing up in the reduced runs rather than in the posterior.
+
+The pattern across cells reproduces, by a different route, what $\delta$ already said.
+The core-CPI negative-unemployment-gap cell is the strongest; core CPI with the HP output
+gap and headline CPI with the unemployment gap are moderate; the BN output gap and all
+three PPI cells are indistinguishable from CES. This is an independent check rather than a
+restatement: it compares models rather than testing a coefficient, and it is computed from
+the marginal likelihood rather than from the posterior of $\delta$.
+
+Two caveats. The estimator is exact only for the linear-Gaussian models: \textbf{HSA full}
+is not linear-Gaussian in the joint state, so it has no exact conditional likelihood and
+no Gibbs ordinate over its blocks, and the implementation raises rather than returning a
+posterior-mean plug-in. And Chib's estimator carries no internal warning when one draw
+dominates an ordinate factor; ours refuses to report a factor supported by too few
+effective draws, which is how a $660$-log-point error on one seed was caught rather than
+published. \CmlNotIdentified{} of the reported cells hit that guard.
 
 \section{What PCHIP interpolation does to the estimates}
 \label{sec:pchip}
@@ -1047,10 +1095,13 @@ check re-estimates \emph{every cell} under baseline, weak, and tight priors
 (Table~\ref{tab:current-priors}); it is a genuine re-estimation of the current runs, not
 a re-weighting of a single posterior. What the three sets actually change is in
 Table~\ref{tab:prior-sets}, and two features of it matter for reading the sweep.
-First, ``weak'' is not a uniform widening: it multiplies most coefficient standard
-deviations by $2.5$ but $\delta$ and $\gamma$ by $5$, and it \emph{recentres}
-$\theta,\theta_0$ from $0.1$ to $0$, so the weak-prior entry-coefficient results mix a
-dispersion change with a location change. Second, ``tight'' holds every variance prior
+First, the three sets differ in \emph{dispersion only} --- every coefficient prior keeps
+its centre across the three --- but the widening is not uniform: it multiplies most
+coefficient standard deviations by $2.5$ and $\delta$, $\gamma$ by $5$. (An earlier
+revision also moved the centre of $\theta,\theta_0$ from $0.1$ to $0$ between sets, which
+mixed a location change into the sweep; all three now centre them at $0$, matching
+$\delta$ and $\gamma$ and taking no prior position on the sign the theory predicts.)
+Second, ``tight'' holds every variance prior
 at the same implied mean while concentrating it, whereas ``weak'' sets the inverse-gamma
 shape to $a=1$, for which the prior mean does not exist. That last choice is why the
 weak cells, not the tight ones, are where the sampler mixes worst.
@@ -1147,21 +1198,24 @@ the relationship is not a general upstream (price-setting-stage) effect.
 \item \textbf{No CES-slope bias found.} The theory's predicted negative bias of the CES
 slope is not supported: both the CES--HSA difference and the HSA-implied omitted-variable
 bias have intervals including zero, with, if anything, positive point estimates.
-\item \textbf{Cyclical-entry channel unconfirmed, and sign-unstable.} The theory
+\item \textbf{Cyclical-entry channel unidentified.} The theory
 predicts a positive entry coefficient $\theta$ in $-\theta_t\hat N_t$. In the main design
-HSA const-theta gives $\AnnualConstThetaHeadlineTheta$ for headline CPI and
-$\AnnualConstThetaCoreTheta$ for core CPI---opposite signs across two price indices, both
-intervals wide and straddling zero. The sign is not stable across the observation design
-either: the same core-CPI cell gives $\ConstThetaCoreTheta$ with
-$\Pr(\theta>0)=\ConstThetaCoreThetaProb$ under
-interpolation against $\AnnualConstThetaCoreTheta$ with
-$\Pr(\theta>0)=\AnnualConstThetaCoreThetaProb$ here. Under interpolation the
-sign also flips between activity measures ($\ConstThetaCoreTheta$ core CPI with the
-unemployment gap
-versus $\ConstThetaCoreBNTheta$ with the BN output gap, the latter putting
+HSA const-theta gives $\AnnualConstThetaHeadlineTheta$ for headline CPI
+($\Pr(\theta>0)=\AnnualConstThetaHeadlineThetaProb$) and
+$\AnnualConstThetaCoreTheta$ for core CPI
+($\Pr(\theta>0)=\AnnualConstThetaCoreThetaProb$): both centred essentially on zero, with
+posteriors that sit on top of the prior in Figure~\ref{fig:pp-unemp}. The data do not
+move $\theta$. An earlier revision reported these two cells as carrying \emph{opposite}
+signs; that contrast was largely an artefact of a prior centred at the theory's
+preferred $+0.1$, and it does not survive centring the prior at zero.
+What does survive is a dependence on choices that should not matter: under
+interpolation the same core-CPI cell gives $\ConstThetaCoreTheta$ with
+$\Pr(\theta>0)=\ConstThetaCoreThetaProb$, against
+$\AnnualConstThetaCoreTheta$ here, and within the interpolated design the sign flips
+between activity measures ($\ConstThetaCoreTheta$ with the unemployment gap versus
+$\ConstThetaCoreBNTheta$ with the BN output gap, the latter putting
 $\ConstThetaCoreBNThetaProbNeg\%$ of its mass on the
-theory-wrong side). We claim no support for this channel and note that what the data say
-about its sign depends on choices that should not matter. $\gamma$ is estimated only in
+theory-wrong side). We claim no support for this channel. $\gamma$ is estimated only in
 HSA full, which converges in no cell under either design.
 \item \textbf{The result does not depend on the interpolation, but the reported
 precision does.} Estimating with the annual firm count PCHIP-interpolated to quarterly
@@ -1227,19 +1281,19 @@ identification of the state equation.
 
 \paragraph{Open (computational).}
 \begin{itemize}
-\item \textbf{Conditional marginal likelihood.} A corrected implementation of
-$p(\pi\mid x,N^{\mathrm{obs}},M)$ now exists: the latent states are integrated out
-exactly by the Kalman filter through
-$\log p(\pi\mid N^{\mathrm{obs}},\theta)=\log p(\pi,N^{\mathrm{obs}}\mid\theta)-\log
-p(N^{\mathrm{obs}}\mid\theta)$, the filter uses the estimating model's own initial state
-(earlier versions started the trend at $N^{\mathrm{obs}}_0$, evaluating a different model
-and using the first observation twice), the AR(2) ordinate is the sampler's own
-initial-lag conditional, the truncated $(\rho_1,\rho_2)$ prior and conditional are
-normalized over the stationary triangle, and the ordinate uses Chib's sequential
-factorization with explicit reduced Gibbs runs. HSA full is excluded by construction:
-its bilinear latent term is not linear-Gaussian, and the previous ``conditional'' figure
-for it conditioned on posterior-\emph{mean} states, which is a plug-in and not a marginal
-likelihood. These numbers are computed but not yet promoted into any table.
+\item \textbf{Conditional marginal likelihood --- now reported
+(Section~\ref{sec:cml}), with two things still open.} The implementation integrates the
+latent states out exactly by the Kalman filter, uses the estimating model's own initial
+state, takes the AR(2) ordinate from the sampler's own initial-lag conditional,
+normalizes the truncated $(\rho_1,\rho_2)$ prior and conditional over the stationary
+triangle, and factorizes the ordinate with explicit reduced Gibbs runs. What still limits
+it: (i) HSA full is excluded by construction --- its bilinear latent term is not
+linear-Gaussian, so no exact conditional likelihood or Gibbs ordinate over its blocks
+exists, and the implementation raises rather than returning the posterior-\emph{mean}
+plug-in an earlier version reported; (ii) the Monte Carlo standard error, \CmlMainMcse{}
+on the main cell, is dominated by the firm-count block's reduced runs and would need
+longer runs, not a better estimator, to shrink. Only the mixed-frequency design and
+baseline priors have been run.
 \item \textbf{Weak convergence of full.} HSA full remains outside the criteria in every
 cell under Particle Gibbs. HSA const-theta's failure, by contrast, was a blocking
 problem and is resolved by the exact joint FFBS; that is a computational fix and is not

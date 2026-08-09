@@ -200,7 +200,7 @@ Run selection for **every** report artifact:
 runs = load_report_runs(min_iter=…, competition_frequency=…)
 ```
 `scripts/12_build_cpi_ppi_report.py:188`. Loads `results/runs/`, filters on
-`estimation_revision == "2026-08-state-initial-covariance-v2"`, `period == "full"`,
+`estimation_revision == "2026-08-theta-centred"`, `period == "full"`,
 `constraint_spec == "unrestricted"`, `n_transform == "log100_centered10"` and the requested
 frequency, then keeps the **newest `run_id`** per `(model, data_spec, prior)` key
 (`:151-154`). Two build-time guards then run:
@@ -215,7 +215,7 @@ model cannot silently fall back to a superseded one.
 
 | Report value | Posterior variable | Run key | Summary | Builder | Output file |
 |---|---|---|---|---|---|
-| `\CoreUnempDelta` | `posterior["delta"]` | `(hsa_steady, unemployment_gap_core, baseline)`, PCHIP | mean, 2.5 %, 97.5 % — `_summary` `:244-254`; formatted `_fmt` `:287-290` as `%+.3f [%+.3f, %+.3f]` | `write_result_macros` `:784-830` | `report/generated/tables/result_macros.tex` |
+| `\CoreUnempDelta` | `posterior["delta"]` | `(hsa_steady, unemployment_gap_core, baseline)`, PCHIP | mean, 2.5 %, 97.5 % — `_summary` `:244-254`; formatted `_fmt` `:287-290` as `%+.3f [%+.3f, %+.3f]` | `write_result_macros` `:784-830` | `results/tables/quarterly_interpolated/result_macros.tex` |
 | `\CoreUnempDeltaBF` | `posterior["delta"]` + `priors.json` | same | Savage–Dickey, `_bf10` `:269-285`; `_fmt_num` 1 dp, `>999` above 1000 | `write_result_macros` | same |
 | `\CoreUnempKappaStart` | `posterior["kappa_t"][:, 0]` | same | `nanmean` of the first column — `_path_summary` `:256-267`; `%+.3f` | `write_result_macros` | same |
 | `\CoreUnempKappaEnd` | `posterior["kappa_t"][:, -1]` | same | `nanmean` of the last column | `write_result_macros` | same |
@@ -242,15 +242,37 @@ reduced to a no-op stub, has been deleted.
 
 **Two observation designs.** `load_report_runs` is called once per design.
 `competition_frequency="annual_q4"` produces the **main** tables into
-`report/generated/tables/annual_q4/`; `"quarterly_interpolated"` produces the
+`results/tables/annual_q4/`; `"quarterly_interpolated"` produces the
 comparison tables into the base directory. Report sections §4–§6, §9–§10 and
 Appendices A and C read the former; §7 and Appendix B read the latter.
 
-**Model comparison not in the report**: `results/evidence/tables/conditional_ml_corrected.csv`
-(from `scripts/chib_marginal_likelihood.py` → `gibbs/conditional_ml.py`) holds components of
-`log p(π | x, N^obs, M)`. It deliberately emits **no** Bayes factor; earlier defective outputs are
-quarantined in `results/evidence/tables/quarantine/`, with a `README.md` there listing the
-defects. Nothing reads that subdirectory.
+**Conditional marginal likelihood (CES vs HSA steady)**:
+`results/evidence/tables/conditional_ml.csv`, from `scripts/chib_marginal_likelihood.py`
+→ `gibbs/conditional_ml.py`.
+
+| quantity | code | notes |
+|---|---|---|
+| `log p(π,N^obs \| x,θ)` | `steady_joint_loglik` | Kalman, states integrated out, inflation row included |
+| `log p(N^obs \| θ_N)` | `firm_count_loglik` | same filter, inflation row dropped |
+| `log p(x \| φ₁,σ_ζ²)` | `activity_loglik` | the activity equation the Gibbs posterior also conditions on |
+| `log m(π,N,x \| M)` | `conditional_marginal_likelihood(..., joint_target=True)` | Chib, sampler's own block order |
+| `log m(N \| M)` | `firm_count_marginal_likelihood` | Chib over the five firm-count blocks |
+| `log m(x)` | `activity_marginal_likelihood` | Chib over `(φ₁, σ_ζ²)`; identical for both models |
+| `log p(π \| x,N^obs,M)` | `conditional_comparison` | joint − `m(N)` − `m(x)`; CES has no `m(N)` term |
+
+The two subtracted terms are Occam factors for data being conditioned on, so they must be
+refunded rather than charged. `m(x)` is computed once per cell and handed to both models, so
+the run itself shows them conditioned on the identical quantity instead of assuming cancellation.
+
+**Guard.** `_checked_logmeanexp` raises `OrdinateNotIdentified` when a Rao-Blackwellised
+ordinate factor rests on fewer than `MIN_EFFECTIVE_ORDINATE_DRAWS` effective draws. The AR(2)
+block mixes slowly enough that short reduced runs can put the whole average on one draw; that
+produced a 660-log-point error on one seed before the guard existed. Reduced runs default to
+`--n-keep 30000` and are executed in parallel (they pin only starred values, so they do not
+depend on one another).
+
+Earlier defective outputs are quarantined in `results/evidence/tables/` (quarantine removed), with a
+`README.md` there listing the defects. Nothing reads that subdirectory.
 
 ---
 

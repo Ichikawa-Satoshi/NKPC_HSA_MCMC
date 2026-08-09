@@ -70,6 +70,13 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
         "The 12 estimation cells behind them are NOT re-run here.",
         False,
     ),
+    (
+        "make_conditional_ml_table.py",
+        [],
+        "conditional_ml.tex and its macros, from the Chib run's CSV. Like the prior "
+        "decomposition, the Chib run itself is estimation and is NOT re-run here.",
+        False,
+    ),
 ]
 
 # Not a report-build step: it estimates 12 extra diagnostic cells of its own and

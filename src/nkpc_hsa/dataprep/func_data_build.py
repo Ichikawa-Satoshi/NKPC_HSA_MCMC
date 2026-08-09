@@ -47,8 +47,16 @@ def annual_to_quarterly_pchip(df: pd.DataFrame, date_col: str, value_col: str) -
     x[date_col] = to_datetime(x[date_col])
     x = x.set_index(date_col).sort_index()
 
-    # annual start frequency
+    # Annual observations are stamped at the start of the year (see
+    # ``annual_firm_average_to_quarterly`` and the BN_N_*.csv sources) but they
+    # denote that whole calendar year: BN_N_Gustavo_26.csv at 1974-01-01 equals
+    # 10000/HHI(1974). The interpolation target is quarter-*end*, so leaving the
+    # knots at 1 January makes Q4 of year t (31 December) land one day before the
+    # year t+1 knot -- PCHIP then returns year t+1's value, and the series comes
+    # out led by a full year against inflation and the activity gap. Move the
+    # knots to the year end so Q4 of year t returns year t.
     a = x.asfreq("YS")
+    a.index = a.index + pd.offsets.YearEnd(0)
 
     # target quarterly index (quarter-end)
     q_index = pd.date_range(a.index.min(), a.index.max(), freq="QE")

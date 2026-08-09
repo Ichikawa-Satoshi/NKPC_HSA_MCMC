@@ -64,6 +64,8 @@ plug-in dressed up as a marginal likelihood.
 
 from __future__ import annotations
 
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -126,6 +128,51 @@ def _logmeanexp(values: np.ndarray) -> float:
         return -np.inf
     m = float(np.max(values))
     return float(m + np.log(np.mean(np.exp(values - m))))
+
+
+def _effective_terms(values: np.ndarray) -> float:
+    """Kish effective sample size of the log-terms entering a log-mean-exp.
+
+    A Rao-Blackwellised ordinate is only meaningful when many draws contribute.
+    When the reduced run rarely visits the neighbourhood of theta*, a handful of
+    draws carry the whole average and the factor is arbitrary -- which is exactly
+    how the AR(2) factor once came out at -655 on one seed and +3.3 on another,
+    with the other nine blocks agreeing to three digits.
+    """
+    values = np.asarray(values, float)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        return 0.0
+    weights = np.exp(values - values.max())
+    total = float(weights.sum())
+    return float(total**2 / float(np.sum(weights**2))) if total > 0 else 0.0
+
+
+# An ordinate factor supported by fewer than this many effective draws is not
+# reported as a number. Chib's estimator has no internal warning for it.
+MIN_EFFECTIVE_ORDINATE_DRAWS = 20.0
+
+
+class OrdinateNotIdentified(RuntimeError):
+    """A Chib ordinate factor was carried by too few draws to be trusted."""
+
+
+def _checked_logmeanexp(values: np.ndarray, *, block: str) -> float:
+    values = np.asarray(values, float)
+    # A single term is not a Monte Carlo average: when every block the factor
+    # conditions on is already pinned at its starred value, the conditional is
+    # exact and one evaluation is the answer. Only average-of-many factors can be
+    # under-supported, so only those are checked.
+    if values.size <= 1:
+        return _logmeanexp(values)
+    effective = _effective_terms(values)
+    if effective < MIN_EFFECTIVE_ORDINATE_DRAWS:
+        raise OrdinateNotIdentified(
+            f"ordinate factor for block {block!r} rests on {effective:.1f} effective "
+            f"draws out of {np.asarray(values).size}; lengthen the reduced run "
+            f"(the state block mixes slowly) rather than trusting this factor"
+        )
+    return _logmeanexp(values)
 
 
 def _is_stationary_ar2(r1, r2):
@@ -311,6 +358,7 @@ class ConditionalMLResult:
     family: str
     ordinate_terms: dict[str, float] = field(default_factory=dict)
     notes: str = ""
+    star: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -474,8 +522,16 @@ def conditional_marginal_likelihood(
     seed: int = 90210,
     m0: np.ndarray | None = None,
     P0: np.ndarray | None = None,
+    joint_target: bool = False,
 ) -> ConditionalMLResult:
-    """Chib (1995) conditional marginal likelihood with explicit reduced runs.
+    """Chib (1995) marginal likelihood with explicit reduced runs.
+
+    With ``joint_target=True`` the likelihood is the joint one the sampler's
+    posterior is built from, so the return value is log m(pi, N, x) (HSA) or
+    log m(pi, x) (CES) -- a genuine marginal likelihood. With the default the
+    likelihood is the conditional one, which does NOT match the ordinate's
+    posterior and is retained only so the old, broken number stays reproducible
+    for the regression test that documents it.
 
     ``priors_internal`` is the sampler-facing prior dict (KAPPA_SCALE applied);
     ``pri`` is the same prior set in physical units, used for the prior term and
@@ -531,22 +587,54 @@ def conditional_marginal_likelihood(
         v * (KAPPA_SCALE if i > 0 else 1.0) for i, v in enumerate(star_values["beta"])
     )
 
+    # Every reduced run pins blocks 0..g-1 at their *starred* values, and theta*
+    # is already known from the full run. The runs therefore do not depend on one
+    # another and are only sequential in Chib's exposition, not in fact. Running
+    # them concurrently is what takes a cell from hours to minutes, which is the
+    # difference between doing this for one cell and doing it for all of them.
+    #
+    # Processes, not threads: the sampler is a Python loop over small numpy
+    # operations, so it holds the GIL almost continuously and threads buy nothing.
+    jobs = [
+        (
+            g,
+            block,
+            {b: fixed_internal[b] for b in blocks[:g]},
+            seed + 101 * g,
+        )
+        for g, block in enumerate(blocks)
+    ]
+    runs_by_block: dict[str, Any] = {blocks[0]: full}
+    todo = [job for job in jobs if job[0] > 0]
+    if todo:
+        with ProcessPoolExecutor(max_workers=min(len(todo), max(1, (os.cpu_count() or 2) - 1))) as pool:
+            futures = {
+                pool.submit(
+                    _run_gibbs, sampler, data, priors_internal, family=family,
+                    fixed=fixed, n_burn=n_burn, n_keep=n_keep, seed=run_seed,
+                ): block
+                for _, block, fixed, run_seed in todo
+            }
+            for future in as_completed(futures):
+                runs_by_block[futures[future]] = future.result()
+
     ordinate_terms: dict[str, float] = {}
-    run = full
-    for g, block in enumerate(blocks):
-        terms = _ordinate_factor(block, run, star, data, pri, family=family, y=y, a_t=a_t)
-        ordinate_terms[block] = terms
-        if g == len(blocks) - 1:
-            break
-        # Reduced run for the next factor: pin blocks 0..g at their star values.
-        run = _run_gibbs(
-            sampler, data, priors_internal, family=family,
-            fixed={b: fixed_internal[b] for b in blocks[: g + 1]},
-            n_burn=n_burn, n_keep=n_keep, seed=seed + 101 * (g + 1),
+    for block in blocks:
+        ordinate_terms[block] = _ordinate_factor(
+            block, runs_by_block[block], star, data, pri, family=family, y=y, a_t=a_t
         )
 
     log_ord = float(sum(ordinate_terms.values()))
-    if family == "ces":
+    if joint_target:
+        # The likelihood the Gibbs posterior actually targets: inflation (+ the
+        # firm-count rows for HSA) *and* the activity equation. Using this makes
+        # Chib's identity hold, because now the posterior really is proportional
+        # to likelihood x prior.
+        if family == "ces":
+            log_lik = ces_conditional_loglik(star, data) + activity_loglik(star, data)
+        else:
+            log_lik = steady_joint_loglik(star, data, m0=m0, P0=P0) + activity_loglik(star, data)
+    elif family == "ces":
         log_lik = ces_conditional_loglik(star, data)
     else:
         log_lik = steady_conditional_loglik(star, data, m0=m0, P0=P0)
@@ -559,6 +647,7 @@ def conditional_marginal_likelihood(
         log_posterior_ordinate=log_ord,
         family=family,
         ordinate_terms=ordinate_terms,
+        star=star,
         notes=(
             "Chib (1995) with explicit reduced Gibbs runs; states integrated out "
             "by exact Kalman filter; (rho_1,rho_2) prior and conditional normalised "
@@ -602,7 +691,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                 X = np.column_stack([a_t, x, x * Nbar])
                 mean, cov = _beta_cond_moments(y - lmb * (x - phi * x_prev), X, se, pm, ps)
                 terms.append(_log_mvn_pdf(beta_star, mean, cov))
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     kappa_term = (
         star["kappa"] * x if family == "ces"
@@ -616,7 +705,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
             kt = kappa_term if family == "ces" else kappa_term[i]
             mean, sd = _lambda_cond_moments(y - star["alpha"] * a_t - kt, zeta, se, pri)
             terms.append(float(_log_norm_pdf(star["lambda_ez"], mean, sd)))
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     if block == "phi_1":
         terms = []
@@ -626,7 +715,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                 x, x_prev, y - star["alpha"] * a_t - kt, star["lambda_ez"], sz, se, pri
             )
             terms.append(float(_log_norm_pdf(star["phi_1"], mean, sd)))
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     zeta_star = x - star["phi_1"] * x_prev
 
@@ -646,7 +735,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                     star["sigma_eta2"], pri["a_e"] + 0.5 * T, pri["b_e"] + 0.5 * float(np.sum(eta**2))
                 )
             )
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     # --- HSA-steady state blocks ---
     Nhat_draws = _states_from(run, "Nhat")
@@ -667,7 +756,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
             )
             for Nhat, lag, su in zip(Nhat_draws, nhat_lag_draws, sigma_u2_draws)
         ]
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     if block == "sigma_u2":
         terms = []
@@ -680,14 +769,14 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                     pri["b_u"] + 0.5 * float(np.sum(resid**2)),
                 )
             )
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     if block == "n":
         terms = [
             float(_log_norm_pdf(star["n"], *_n_cond_moments(Nbar, sp, pri)))
             for Nbar, sp in zip(Nbar_draws, sigma_eps2_draws)
         ]
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     if block == "sigma_eps2":
         terms = []
@@ -699,7 +788,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                     pri["b_eps"] + 0.5 * float(np.sum(resid**2)),
                 )
             )
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     if block == "sigma_N2":
         terms = []
@@ -712,7 +801,7 @@ def _ordinate_factor(block, run, star, data, pri, *, family, y, a_t) -> float:
                     pri["b_N"] + 0.5 * float(np.sum(resid**2)),
                 )
             )
-        return _logmeanexp(np.array(terms))
+        return _checked_logmeanexp(np.array(terms), block=block)
 
     raise ValueError(f"Unknown ordinate block: {block!r}")
 
@@ -721,3 +810,401 @@ def _beta_prior_arrays(pri, names):
     means = np.array([_prior_pair(pri, name)[0] for name in names], float)
     sds = np.array([_prior_pair(pri, name)[1] for name in names], float)
     return means, sds
+
+
+# ---------------------------------------------------------------------------
+# Full marginal likelihoods of the joint data, and of the conditioning data
+#
+# The estimand is p(pi | x, N_obs, M). The Gibbs posterior conditions on pi, N
+# and x, and its likelihood therefore includes the activity equation
+#     x_t = phi_1 x_{t-1} + zeta_t
+# (``sigma_zeta2`` is drawn from those residuals, and both ``phi_1`` and
+# ``sigma_zeta2`` are Chib ordinate blocks). So the conditioning set is (x, N),
+# not N alone, and
+#
+#     log p(pi | x, N, M) = log m(pi, N, x | M) - log m(N | M) - log m(x)
+#
+# where the last two factorise because p(N|theta) depends only on the firm-count
+# block, p(x|theta) only on (phi_1, sigma_zeta2), and the two blocks are a priori
+# independent. m(x) is the same number for both models; it is computed rather
+# than cancelled by assertion, so that the two models are visibly conditioned on
+# the same quantity.
+#
+# Feeding the *conditional* likelihood into Chib's identity while taking the
+# ordinate from the *joint* posterior -- which is what this module used to do --
+# does not estimate anything: the identity collapses to
+# m(pi,N|x)/p(N|x,theta*), which still depends on theta*. The invariance test in
+# tests/ is what pins that down.
+# ---------------------------------------------------------------------------
+
+
+def steady_joint_loglik(star: dict, data: dict, *, m0, P0) -> float:
+    """log p(pi, N_obs | x, theta) for HSA steady, states integrated out."""
+    y = data["pi"] - data["pi_expect"]
+    a_t = data["pi_prev"] - data["pi_expect"]
+    zeta = data["x"] - star["phi_1"] * data["x_prev"]
+    y_tilde = y - star["alpha"] * a_t - star["kappa_0"] * data["x"] - star["lambda_ez"] * zeta
+    return float(
+        kalman_loglik(
+            N_obs=data["N"],
+            y_tilde=y_tilde,
+            h_nhat=np.zeros(y.size),
+            h_nbar=star["delta"] * data["x"],
+            n_drift=star["n"],
+            rho1=star["rho_1"],
+            rho2=star["rho_2"],
+            sigma_eta2=star["sigma_eta2"],
+            sigma_u2=star["sigma_u2"],
+            sigma_eps2=star["sigma_eps2"],
+            sigma_N2=star["sigma_N2"],
+            m0=m0,
+            P0=P0,
+            include_inflation_row=True,
+        )
+    )
+
+
+def activity_loglik(star: dict, data: dict) -> float:
+    """log p(x | phi_1, sigma_zeta2), the activity equation the sampler includes."""
+    zeta = data["x"] - star["phi_1"] * data["x_prev"]
+    T = zeta.size
+    return float(
+        -0.5 * T * np.log(2.0 * np.pi * star["sigma_zeta2"])
+        - 0.5 * float(np.sum(zeta**2)) / star["sigma_zeta2"]
+    )
+
+
+def firm_count_loglik(star: dict, data: dict, *, m0, P0) -> float:
+    """log p(N_obs | theta_N), states integrated out, inflation row dropped."""
+    return float(
+        kalman_loglik(
+            N_obs=data["N"],
+            y_tilde=None,
+            h_nhat=None,
+            h_nbar=None,
+            n_drift=star["n"],
+            rho1=star["rho_1"],
+            rho2=star["rho_2"],
+            sigma_eta2=1.0,
+            sigma_u2=star["sigma_u2"],
+            sigma_eps2=star["sigma_eps2"],
+            sigma_N2=star["sigma_N2"],
+            m0=m0,
+            P0=P0,
+            include_inflation_row=False,
+        )
+    )
+
+
+def _phi_x_only_moments(x, x_prev, sigma_zeta2, pri):
+    """phi_1 | sigma_zeta2, x -- the activity equation on its own.
+
+    Not the production sampler's phi conditional: that one also carries the
+    inflation equation through lambda_ez. Here the target is m(x), where the
+    inflation equation is not part of the model at all.
+    """
+    mu0, sd0 = _prior_pair(pri, "phi_1")
+    prec = 1.0 / sd0**2 + float(np.sum(x_prev**2)) / sigma_zeta2
+    mean = (mu0 / sd0**2 + float(np.dot(x_prev, x)) / sigma_zeta2) / prec
+    return mean, np.sqrt(1.0 / prec)
+
+
+def activity_marginal_likelihood(data, pri, *, n_burn=1500, n_keep=6000, seed=90210):
+    """log m(x) by Chib over the two-block activity model.
+
+    Blocks in sampler order: phi_1 | sigma_zeta2, then sigma_zeta2 | phi_1.
+    Both conditionals are exact, so both ordinate factors are exact: the first
+    Rao-Blackwellised over the full run, the second evaluated at phi_1*.
+    """
+    rng = np.random.default_rng(seed)
+    x, x_prev = np.asarray(data["x"], float), np.asarray(data["x_prev"], float)
+    T = x.size
+    a_z, b_z = float(pri["a_z"]), float(pri["b_z"])
+
+    phi, sigma_zeta2 = _prior_pair(pri, "phi_1")[0], 1.0
+    phi_draws, sig_draws = [], []
+    for it in range(n_burn + n_keep):
+        mean, sd = _phi_x_only_moments(x, x_prev, sigma_zeta2, pri)
+        phi = float(mean + sd * rng.standard_normal())
+        resid = x - phi * x_prev
+        sigma_zeta2 = float(
+            1.0 / rng.gamma(a_z + 0.5 * T, 1.0 / (b_z + 0.5 * float(np.sum(resid**2))))
+        )
+        if it >= n_burn:
+            phi_draws.append(phi)
+            sig_draws.append(sigma_zeta2)
+    phi_draws = np.asarray(phi_draws)
+    sig_draws = np.asarray(sig_draws)
+    star = {"phi_1": float(phi_draws.mean()), "sigma_zeta2": float(sig_draws.mean())}
+
+    log_lik = activity_loglik(star, data)
+    log_pri = float(
+        _log_norm_pdf(star["phi_1"], *_prior_pair(pri, "phi_1"))
+        + _log_ig_pdf_var(star["sigma_zeta2"], a_z, b_z)
+    )
+    # p(phi_1* | x), Rao-Blackwellised over sigma_zeta2 draws from the full run.
+    terms = np.array([
+        _log_norm_pdf(star["phi_1"], *_phi_x_only_moments(x, x_prev, s, pri)) for s in sig_draws
+    ])
+    log_ord = _checked_logmeanexp(terms, block="phi_1")
+    # p(sigma_zeta2* | phi_1*, x) is exact, no averaging needed.
+    resid = x - star["phi_1"] * x_prev
+    log_ord += _log_ig_pdf_var(
+        star["sigma_zeta2"], a_z + 0.5 * T, b_z + 0.5 * float(np.sum(resid**2))
+    )
+    return float(log_lik + log_pri - log_ord), star
+
+
+def _run_firm_count_gibbs(data, pri, *, m0, P0, n_burn, n_keep, seed, fixed=None):
+    """Gibbs over the firm-count block alone, conditioning on N_obs only.
+
+    Same state equation, same observation equation and the same block
+    conditionals as the production sampler, with the inflation row removed --
+    that is the model whose marginal likelihood is m(N).
+    """
+    from nkpc_hsa.gibbs.common.competition import finite_N_residuals, initial_competition_path
+    from nkpc_hsa.gibbs.common.joint_ffbs import sample_joint_competition_states_ffbs
+
+    fixed = dict(fixed or {})
+    rng = np.random.default_rng(seed)
+    N_obs = np.asarray(data["N"], float)
+    T = N_obs.size
+    zeros = np.zeros(T)
+
+    N_init = initial_competition_path(N_obs)
+    Nbar = np.zeros(T)
+    Nbar[: min(2, T)] = N_init[: min(2, T)]
+    for t in range(2, T):
+        Nbar[t] = 0.7 * Nbar[t - 1] + 0.3 * N_init[t]
+    Nhat = N_init - Nbar
+    states = np.zeros((T, 3))
+    states[:, 0], states[:, 2] = Nhat, Nbar
+    states[1:, 1] = Nhat[:-1]
+
+    rho = np.array([_prior_pair(pri, "rho_1")[0], _prior_pair(pri, "rho_2")[0]])
+    sigma_u2 = sigma_eps2 = sigma_N2 = 1.0
+    n_drift = _prior_pair(pri, "n")[0]
+    if "rho" in fixed:
+        rho = np.asarray(fixed["rho"], float)
+    sigma_u2 = float(fixed.get("sigma_u2", sigma_u2))
+    sigma_eps2 = float(fixed.get("sigma_eps2", sigma_eps2))
+    sigma_N2 = float(fixed.get("sigma_N2", sigma_N2))
+    n_drift = float(fixed.get("n", n_drift))
+
+    out = {k: [] for k in ("rho_1", "rho_2", "sigma_u2", "n", "sigma_eps2", "sigma_N2")}
+    paths = {"Nbar": [], "Nhat": [], "Nhat_lag": []}
+    for it in range(n_burn + n_keep):
+        if "rho" not in fixed:
+            mean, cov = _rho_cond_moments(states[:, 0], states[0, 1], sigma_u2, pri)
+            for _ in range(2000):
+                cand = rng.multivariate_normal(mean, force_pd(cov))
+                if _is_stationary_ar2(cand[0], cand[1]):
+                    rho = cand
+                    break
+        resid_u = states[1:, 0] - rho[0] * states[:-1, 0] - rho[1] * states[:-1, 1]
+        if "sigma_u2" not in fixed:
+            sigma_u2 = float(1.0 / rng.gamma(
+                pri["a_u"] + 0.5 * resid_u.size,
+                1.0 / (pri["b_u"] + 0.5 * float(np.sum(resid_u**2))),
+            ))
+        if "n" not in fixed:
+            mean_n, sd_n = _n_cond_moments(states[:, 2], sigma_eps2, pri)
+            n_drift = float(mean_n + sd_n * rng.standard_normal())
+        resid_eps = states[1:, 2] - n_drift - states[:-1, 2]
+        if "sigma_eps2" not in fixed:
+            sigma_eps2 = float(1.0 / rng.gamma(
+                pri["a_eps"] + 0.5 * resid_eps.size,
+                1.0 / (pri["b_eps"] + 0.5 * float(np.sum(resid_eps**2))),
+            ))
+        resid_N = finite_N_residuals(N_obs, states[:, 0], states[:, 2])
+        if "sigma_N2" not in fixed:
+            sigma_N2 = float(1.0 / rng.gamma(
+                pri["a_N"] + 0.5 * resid_N.size,
+                1.0 / (pri["b_N"] + 0.5 * float(np.sum(resid_N**2))),
+            ))
+        # States given N only: zero loadings make the inflation row uninformative.
+        Nbar, Nhat, states = sample_joint_competition_states_ffbs(
+            N_obs=N_obs, y_tilde=zeros, h_nhat=zeros, h_nbar=zeros,
+            n_drift=n_drift, rho1=rho[0], rho2=rho[1],
+            sigma_eta2=1.0, sigma_u2=sigma_u2, sigma_eps2=sigma_eps2,
+            sigma_N2=sigma_N2, m0=m0, P0=P0, rng=rng,
+        )
+        if it >= n_burn:
+            out["rho_1"].append(rho[0]); out["rho_2"].append(rho[1])
+            out["sigma_u2"].append(sigma_u2); out["n"].append(n_drift)
+            out["sigma_eps2"].append(sigma_eps2); out["sigma_N2"].append(sigma_N2)
+            paths["Nbar"].append(Nbar.copy()); paths["Nhat"].append(Nhat.copy())
+            paths["Nhat_lag"].append(float(states[0, 1]))
+    return ({k: np.asarray(v) for k, v in out.items()},
+            {k: np.asarray(v) for k, v in paths.items()})
+
+
+_FIRM_BLOCKS = ["rho", "sigma_u2", "n", "sigma_eps2", "sigma_N2"]
+
+
+def firm_count_marginal_likelihood(data, pri, *, m0, P0, n_burn=1500, n_keep=3000, seed=90210):
+    """log m(N_obs) by Chib over the firm-count block, with reduced runs.
+
+    Same sequential factorisation as the full model: block g's ordinate factor is
+    averaged over a run in which blocks 1..g-1 are pinned at their starred
+    values, so every factor is the sampler's own conditional.
+    """
+    full, full_paths = _run_firm_count_gibbs(
+        data, pri, m0=m0, P0=P0, n_burn=n_burn, n_keep=n_keep, seed=seed
+    )
+    star = {k: float(np.mean(v)) for k, v in full.items()}
+
+    star_fixed = {
+        "rho": (star["rho_1"], star["rho_2"]),
+        "sigma_u2": star["sigma_u2"],
+        "n": star["n"],
+        "sigma_eps2": star["sigma_eps2"],
+        "sigma_N2": star["sigma_N2"],
+    }
+    # Same independence as in the full model: the pinned values are all starred,
+    # so the reduced runs can go at once.
+    results: dict[str, tuple] = {_FIRM_BLOCKS[0]: (full, full_paths)}
+    todo = [
+        (block, {b: star_fixed[b] for b in _FIRM_BLOCKS[:g]}, seed + 101 * g)
+        for g, block in enumerate(_FIRM_BLOCKS) if g > 0
+    ]
+    if todo:
+        with ProcessPoolExecutor(max_workers=min(len(todo), max(1, (os.cpu_count() or 2) - 1))) as pool:
+            futures = {
+                pool.submit(_run_firm_count_gibbs, data, pri, m0=m0, P0=P0,
+                            n_burn=n_burn, n_keep=n_keep, seed=run_seed, fixed=fixed): block
+                for block, fixed, run_seed in todo
+            }
+            for future in as_completed(futures):
+                results[futures[future]] = future.result()
+    terms = {
+        block: _firm_ordinate_factor(block, *results[block], star, data, pri)
+        for block in _FIRM_BLOCKS
+    }
+    log_lik = firm_count_loglik(star, data, m0=m0, P0=P0)
+    mu_rho = np.array([_prior_pair(pri, "rho_1")[0], _prior_pair(pri, "rho_2")[0]])
+    cov_rho = np.diag([_prior_pair(pri, "rho_1")[1] ** 2, _prior_pair(pri, "rho_2")[1] ** 2])
+    log_pri = float(
+        log_truncated_mvn_pdf([star["rho_1"], star["rho_2"]], mu_rho, cov_rho)
+        + _log_ig_pdf_var(star["sigma_u2"], pri["a_u"], pri["b_u"])
+        + _log_norm_pdf(star["n"], *_prior_pair(pri, "n"))
+        + _log_ig_pdf_var(star["sigma_eps2"], pri["a_eps"], pri["b_eps"])
+        + _log_ig_pdf_var(star["sigma_N2"], pri["a_N"], pri["b_N"])
+    )
+    return float(log_lik + log_pri - sum(terms.values())), star, terms
+
+
+def _firm_ordinate_factor(block, run, paths, star, data, pri) -> float:
+    """One Chib factor for m(N), Rao-Blackwellised over the run's draws."""
+    from nkpc_hsa.gibbs.common.competition import finite_N_residuals
+
+    Nbar, Nhat, Nhat_lag = paths["Nbar"], paths["Nhat"], paths["Nhat_lag"]
+    n_draws = Nbar.shape[0]
+    if block == "rho":
+        logs = np.empty(n_draws)
+        for s in range(n_draws):
+            mean, cov = _rho_cond_moments(Nhat[s], Nhat_lag[s], run["sigma_u2"][s], pri)
+            logs[s] = log_truncated_mvn_pdf([star["rho_1"], star["rho_2"]], mean, cov)
+        return _checked_logmeanexp(logs, block=block)
+    if block == "sigma_u2":
+        logs = np.empty(n_draws)
+        for s in range(n_draws):
+            lag2 = np.concatenate([[Nhat_lag[s]], Nhat[s][:-2]])
+            resid = Nhat[s][1:] - star["rho_1"] * Nhat[s][:-1] - star["rho_2"] * lag2
+            logs[s] = _log_ig_pdf_var(
+                star["sigma_u2"], pri["a_u"] + 0.5 * resid.size,
+                pri["b_u"] + 0.5 * float(np.sum(resid**2)),
+            )
+        return _checked_logmeanexp(logs, block=block)
+    if block == "n":
+        logs = np.array([
+            _log_norm_pdf(star["n"], *_n_cond_moments(Nbar[s], run["sigma_eps2"][s], pri))
+            for s in range(n_draws)
+        ])
+        return _checked_logmeanexp(logs, block=block)
+    if block == "sigma_eps2":
+        logs = np.empty(n_draws)
+        for s in range(n_draws):
+            resid = Nbar[s][1:] - star["n"] - Nbar[s][:-1]
+            logs[s] = _log_ig_pdf_var(
+                star["sigma_eps2"], pri["a_eps"] + 0.5 * resid.size,
+                pri["b_eps"] + 0.5 * float(np.sum(resid**2)),
+            )
+        return _checked_logmeanexp(logs, block=block)
+    if block == "sigma_N2":
+        logs = np.empty(n_draws)
+        for s in range(n_draws):
+            resid = finite_N_residuals(np.asarray(data["N"], float), Nhat[s], Nbar[s])
+            logs[s] = _log_ig_pdf_var(
+                star["sigma_N2"], pri["a_N"] + 0.5 * resid.size,
+                pri["b_N"] + 0.5 * float(np.sum(resid**2)),
+            )
+        return _checked_logmeanexp(logs, block=block)
+    raise ValueError(f"unknown firm-count block {block!r}")
+
+
+@dataclass
+class ConditionalComparison:
+    """Every component of log p(pi | x, N_obs, M), kept separately.
+
+    The components are reported rather than only their combination because the
+    whole point of the correction is which Occam factors cancel: log_m_N and
+    log_m_x are charged in the joint term and refunded in the conditioning term.
+    """
+    log_m_joint: float
+    log_m_firm_count: float
+    log_m_activity: float
+    log_m_conditional: float
+    star: dict
+    family: Family
+
+
+def _joint_marginal_likelihood(data, priors_internal, pri, *, family, n_burn, n_keep, seed, m0, P0):
+    return conditional_marginal_likelihood(
+        data, priors_internal, pri, family=family, n_burn=n_burn, n_keep=n_keep,
+        seed=seed, m0=m0, P0=P0, joint_target=True,
+    )
+
+
+def conditional_comparison(
+    data, priors_internal, pri, *, family: Family,
+    n_burn: int = 1500, n_keep: int = 3000, seed: int = 90210,
+    m0=None, P0=None, log_m_activity: float | None = None,
+) -> ConditionalComparison:
+    """log p(pi | x, N_obs, M) as a ratio of full marginal likelihoods.
+
+        HSA steady   log m(pi, N, x) - log m(N) - log m(x)
+        CES          log m(pi, x)              - log m(x)
+
+    Every term is a Chib estimate of a genuine marginal likelihood, so the
+    result does not depend on where theta* is placed -- unlike the previous
+    routine, which mixed a conditional likelihood with a joint-posterior
+    ordinate and inherited a theta* dependence of several log points.
+
+    ``log_m_activity`` may be passed in so both models are debited the identical
+    m(x); leaving it None recomputes it.
+    """
+    m0 = np.zeros(3) if m0 is None else np.asarray(m0, float)
+    P0 = np.eye(3) * 10.0 if P0 is None else np.asarray(P0, float)
+
+    joint = _joint_marginal_likelihood(
+        data, priors_internal, pri, family=family,
+        n_burn=n_burn, n_keep=n_keep, seed=seed, m0=m0, P0=P0,
+    )
+    if log_m_activity is None:
+        log_m_activity, _ = activity_marginal_likelihood(data, pri, seed=seed)
+    log_m_firm = 0.0
+    if family == "steady":
+        log_m_firm, _, _ = firm_count_marginal_likelihood(
+            data, pri, m0=m0, P0=P0, n_burn=n_burn, n_keep=n_keep, seed=seed
+        )
+    return ConditionalComparison(
+        log_m_joint=joint.log_conditional_marginal_likelihood,
+        log_m_firm_count=float(log_m_firm),
+        log_m_activity=float(log_m_activity),
+        log_m_conditional=float(
+            joint.log_conditional_marginal_likelihood - log_m_firm - log_m_activity
+        ),
+        star=joint.star,
+        family=family,
+    )

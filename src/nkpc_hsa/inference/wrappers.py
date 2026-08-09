@@ -38,9 +38,15 @@ from nkpc_hsa.paths import project_path
 # comparison rather than deleted.
 #
 # 2026-08-unrate-sa-v1  unemp_gap switched from UNRATENSA to UNRATE (seasonally
-#                       adjusted). The prior vintage,
-#                       "2026-08-state-initial-covariance-v2", is the NSA one.
-ESTIMATION_REVISION = "2026-08-unrate-sa-v1"
+#                       adjusted).
+# 2026-08-theta-centred  theta and theta_0 prior means moved from 0.1 to 0 in all
+#                       three prior sets. The sweep is meant to vary dispersion
+#                       only; leaving theta centred at the theory-preferred sign
+#                       in baseline/tight but at 0 in weak mixed a location
+#                       change into it, so the weak-prior entry-coefficient
+#                       results were not comparable with the others. 0 also
+#                       matches delta and gamma, which were already centred there.
+ESTIMATION_REVISION = "2026-08-theta-centred"
 
 
 @dataclass(frozen=True)
@@ -108,6 +114,32 @@ def _default_run_dir(
     return project_path("results", "runs", safe)
 
 
+def _apply_sample_window(frame: pd.DataFrame, spec: Mapping[str, Any]) -> pd.DataFrame:
+    """Restrict to the configured estimation window before complete-case selection.
+
+    With no explicit window the sample is whatever ``dropna`` happens to leave,
+    which makes it an accident of how far each input series runs. That is not
+    hypothetical: correcting the year-start/quarter-end mismatch in
+    ``dataprep.func_data_build.annual_to_quarterly_pchip`` extended the
+    interpolated firm count by four quarters and silently moved the estimation
+    sample from 1982Q1-2012Q4 to 1982Q1-2013Q4. The window is compared on
+    quarterly periods because the processed index carries end-of-day timestamps
+    (``2012-12-31 23:59:59.999999``), against which a plain ``<= 2012-12-31``
+    would drop the final quarter.
+    """
+    start = spec.get("sample_start")
+    end = spec.get("sample_end")
+    if (start is None and end is None) or not isinstance(frame.index, pd.DatetimeIndex):
+        return frame
+    periods = frame.index.to_period("Q")
+    mask = np.ones(len(frame), dtype=bool)
+    if start is not None:
+        mask &= periods >= pd.Period(str(start), freq="Q")
+    if end is not None:
+        mask &= periods <= pd.Period(str(end), freq="Q")
+    return frame.loc[mask]
+
+
 def _coerce_model_data(
     data: pd.DataFrame | Mapping[str, Any] | None,
     *,
@@ -131,7 +163,7 @@ def _coerce_model_data(
         missing = [cols[k] for k in required if cols[k] not in data.columns]
         if missing:
             raise KeyError(f"Missing model-ready columns: {missing}")
-        sample = data[[cols[k] for k in required]].dropna()
+        sample = _apply_sample_window(data[[cols[k] for k in required]], spec).dropna()
         return {k: sample[cols[k]].to_numpy(dtype=float) for k in required}
     return {k: np.asarray(v, dtype=float).reshape(-1) for k, v in data.items()}
 
@@ -154,7 +186,7 @@ def model_sample_index(data: pd.DataFrame | Mapping[str, Any] | None, data_spec:
     missing = [cols[k] for k in required if cols[k] not in data.columns]
     if missing:
         return None
-    return data[[cols[k] for k in required]].dropna().index
+    return _apply_sample_window(data[[cols[k] for k in required]], data_spec).dropna().index
 
 
 def _fallback_quarterly_index(T: int) -> pd.PeriodIndex:

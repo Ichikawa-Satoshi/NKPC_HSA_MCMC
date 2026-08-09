@@ -692,7 +692,11 @@ def build_model_table(runs) -> pd.DataFrame:
     _write_latex(
         table,
         "unemployment_by_model",
-        ["model", "inflation", "slope", "delta", "BF10(delta)", "entry", "gamma", "kappa path", "diagnostics"],
+        # No convergence column: the dagger on each value already carries the
+        # coefficient rule, and the group-by-group tables carry the rest. A third
+        # restatement in every coefficient table only invited reading "OK" as a
+        # claim about the whole run.
+        ["model", "inflation", "slope", "delta", "BF10(delta)", "entry", "gamma", "kappa path"],
     )
     return table
 
@@ -727,7 +731,7 @@ def build_output_gap_model_tables(runs) -> pd.DataFrame:
                     }
                 )
     table = pd.DataFrame(rows)
-    columns = ["model", "inflation", "slope", "delta", "BF10(delta)", "entry", "gamma", "kappa path", "diagnostics"]
+    columns = ["model", "inflation", "slope", "delta", "BF10(delta)", "entry", "gamma", "kappa path"]
     for activity, filename in [("HP output gap", "output_gap_hp_by_model"), ("BN output gap", "output_gap_bn_by_model")]:
         _write_latex(table.loc[table["activity"] == activity], filename, columns)
     return table
@@ -835,7 +839,7 @@ def build_ces_hsa_bias_table(runs, *, command_prefix: str = "") -> pd.DataFrame:
     _write_latex(
         table,
         "ces_hsa_kappa_bias",
-        ["specification", "CES kappa", "HSA kappa", "CES-HSA", "Pr(CES-HSA<0)", "HSA-implied OVB", "Pr(OVB<0)", "diagnostics"],
+        ["specification", "CES kappa", "HSA kappa", "CES-HSA", "Pr(CES-HSA<0)", "HSA-implied OVB", "Pr(OVB<0)"],
     )
     (OUT_TABLES / "bias_macros.tex").write_text("\n".join(direct_macros) + "\n", encoding="utf-8")
     return table
@@ -1479,14 +1483,14 @@ def build_primary_parameter_state_diagnostics(runs) -> pd.DataFrame:
         idata = item[1]
         row: dict[str, object] = {"inflation": inflation}
         for parameter, label in [
-            ("delta", "delta"),
-            ("kappa_0", "kappa0"),
-            ("kappa_t", "kappa path"),
-            ("Nbar", "Nbar path"),
-            ("Nhat", "Nhat path"),
+            ("delta", r"$\delta$"),
+            ("kappa_0", r"$\kappa_0$"),
+            ("kappa_t", r"$\kappa_t$ path"),
+            ("Nbar", r"$\bar N$ path"),
+            ("Nhat", r"$\hat N$ path"),
         ]:
             max_rhat, min_ess = _array_diagnostics(idata, parameter)
-            row[f"{label} Rhat"] = f"{max_rhat:.3f}"
+            row[f"{label} $\\hat R$"] = f"{max_rhat:.3f}"
             row[f"{label} ESS"] = f"{min_ess:.0f}"
         rows.append(row)
     table = pd.DataFrame(rows)
@@ -1495,11 +1499,11 @@ def build_primary_parameter_state_diagnostics(runs) -> pd.DataFrame:
         "primary_parameter_state_diagnostics",
         [
             "inflation",
-            "delta Rhat", "delta ESS",
-            "kappa0 Rhat", "kappa0 ESS",
-            "kappa path Rhat", "kappa path ESS",
-            "Nbar path Rhat", "Nbar path ESS",
-            "Nhat path Rhat", "Nhat path ESS",
+            r"$\delta$ $\hat R$", r"$\delta$ ESS",
+            r"$\kappa_0$ $\hat R$", r"$\kappa_0$ ESS",
+            r"$\kappa_t$ path $\hat R$", r"$\kappa_t$ path ESS",
+            r"$\bar N$ path $\hat R$", r"$\bar N$ path ESS",
+            r"$\hat N$ path $\hat R$", r"$\hat N$ path ESS",
         ],
     )
     return table

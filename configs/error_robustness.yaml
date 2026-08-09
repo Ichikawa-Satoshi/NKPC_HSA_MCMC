@@ -1,0 +1,87 @@
+# Error-structure robustness: the NKPC disturbance as an MA(3).
+#
+# Purely additive. Data specs are read from models.yaml rather than duplicated,
+# priors are read from priors_*.yaml and extended with the psi block below, and
+# every output goes under results/error_robustness/. No production run, config,
+# or table is touched by anything driven from this file.
+#
+# Why MA(3) and not something else: pi_t is a four-quarter change sampled
+# quarterly, so an iid quarterly shock enters the estimated equation as an
+# MA(3). The order is implied by the data construction, not selected. AR(1)
+# loses to MA(3) on BIC in all ten baseline cells, and the equal-weight overlap
+# restriction psi = (1,1,1) is not even invertible (its roots are -1 and +/-i).
+# scripts/er_01_diagnose.py regenerates both facts.
+
+base_config: models.yaml
+
+defaults:
+  n_iter: 12000
+  burn: 4000
+  thin: 5
+  chains: 2
+  seed: 12345
+  n_transform: log100_centered10
+  competition_measurement:
+    frequency: annual_q4
+    annual_timing: q4
+  enforce_stationary: true
+  ar2_max_tries: 2000
+  coefficient_constraints:
+    enabled: false
+    max_tries: 1000
+    positive: []
+    bounds: {}
+
+  # --- MA(3) block ---
+  ma_order: 3
+  # Metropolis steps per Gibbs sweep for psi. Two keeps the acceptance-weighted
+  # move size reasonable without making psi the cost driver; observed
+  # acceptance is ~0.29-0.31 on the report cells.
+  n_psi_steps: 2
+  psi_init_scale: 0.08
+
+# Prior on psi, merged into whichever priors_*.yaml is in use. Independent
+# Gaussians truncated to the invertible region. Centred at zero on purpose:
+# centring on the equal-weight overlap value would build in a restriction the
+# data reject, and zero nests the production iid specification.
+psi_prior:
+  mu_psi: [0.0, 0.0, 0.0]
+  sigma_psi: [0.5, 0.5, 0.5]
+
+# All four production models have an MA(3) counterpart.
+#
+# hsa_dynamic and hsa_full each needed more than the plain state augmentation
+# hsa_steady uses. In hsa_dynamic the disturbance is one coordinate of a
+# correlated 4-vector, so Sigma's first coordinate is re-read as the MA
+# innovation and the coefficient conditionals become heteroskedastic. In
+# hsa_full the bilinear -gamma*Nbar*Nhat term rules out an FFBS entirely, so the
+# conditional-SMC sweep solves for v_t from the inflation equation instead of
+# proposing it -- proposing it would make the observation a point mass given the
+# state and zero every particle weight.
+run_models:
+  - ces
+  - hsa_steady
+  - hsa_dynamic
+  - hsa_full
+
+run_priors:
+  - baseline
+
+run_data_specs:
+  - inv_markup
+  - output_gap_bn
+  - output_gap_bn_core
+  - output_gap_hp
+  - output_gap_hp_core
+  - output_gap_bn_ppi
+  - output_gap_hp_ppi
+  - labor_share_gap_hp
+  - unemployment_gap
+  - unemployment_gap_core
+  - unemployment_gap_ppi
+
+# The cell every headline number is quoted from.
+main_cell:
+  model: hsa_steady
+  data_spec: unemployment_gap_core
+  prior: baseline

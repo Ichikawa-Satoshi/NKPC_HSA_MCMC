@@ -40,8 +40,8 @@ wrappers.run_model(model, …)
 results/runs/<model>_<spec>_<prior>_<run_id>/{posterior.nc, metadata.json, priors.json}
     │  scripts/12_build_cpi_ppi_report.load_report_runs   (one call per observation design)
     ▼
-report/generated/tables/             interpolated (PCHIP) tables
-report/generated/tables/annual_q4/   mixed-frequency tables  ← MAIN results
+results/tables/quarterly_interpolated/  interpolated (PCHIP) tables
+results/tables/annual_q4/   mixed-frequency tables  ← MAIN results
     ▼
 report/nkpc_hsa_report.tex
     §4-§6, §9-§10 and Appendix A/C  read  annual_q4/   (main)
@@ -68,9 +68,9 @@ translation pass. ``_write_latex`` refuses to emit a table containing CJK text.
 | **Production** | `gibbs/ces`, `gibbs/hsa_steady`, `gibbs/hsa_dynamic`, `gibbs/hsa_const_theta`, `gibbs/hsa_full`, `gibbs/common/joint_ffbs.py`, `gibbs/common/competition.py`, `gibbs/common/constraints.py`, `inference/wrappers.py`, `models/common.py` |
 | **Production (`hsa_full`)** | `gibbs/hsa_full_pg/model.py` — `run_model("hsa_full")` dispatches here for **both** observation designs, via the facade `models/hsa_full.py`. Particle count comes from `configs/models.yaml → defaults.n_particles` (512) and is recorded in run metadata. |
 | **Validation only** | `sample_states_joint_ffbs_gamma0` (`gibbs/hsa_full_pg/model.py:240`) — the γ=0 benchmark used to check Particle Gibbs and, in `tests/test_joint_ffbs.py`, the shared joint FFBS |
-| **Legacy / deprecated** | `gibbs/hsa_full/model.py:func_nkpc_hsa_full` — the superseded **alternating-FFBS** state sampler, still importable as `models.hsa_full.func_nkpc_hsa_full_alternating_ffbs` for validation but no longer reachable from `run_model`; its helper functions are still imported by `hsa_full_pg`. `scripts/appendix_pg_full_runs.py` (retired: the monkeypatch it applied is obsolete). `gibbs/gibbs_wrappers.py` (emits `DeprecationWarning`; uses `100·log N`, **not** the production `log100_centered10`), `func_nkpc_hsa_full_static_theta` (old alternating-FFBS const-theta, kept as an alias), `func_nkpc_hsa_decomp_tv_theta_kappa` (raises `NotImplementedError`), **`gibbs/gibbs_ces.py`** — a second, older CES sampler that returns a `"deprecated"` key in its own output (`:206-209`) and is imported by nothing |
+| **Legacy / deprecated** | `gibbs/hsa_full/model.py:func_nkpc_hsa_full` — the superseded **alternating-FFBS** state sampler, still importable as `models.hsa_full.func_nkpc_hsa_full_alternating_ffbs` for validation but no longer reachable from `run_model`; its helper functions are still imported by `hsa_full_pg`. `scripts/appendix_pg_full_runs.py` (deleted: the monkeypatch it applied is obsolete). `gibbs/gibbs_wrappers.py` (emits `DeprecationWarning`; uses `100·log N`, **not** the production `log100_centered10`), `func_nkpc_hsa_full_static_theta` (old alternating-FFBS const-theta, kept as an alias), `func_nkpc_hsa_decomp_tv_theta_kappa` (raises `NotImplementedError`), **`gibbs/gibbs_ces.py`** — a second, older CES sampler that returns a `"deprecated"` key in its own output (`:206-209`) and is imported by nothing |
 | **Unused** | `_sample_ar2_states_ffbs`, `_sample_rw_states_ffbs` (`gibbs/hsa_full/model.py:86, 265`) — superseded by their `_tv_theta` variants; re-exported by `gibbs/common/state_space.py` but called by nothing. `gibbs/gibbs_utils.py` and `gibbs/gibbs_notebook_utils.py` survive only through the thin re-export shims `gibbs/common/math.py` and `gibbs/common/notebook.py` |
-| **Retired** | `scripts/appendix_pg_full_tables.py`, `scripts/appendix_pg_full_runs.py`, `scripts/build_english_tables.py` — all no-op stubs. The first two are obsolete now that Particle Gibbs is the dispatched sampler; the third is obsolete now that the tables are English at source and the Japanese edition of the report has been removed. |
+| **Retired** | `scripts/appendix_pg_full_tables.py`, `scripts/appendix_pg_full_runs.py`, `scripts/build_english_tables.py` — **deleted**, not stubbed. The first two became obsolete once Particle Gibbs was the dispatched sampler; the third once the tables were English at source and the Japanese edition was removed. Also **superseded but retained**: `scripts/04_prior_robustness.py` re-estimates the prior sweep into `results/prior_robustness/` on its own, while the sweep the report uses is part of the main run set (weak and tight are 24 of the 61 mixed-frequency cells); running it produces a parallel set of estimates that nothing reads. `scripts/06_model_comparison.py` computes Chib marginal likelihoods that §K supersedes. |
 
 ---
 
@@ -808,13 +808,22 @@ authoritative implementation.
 | κ | N(0.1, 0.2²) | N(0.1, 0.5²) | N(0.1, 0.1²) | ℝ | **×100** | `mu_kappa, sigma_kappa` |
 | κ₀ | N(0.1, 0.2²) | N(0.1, 0.5²) | N(0.1, 0.1²) | ℝ | **×100** | `mu_kappa_0, sigma_kappa_0` |
 | δ | **N(0, 0.02²)** | N(0, 0.1²) | N(0, 0.01²) | ℝ | **×100** → N(0, 2²) | `mu_delta, sigma_delta` |
-| θ, θ₀ | N(0.1, 0.2²) | N(0, 0.5²) | N(0.1, 0.1²) | ℝ | same | `mu_theta, sigma_theta` |
+| θ, θ₀ | **N(0, 0.2²)** | N(0, 0.5²) | N(0, 0.1²) | ℝ | same | `mu_theta, sigma_theta` |
 | γ | N(0, 0.02²) | N(0, 0.1²) | N(0, 0.01²) | ℝ | **same** (unscaled regressor) | `mu_gamma, sigma_gamma` |
 | φ_1 | N(0.7, 0.2²) | N(0.7, 0.5²) | N(0.7, 0.1²) | ℝ | same | `mu_phi_1, sigma_phi_1` |
 | ρ₁ | N(0.5, 0.2²) | N(0.5, 0.5²) | N(0.5, 0.1²) | **stationary triangle** | same | `mu_rho1, sigma_rho1` |
 | ρ₂ | N(−0.5, 0.2²) | N(−0.5, 0.5²) | N(−0.5, 0.1²) | **stationary triangle** | same | `mu_rho2, sigma_rho2` |
 | n | N(0, 0.1²) | N(0, 0.25²) | N(0, 0.05²) | ℝ | same | `mu_n, sigma_n` |
 | λ_eζ | **N(0, 0.5²)** | *same* | *same* | ℝ | same | ⚠️ **hard-coded default**, see below |
+
+**Centres are common across the three sets; only dispersion varies.** Until revision
+`2026-08-theta-centred`, θ and θ₀ were centred at 0.1 in baseline and tight but at 0 in weak,
+which mixed a location change into a sweep that is meant to vary dispersion only. They are now
+centred at 0 in all three, matching δ and γ and taking no prior position on the sign the theory
+predicts. The change moved the entry coefficient materially: in the main design HSA const-theta
+went from +0.037 (headline) / −0.027 (core), reported as opposite signs, to +0.004 / −0.015 with
+Pr(θ>0) of 0.51 and 0.34 — both posteriors sitting on the prior. δ, κ₀ and κ_t are unaffected,
+since HSA steady restricts θ to zero.
 | σ_η² | IG(2, 2) | IG(1, 1) | IG(4, 4) | ℝ₊ | same | `a_e, b_e` |
 | σ_ζ² | IG(.001, .001) | IG(.001,.001) | IG(.01, .01) | ℝ₊ | same | `a_z, b_z` |
 | σ_u² | IG(2, 0.02) | IG(1, 0.02) | IG(4, 0.06) | ℝ₊ | same | `a_u, b_u` |
@@ -857,7 +866,60 @@ are converted to internal units by `coefficient_constraints_to_internal` (`model
 
 ---
 
-## K. Diagnostics
+## K. Conditional marginal likelihood (CES vs HSA steady)
+
+The report's Bayes factor for `δ ≠ 0` is a Savage–Dickey ratio computed **inside** the HSA
+state model. It answers a different question from "which model?", so the model comparison is
+done separately, by conditional marginal likelihood.
+
+**Estimand.** Both models must be densities of the same data given the same conditioning set:
+
+```
+log p(π | x, N^obs, M) = log m(π, N^obs, x | M) − log m(N^obs | M) − log m(x)
+```
+
+**Why x appears.** The Gibbs posterior conditions on π, N^obs *and* x: `σ_ζ²` is drawn from the
+activity-equation residuals (`hsa_steady/model.py`, step 4) and both `φ₁` and `σ_ζ²` are Chib
+ordinate blocks. The conditioning set is therefore `(x, N^obs)`, not `N^obs` alone, and both
+Occam factors have to be refunded. They factorise because `p(N|θ)` touches only the firm-count
+block and `p(x|φ₁,σ_ζ²)` only the activity block, and the two are a priori independent.
+
+`m(x)` is the same number for both models. It is computed once per cell and passed to both
+rather than cancelled by assertion, so the output shows the two models conditioned on the
+identical quantity. CES has no firm-count block, so it carries no `m(N)` term.
+
+**Implementation.** `src/nkpc_hsa/gibbs/conditional_ml.py`, driven by
+`scripts/chib_marginal_likelihood.py`. Every ordinate factor is the production sampler's own
+full conditional, Rao-Blackwellised over a reduced run with blocks 1..g−1 pinned at their
+starred values; the reduced runs come from the production samplers via `opts["fixed"]`.
+
+**Reduced runs are parallel.** Block g's run pins only starred values, and θ\* is known once the
+full run finishes, so the runs do not depend on one another. They are executed with
+`ProcessPoolExecutor` (not threads: the sampler is a Python loop over 3×3 numpy operations and
+holds the GIL). This is roughly a sixfold speed-up and returns bit-identical values.
+
+**Guard.** `_checked_logmeanexp` raises `OrdinateNotIdentified` below
+`MIN_EFFECTIVE_ORDINATE_DRAWS = 20` effective draws. Chib's estimator gives no warning when one
+draw carries the whole average; with `n_keep = 3000` the AR(2) factor once did exactly that
+(effective draws 1.0) and returned −655 instead of +3.3, a 660-log-point error in the cell.
+Reduced runs default to `n_keep = 30000`.
+
+**Main-cell result** (core CPI, negative unemployment gap, baseline, annual-Q4, T = 124):
+Δ log m = +4.52 with Monte Carlo standard error 0.16 over three seeds, i.e. BF ≈ 90 favouring
+HSA steady, seed range 67–115. The Monte Carlo uncertainty is concentrated in `log m(N)`
+(sd 0.23); the CES side is stable to sd 0.002.
+
+**Not supported.** `hsa_full` is not linear-Gaussian in the joint state, so neither the exact
+likelihood nor a Gibbs ordinate over its blocks exists; the module raises rather than returning
+a posterior-mean plug-in.
+
+**Tests.** `tests/test_conditional_ml.py` (identity, ordinate factors, truncation constant) and
+`tests/test_conditional_ml_comparison.py` (θ\* invariance, seed stability, the shared `m(x)`,
+and the guard firing on a one-draw ordinate).
+
+---
+
+## L. Diagnostics
 
 Implemented in `scripts/12_build_cpi_ppi_report.py:301-400`. Thresholds `RHAT_LIMIT = 1.01`,
 `ESS_LIMIT = 400.0` (`:33-34`).
@@ -911,7 +973,7 @@ scalar in essentially every HSA cell, so the earlier flags were systematically o
 
 ---
 
-## L. Derived quantities and report outputs
+## M. Derived quantities and report outputs
 
 ### κ_t — **not separately estimated**
 
@@ -966,13 +1028,13 @@ in `report/nkpc_hsa_report.tex`, not a macro. The macro-driven components are
 
 ---
 
-## M. Code-to-equation crosswalk
+## N. Code-to-equation crosswalk
 
 See `docs/code_equation_crosswalk.md`.
 
 ---
 
-## N. Identification map
+## O. Identification map
 
 | Parameter | Appears in | Identifying variation | Posterior dependence / confounding |
 |---|---|---|---|
@@ -1009,7 +1071,7 @@ and leaves the interaction `x_t·N̄_t` unchanged. Under PCHIP the posterior mea
 
 ---
 
-## O. File / function dependency map
+## P. File / function dependency map
 
 ```
 configs/
@@ -1047,7 +1109,7 @@ src/nkpc_hsa/
                            + func_nkpc_hsa_full_static_theta  [legacy const-theta]
     hsa_full_pg/model.py   func_nkpc_hsa_full_pg  (Particle Gibbs)
                            + sample_states_joint_ffbs_gamma0  [validation only]
-    conditional_ml.py      corrected conditional marginal likelihood
+    conditional_ml.py      conditional marginal likelihood; CES vs HSA steady comparison
     gibbs_marginal_likelihood.py  [older Chib code; outputs quarantined]
     gibbs_wrappers.py      [DEPRECATED]
   inference/
@@ -1115,7 +1177,7 @@ from the re-run drivers above. Their outputs moved with them, to
 
 ---
 
-## P. How to read this specification
+## Q. How to read this specification
 
 **Which design is a number from?** Macros prefixed `Annual` and tables under
 `annual_q4/` are the **main** mixed-frequency results (paper §4–§6, §9–§10, Appendices A
@@ -1153,7 +1215,7 @@ execution order per model with the conditional posterior and code for every step
 
 ---
 
-## Q. Final review — verification record
+## R. Final review — verification record
 
 ### Q.1 What was verified, and how
 
@@ -1250,6 +1312,8 @@ The suite is 84 tests. The ones that pin decisions made in this revision:
 | `tests/test_particle_gibbs_missing_n.py` | Particle Gibbs handles the annual-Q4 missing-N pattern: a missing `N^obs` drops only the firm-count term; one-step invariance against the exact γ=0 joint FFBS, with the tolerance **calibrated from a split-half null** rather than a fixed constant |
 | `tests/test_prior_wiring.py` | every configured prior field reaches the sampler; `γ` is not KAPPA_SCALE-rescaled; state-variance scales stay in the transformed-N decade |
 | `tests/test_conditional_ml.py` | the conditional marginal likelihood's identity, ordinate factors and truncation constant |
+| `tests/test_conditional_ml_comparison.py` | theta* invariance, seed stability, the shared `m(x)`, and the effective-draw guard |
+| `tests/test_report_inputs.py` | every `\input`/`\includegraphics` the report needs exists; macro names are letters only; the two designs stay in separate directories |
 | `tests/test_observation_design_default.py` | config, library default and the estimation driver all resolve to `annual_q4`; metadata *readers* still fall back to `quarterly_interpolated`; run directories always carry the design |
 | `tests/test_competition_measurement.py`, `test_transforms.py`, `test_common.py` | data-side transforms and the observation-vector construction |
 | `tests/test_wrappers_and_diagnostics.py`, `test_report_and_robustness.py`, `test_identification.py`, `test_statistical_updates.py` | wrapper plumbing, report builders, identification helpers |

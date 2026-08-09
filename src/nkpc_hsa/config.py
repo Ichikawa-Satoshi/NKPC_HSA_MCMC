@@ -29,11 +29,18 @@ def configured_data_specs(
     """
     all_specs = dict(config.get("data_specs", {}) or {})
     names = list(requested or config.get("run_data_specs", []) or ["default"])
+    # The estimation window is a property of the study, not of a cell, so it
+    # lives in ``defaults`` and is injected here. Injecting rather than reading
+    # it at the call site means every script that resolves specs through this
+    # function gets the same window, and the window is recorded in each run's
+    # saved data_spec.json.
+    defaults = dict(config.get("defaults", {}) or {})
+    window = {k: defaults[k] for k in ("sample_start", "sample_end") if defaults.get(k) is not None}
     out: dict[str, dict[str, Any]] = {}
     for name in names:
         if name not in all_specs:
             raise KeyError(f"Unknown data spec {name!r}. Available: {sorted(all_specs)}")
-        out[name] = {"name": name, **dict(all_specs[name] or {})}
+        out[name] = {"name": name, **window, **dict(all_specs[name] or {})}
     return out
 
 
