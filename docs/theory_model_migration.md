@@ -200,6 +200,12 @@ The original report and builder are unchanged.
 | `build_restriction_report.py`, restriction report `.tex` | separate theory-only PDF; historical report untouched |
 | `run_restriction_production.py` | clean-revision estimate -> diagnostics -> validated artifacts -> PDF |
 
+For U/R1/R2/R3, coefficient admissibility is sampled with a coordinate-Gibbs
+kernel for the exact linearly truncated Gaussian conditional. This replaces an
+independent rejection loop that can fail when whole-path positivity has low
+conditional probability. One unconstrained probe per iteration is retained
+only as an admissibility-pressure diagnostic; it does not enter the posterior.
+
 ## 11. Provenance and stale-artifact validation
 
 Every theory run records the code revision/dirty flag, unique slug and hierarchy,

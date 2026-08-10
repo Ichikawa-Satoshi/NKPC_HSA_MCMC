@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from pathlib import Path
 
+from nkpc_hsa.gibbs.hsa_full.model import _sample_beta_gaussian_linear_constraints
 from nkpc_hsa.models.common import KAPPA_SCALE
 from nkpc_hsa.provenance import StaleArtifactError, stamp_artifact_metadata, validate_artifact_metadata
 from nkpc_hsa.theory_models import (
@@ -44,6 +45,33 @@ def test_cross_restriction_matches_production_kappa_scaling() -> None:
     sampler_equation_term = mapping["kappa_N_internal"] * (nbar * x / KAPPA_SCALE)
     assert sampler_equation_term == pytest.approx(stored_equation_term)
     assert mu_from_zeta(zeta0) == pytest.approx(1.2)
+
+
+def test_truncated_gaussian_coefficient_update_preserves_path_positivity() -> None:
+    rng = np.random.default_rng(123)
+    x = np.column_stack([np.ones(24), np.linspace(-2.0, 2.0, 24)])
+    y = np.linspace(-0.5, 0.5, 24)
+    n_extremes = (-1.5, 2.0)
+    constraints = np.array([[1.0, n] for n in n_extremes])
+    beta = np.array([0.1, 0.0])
+    draws = []
+    for _ in range(100):
+        beta = _sample_beta_gaussian_linear_constraints(
+            y,
+            x,
+            sigma2=0.5,
+            prior_mean=np.zeros(2),
+            prior_var=np.ones(2),
+            rng=rng,
+            constraint_matrix=constraints,
+            lower_bounds=np.zeros(2),
+            initial=beta,
+            sweeps=2,
+        )
+        draws.append(beta.copy())
+    draws_array = np.asarray(draws)
+    assert np.all(draws_array @ constraints.T >= -1e-10)
+    assert np.std(draws_array[:, 0]) > 0.01
 
 
 def test_restricted_gap_proxy_needs_explicit_bx() -> None:

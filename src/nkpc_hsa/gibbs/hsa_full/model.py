@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 import numpy as np
 from numpy.linalg import inv
+from scipy.stats import truncnorm
 
 from nkpc_hsa.gibbs.common.competition import finite_N_residuals, initial_competition_path
 from nkpc_hsa.gibbs.common.constraints import constraint_stats_summary, draw_with_constraints
@@ -48,14 +49,13 @@ def _sample_invgamma(a_post: float, b_post: float, rng: np.random.Generator) -> 
     return 1.0 / rng.gamma(shape=a_post, scale=1.0 / b_post)
 
 
-def _sample_beta_gaussian(
+def _beta_gaussian_posterior(
     y: np.ndarray,
     X: np.ndarray,
     sigma2: float,
     prior_mean: np.ndarray,
     prior_var: np.ndarray,
-    rng: np.random.Generator,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     y = _as_1d(y)
     X = np.asarray(X, dtype=float)
     prior_mean = _as_1d(prior_mean)
@@ -64,7 +64,93 @@ def _sample_beta_gaussian(
     V0_inv = np.diag(1.0 / prior_var)
     Vn = inv(X.T @ X / sigma2 + V0_inv)
     mn = Vn @ (X.T @ y / sigma2 + V0_inv @ prior_mean)
+    return mn, _force_pd(Vn)
+
+
+def _sample_beta_gaussian(
+    y: np.ndarray,
+    X: np.ndarray,
+    sigma2: float,
+    prior_mean: np.ndarray,
+    prior_var: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    mn, Vn = _beta_gaussian_posterior(y, X, sigma2, prior_mean, prior_var)
     return _mvnrnd(mn, Vn, rng)
+
+
+def _sample_beta_gaussian_linear_constraints(
+    y: np.ndarray,
+    X: np.ndarray,
+    sigma2: float,
+    prior_mean: np.ndarray,
+    prior_var: np.ndarray,
+    rng: np.random.Generator,
+    *,
+    constraint_matrix: np.ndarray,
+    lower_bounds: np.ndarray,
+    initial: np.ndarray,
+    sweeps: int = 4,
+) -> np.ndarray:
+    """Update a Gaussian coefficient block subject to ``A @ beta >= lower``.
+
+    A coordinate Gibbs kernel is used instead of independent rejection.  It is
+    invariant for the exact linearly truncated Gaussian conditional and stays
+    usable when the admissible probability is too small for rejection sampling.
+    ``initial`` must be feasible; theory samplers carry their previous feasible
+    draw forward, so this does not project or otherwise alter the target.
+    """
+    mn, Vn = _beta_gaussian_posterior(y, X, sigma2, prior_mean, prior_var)
+    A = np.atleast_2d(np.asarray(constraint_matrix, dtype=float))
+    lower = np.asarray(lower_bounds, dtype=float).reshape(-1)
+    beta = np.asarray(initial, dtype=float).reshape(-1).copy()
+    if A.shape != (lower.size, beta.size):
+        raise ValueError("Linear-constraint dimensions do not match the coefficient block.")
+    if np.any(A @ beta < lower - 1e-10):
+        raise ValueError("Initial coefficient draw is not feasible for the linear constraints.")
+    if sweeps <= 0:
+        raise ValueError("sweeps must be positive.")
+
+    precision = inv(Vn)
+    tol = 1e-14
+    for _ in range(int(sweeps)):
+        for j in rng.permutation(beta.size):
+            qjj = float(precision[j, j])
+            centered = beta - mn
+            conditional_mean = float(
+                mn[j] - (precision[j] @ centered - qjj * centered[j]) / qjj
+            )
+            conditional_sd = float(np.sqrt(1.0 / qjj))
+
+            coefficients = A[:, j]
+            without_j = A @ beta - coefficients * beta[j]
+            needed = lower - without_j
+            lo = -np.inf
+            hi = np.inf
+            positive = coefficients > tol
+            negative = coefficients < -tol
+            if np.any(positive):
+                lo = float(np.max(needed[positive] / coefficients[positive]))
+            if np.any(negative):
+                hi = float(np.min(needed[negative] / coefficients[negative]))
+            if lo > hi + 1e-12:
+                raise RuntimeError("Linear coefficient constraints have an empty coordinate interval.")
+
+            a = (lo - conditional_mean) / conditional_sd
+            b = (hi - conditional_mean) / conditional_sd
+            beta[j] = float(
+                truncnorm.rvs(
+                    a,
+                    b,
+                    loc=conditional_mean,
+                    scale=conditional_sd,
+                    random_state=rng,
+                )
+            )
+
+    if np.any(A @ beta < lower - 1e-9):
+        raise RuntimeError("Truncated-Gaussian update returned an inadmissible coefficient draw.")
+    return beta
 
 
 def _coerce_kappa_series(

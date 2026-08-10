@@ -36,6 +36,7 @@ from nkpc_hsa.gibbs.hsa_full.model import (
     _kappa_t_constraint_validators,
     _sample_ar2_coeffs,
     _sample_beta_gaussian,
+    _sample_beta_gaussian_linear_constraints,
     _sample_invgamma,
     _sample_phi_joint,
     _summary,
@@ -501,23 +502,68 @@ def func_nkpc_hsa_full_pg(
                     return False
                 return True
 
-            theory_constraints = dict(coefficient_constraints or {})
-            theory_constraints["enabled"] = True
-            theory_constraints.setdefault("max_tries", 2000)
-            before_rejections = int(constraint_stats.get("rejections", 0))
-            beta = draw_with_constraints(
-                lambda: _sample_beta_gaussian(
-                    y_adj, X, sigma2=sigma_eta2,
-                    prior_mean=np.array(prior_means, dtype=float),
-                    prior_var=np.array(prior_vars, dtype=float),
-                    rng=rng,
-                ),
-                tuple(beta_names),
-                theory_constraints,
-                validators=[_theory_valid],
-                stats=constraint_stats,
+            if dict((coefficient_constraints or {}).get("bounds", {}) or {}):
+                raise ValueError("Named coefficient bounds are not supported for theory-model blocks.")
+            probe = _sample_beta_gaussian(
+                y_adj, X, sigma2=sigma_eta2,
+                prior_mean=np.array(prior_means, dtype=float),
+                prior_var=np.array(prior_vars, dtype=float),
+                rng=rng,
             )
-            coefficient_admissibility_rejections += int(constraint_stats.get("rejections", 0)) - before_rejections
+            probe_rejected = not _theory_valid(probe)
+            constraint_stats["attempts"] = constraint_stats.get("attempts", 0) + 1
+            constraint_stats["rejections"] = constraint_stats.get("rejections", 0) + int(probe_rejected)
+            coefficient_admissibility_rejections += int(probe_rejected)
+
+            dimension = len(beta_names)
+            rows: list[np.ndarray] = []
+            lower: list[float] = []
+
+            def _row(**entries: float) -> np.ndarray:
+                result = np.zeros(dimension)
+                for name, value in entries.items():
+                    result[beta_names.index(name)] = value
+                return result
+
+            rows.extend([_row(kappa_0=1.0), _row(**{beta_names[2]: 1.0})])
+            lower.extend([0.0, 0.0])
+            if weak_third_law:
+                rows.append(_row(gamma=-1.0))
+                lower.append(0.0)
+            if require_path_positivity:
+                for n_value in (float(np.min(Nbar)), float(np.max(Nbar))):
+                    rows.append(
+                        _row(
+                            kappa_0=1.0,
+                            **{beta_names[2]: marginal_cost_loading * zeta0 * n_value},
+                        )
+                    )
+                    lower.append(0.0)
+                    theta_entries = {beta_names[2]: 1.0}
+                    if not static_theta:
+                        theta_entries["gamma"] = n_value
+                    rows.append(_row(**theta_entries))
+                    lower.append(0.0)
+
+            initial_beta = np.array(
+                [alpha, kappa0, theta0, *([] if static_theta else [gamma])],
+                dtype=float,
+            )
+            if not _theory_valid(initial_beta):
+                initial_beta = np.array(
+                    [alpha, max(kappa0, 1e-4), 1e-6, *([] if static_theta else [0.0])],
+                    dtype=float,
+                )
+            beta = _sample_beta_gaussian_linear_constraints(
+                y_adj, X, sigma2=sigma_eta2,
+                prior_mean=np.array(prior_means, dtype=float),
+                prior_var=np.array(prior_vars, dtype=float),
+                rng=rng,
+                constraint_matrix=np.vstack(rows),
+                lower_bounds=np.array(lower),
+                initial=initial_beta,
+                sweeps=4,
+            )
             alpha = float(beta[0])
             kappa0 = float(beta[1])
             theta0 = float(beta[2])
@@ -549,21 +595,73 @@ def func_nkpc_hsa_full_pg(
             active_constraints = dict(coefficient_constraints or {})
             validators = _kappa_t_constraint_validators(Nbar, coefficient_constraints)
             if unrestricted_theory:
-                active_constraints["enabled"] = True
-                active_constraints.setdefault("max_tries", 2000)
-                validators = [*validators, _unrestricted_theory_valid]
-            beta = draw_with_constraints(
-                lambda: _sample_beta_gaussian(
+                if dict(active_constraints.get("bounds", {}) or {}):
+                    raise ValueError("Named coefficient bounds are not supported for theory-model blocks.")
+                probe = _sample_beta_gaussian(
                     y_adj, X, sigma2=sigma_eta2,
                     prior_mean=np.array(prior_means, dtype=float),
                     prior_var=np.array(prior_vars, dtype=float),
                     rng=rng,
-                ),
-                tuple(beta_names),
-                active_constraints,
-                validators=validators,
-                stats=constraint_stats,
-            )
+                )
+                probe_rejected = not _unrestricted_theory_valid(probe)
+                constraint_stats["attempts"] = constraint_stats.get("attempts", 0) + 1
+                constraint_stats["rejections"] = constraint_stats.get("rejections", 0) + int(probe_rejected)
+                coefficient_admissibility_rejections += int(probe_rejected)
+
+                dimension = len(beta_names)
+                rows = []
+                lower = []
+
+                def _row_u(**entries: float) -> np.ndarray:
+                    result = np.zeros(dimension)
+                    for name, value in entries.items():
+                        result[beta_names.index(name)] = value
+                    return result
+
+                rows.append(_row_u(kappa_0=1.0))
+                lower.append(0.0)
+                if require_path_positivity:
+                    for n_value in (float(np.min(Nbar)), float(np.max(Nbar))):
+                        rows.append(_row_u(kappa_0=1.0, delta=n_value))
+                        lower.append(0.0)
+                        theta_entries = {beta_names[3]: 1.0}
+                        if not static_theta:
+                            theta_entries["gamma"] = n_value
+                        rows.append(_row_u(**theta_entries))
+                        lower.append(0.0)
+
+                initial_beta = np.array(
+                    [alpha, kappa0, delta, theta0, *([] if static_theta else [gamma])],
+                    dtype=float,
+                )
+                if not _unrestricted_theory_valid(initial_beta):
+                    initial_beta = np.array(
+                        [alpha, max(kappa0, 1e-4), 0.0, 1e-6, *([] if static_theta else [0.0])],
+                        dtype=float,
+                    )
+                beta = _sample_beta_gaussian_linear_constraints(
+                    y_adj, X, sigma2=sigma_eta2,
+                    prior_mean=np.array(prior_means, dtype=float),
+                    prior_var=np.array(prior_vars, dtype=float),
+                    rng=rng,
+                    constraint_matrix=np.vstack(rows),
+                    lower_bounds=np.array(lower),
+                    initial=initial_beta,
+                    sweeps=4,
+                )
+            else:
+                beta = draw_with_constraints(
+                    lambda: _sample_beta_gaussian(
+                        y_adj, X, sigma2=sigma_eta2,
+                        prior_mean=np.array(prior_means, dtype=float),
+                        prior_var=np.array(prior_vars, dtype=float),
+                        rng=rng,
+                    ),
+                    tuple(beta_names),
+                    active_constraints,
+                    validators=validators,
+                    stats=constraint_stats,
+                )
             alpha = float(beta[0])
             kappa0 = float(beta[1])
             delta = float(beta[2])
@@ -744,6 +842,11 @@ def func_nkpc_hsa_full_pg(
                 "replacing the alternating Nhat|Nbar and Nbar|Nhat FFBS blocks."
             ),
             "state_sampler": "joint_ffbs" if cross_restriction and static_theta else "particle_gibbs",
+            "coefficient_sampler": (
+                "linear_truncated_gaussian_coordinate_gibbs"
+                if restriction_level in {"U", "R1", "R2", "R3"}
+                else "gaussian_or_configured_rejection"
+            ),
             "n_particles": n_particles,
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",

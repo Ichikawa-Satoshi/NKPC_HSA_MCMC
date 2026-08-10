@@ -947,6 +947,11 @@ def run_model(
                 "zeta0_treatment": zeta0_treatment,
                 "observation_frequency": "quarterly",
                 "sampler_type": theory_definition.state_sampler,
+                "parameter_sampler": (
+                    "positive_gaussian_rejection"
+                    if model == "hsa_f0"
+                    else "linear_truncated_gaussian_coordinate_gibbs"
+                ),
                 "chain": list(range(chains)),
                 "convergence_status": "pending_diagnostics",
                 "data_transformation": {
