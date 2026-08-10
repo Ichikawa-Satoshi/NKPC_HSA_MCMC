@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +31,17 @@ from nkpc_hsa.models.common import (
     prior_specs_to_internal,
 )
 from nkpc_hsa.paths import project_path
+from nkpc_hsa.provenance import stamp_artifact_metadata
+from nkpc_hsa.theory_models import (
+    RESTRICTION_TAXONOMY,
+    STRUCTURAL_FREQUENCY,
+    THEORY_ESTIMATION_REVISION,
+    THEORY_MODELS,
+    is_theory_model,
+    mu_from_zeta,
+    theory_model_definition,
+    validate_theory_run_design,
+)
 
 
 # Bumped when the estimation inputs or the sampler change in a way that makes older
@@ -94,6 +106,25 @@ def _timestamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
+def _code_revision() -> tuple[str, bool]:
+    """Return the checked-out revision and whether tracked/untracked files differ."""
+    root = project_path()
+    try:
+        revision = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "status", "--porcelain"], cwd=root, check=True,
+                capture_output=True, text=True,
+            ).stdout.strip()
+        )
+        return revision, dirty
+    except (OSError, subprocess.SubprocessError):
+        return "unknown", True
+
+
 def _constraint_label(spec: Mapping[str, Any] | None) -> str:
     raw = dict(spec or {})
     enabled = bool(raw.get("enabled") or raw.get("positive") or raw.get("nonnegative") or raw.get("bounds"))
@@ -124,6 +155,8 @@ def _default_run_dir(
     parts.append(competition_frequency)
     parts.append(run_id)
     safe = "_".join(part.replace("/", "-") for part in parts)
+    if is_theory_model(model):
+        return project_path("results", "theory_runs", THEORY_ESTIMATION_REVISION, safe)
     return project_path("results", "runs", safe)
 
 
@@ -595,12 +628,14 @@ def _run_sampler(
     ar2_max_tries: int = 2000,
     n_particles: int = 512,
     no_inertia: bool = False,
+    theory_options: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     from nkpc_hsa.models.ces import func_nkpc_ces
     from nkpc_hsa.models.hsa_const_theta import func_nkpc_hsa_const_theta
     from nkpc_hsa.models.hsa_dynamic import func_nkpc_hsa_decomp
     from nkpc_hsa.models.hsa_full import func_nkpc_hsa_full  # Particle Gibbs
     from nkpc_hsa.models.hsa_steady import func_nkpc_hsa_decomp_tv_kappa_noerror
+    from nkpc_hsa.models.hsa_theory import func_hsa_f0, func_hsa_restricted, func_hsa_u
 
     funcs: dict[str, Callable[..., Mapping[str, Any]]] = {
         "ces": func_nkpc_ces,
@@ -610,6 +645,11 @@ def _run_sampler(
         # gamma = 0 makes the joint state linear-Gaussian, so const-theta uses the
         # exact joint FFBS rather than hsa_full's alternating conditional blocks.
         "hsa_const_theta": func_nkpc_hsa_const_theta,
+        "hsa_f0": func_hsa_f0,
+        "hsa_u": func_hsa_u,
+        "hsa_r1": func_hsa_restricted,
+        "hsa_r2": func_hsa_restricted,
+        "hsa_r3": func_hsa_restricted,
     }
     if model not in funcs:
         raise ValueError(f"Unknown model: {model}")
@@ -652,6 +692,11 @@ def _run_sampler(
             # explicitly so the operating point is recorded in run metadata
             # rather than living as a module constant.
             kwargs["opts"]["n_particles"] = int(n_particles)
+        if is_theory_model(model):
+            kwargs["opts"].update(dict(theory_options or {}))
+            kwargs["opts"]["restriction_level"] = theory_model_definition(model).hierarchy
+            if model in {"hsa_u", "hsa_r1", "hsa_r2"}:
+                kwargs["opts"]["n_particles"] = int(n_particles)
         if model != "ces":
             if "N_obs" in model_data:
                 kwargs["N_data"] = np.asarray(model_data["N_obs"], dtype=float)
@@ -708,6 +753,10 @@ def run_model(
     run_id: str | None = None,
     run_dir: str | Path | None = None,
     save: bool = True,
+    inflation_observation: str | None = None,
+    zeta0: float = 6.0,
+    zeta0_treatment: str = "fixed",
+    require_path_positivity: bool = True,
 ):
     if isinstance(data_spec, (str, Path)):
         data_spec_dict = _load_yaml(data_spec)
@@ -722,6 +771,27 @@ def run_model(
         prior_dict = dict(prior_specs or {})
 
     competition_spec = normalize_competition_measurement(competition_measurement)
+    theory_definition = theory_model_definition(model) if is_theory_model(model) else None
+    inflation_observation = str(
+        inflation_observation
+        or data_spec_dict.get("inflation_observation")
+        or ("yoy_4q" if not is_theory_model(model) else "")
+    )
+    if is_theory_model(model) and not inflation_observation:
+        raise ValueError(
+            "Theory-model runs require an explicit inflation_observation ('qoq' or 'yoy_4q') "
+            "in the data spec or run_model call."
+        )
+    marginal_cost_loading = 1.0
+    if theory_definition is not None:
+        if zeta0_treatment != "fixed":
+            raise ValueError("This revision implements zeta0_treatment='fixed' only; sampled zeta0 needs a separate model.")
+        marginal_cost_loading = validate_theory_run_design(
+            model,
+            data_spec_dict,
+            zeta0=zeta0,
+            inflation_observation=inflation_observation,
+        )
     model_data = _coerce_model_data(data, data_spec=data_spec_dict)
     sample_start = ""
     sample_end = ""
@@ -786,9 +856,21 @@ def run_model(
         ar2_max_tries=ar2_max_tries,
         n_particles=n_particles,
         no_inertia=no_inertia,
+        theory_options={
+            "zeta0": float(zeta0),
+            "marginal_cost_loading": float(marginal_cost_loading),
+            "require_path_positivity": bool(require_path_positivity),
+        } if theory_definition is not None else None,
     )
+    code_revision, code_dirty = _code_revision()
+    N_raw = np.asarray(model_data.get("N", []), dtype=float)
+    N0_anchor = None
+    if N_raw.size and np.all(np.isfinite(N_raw)) and np.all(N_raw > 0.0):
+        N0_anchor = float(np.exp(np.mean(np.log(N_raw))))
     meta = {
         **metadata.__dict__,
+        "code_revision": code_revision,
+        "code_dirty": code_dirty,
         "orth": orth,
         "n_obs": int(len(model_data["pi"])),
         "sample_start": sample_start,
@@ -817,6 +899,75 @@ def run_model(
         },
         "extra": extra_meta,
     }
+    if theory_definition is not None:
+        chain_theory = [
+            dict((chain.get("model_metadata", {}) or {}).get("theory_restriction", {}) or {})
+            for chain in extra_meta.get("chains", [])
+        ]
+        state_rejections = sum(int(item.get("state_admissibility_rejections", 0) or 0) for item in chain_theory)
+        coefficient_rejections = sum(
+            int(item.get("coefficient_admissibility_rejections", 0) or 0)
+            for item in chain_theory
+        )
+        state_proposals = max(1, chains * n_iter)
+        meta.update(
+            {
+                "estimation_revision": THEORY_ESTIMATION_REVISION,
+                "model_hierarchy": theory_definition.hierarchy,
+                "model_definition": theory_definition.metadata(),
+                "restriction_taxonomy": RESTRICTION_TAXONOMY,
+                "exact_restrictions": list(theory_definition.exact_restrictions),
+                "maintained_laws": {
+                    "second_law": theory_definition.second_law,
+                    "third_law": theory_definition.third_law,
+                },
+                "domain_admissibility_conditions": [
+                    "zeta0 > 1",
+                    "mu0 > 1",
+                    "kappa0 > 0",
+                    *(
+                        ["kappa_t > 0 for every draw/time", "theta_t > 0 for every draw/time"]
+                        if require_path_positivity else []
+                    ),
+                ],
+                "moving_reference_approximation": theory_definition.moving_reference,
+                "structural_frequency": STRUCTURAL_FREQUENCY,
+                "inflation_observation": inflation_observation,
+                "inflation_transformation": data_spec_dict.get("inflation_transformation"),
+                "expectation_series": data_spec_dict.get("pi_expect_col"),
+                "expectation_horizon": data_spec_dict.get("expectation_horizon", "unverified"),
+                "expectation_information_date": data_spec_dict.get("expectation_information_date", "unverified"),
+                "activity_proxy": data_spec_dict.get("x_col"),
+                "activity_mapping": data_spec_dict.get("activity_mapping", "gap_proxy"),
+                "marginal_cost_loading": marginal_cost_loading,
+                "competition_proxy": data_spec_dict.get("n_col", data_spec_dict.get("N_col")),
+                "N0_anchor": N0_anchor,
+                "zeta0": float(zeta0),
+                "mu0": float(mu_from_zeta(zeta0)),
+                "zeta0_treatment": zeta0_treatment,
+                "observation_frequency": "quarterly",
+                "sampler_type": theory_definition.state_sampler,
+                "chain": list(range(chains)),
+                "convergence_status": "pending_diagnostics",
+                "data_transformation": {
+                    "n_transform": n_transform,
+                    "inflation": data_spec_dict.get("inflation_transformation"),
+                    "expectations": data_spec_dict.get("expectation_transformation", "as_configured"),
+                    "activity": data_spec_dict.get("activity_transformation", "as_processed"),
+                },
+                "historical_compatibility": False,
+                "admissibility_sampling": {
+                    "state_path_rejections": state_rejections,
+                    "state_path_proposals": state_proposals,
+                    "state_path_rejection_share": state_rejections / state_proposals,
+                    "coefficient_rejections": coefficient_rejections,
+                    "interpretation": (
+                        "Frequent positivity rejection can indicate that the local linear approximation spans too wide an N range."
+                    ),
+                },
+            }
+        )
+        meta = stamp_artifact_metadata(meta)
     idata = _to_idata(posterior, meta)
     if save:
         target = (

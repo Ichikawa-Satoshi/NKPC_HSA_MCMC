@@ -10,11 +10,13 @@
 - `data/processed/` contains generated model-ready data.
 - `results/` holds **every generated output**, git-ignored and reproducible from scripts; it must never be committed. One directory per producer:
   - `results/runs/` — one directory per (model, data spec, prior, observation design). No timestamp in the name: a cell is re-estimated in place, and the estimation time lives in `metadata.json` as `run_id`. The observation design must be part of the name, or the two designs of the same cell collide.
+  - `results/theory_runs/2026-08-moving-reference-hsa-v1/` — the separate F0/U/R1/R2/R3 namespace. Never copy a legacy `results/runs` posterior into it. Current-report inputs require signed definition/data provenance, 12,000 iterations, a clean code revision, and passed diagnostics.
   - `results/tables/` and `results/figures/` — the tables and figures the report `\input`s and `\includegraphics`es. Written by `scripts/12_build_cpi_ppi_report.py` and the `make_*` scripts; `annual_q4/` subdirectories hold the mixed-frequency design, the top level the interpolated one.
   - `results/diagnostics/`, `results/prior_robustness/`, `results/period_robustness/`, `results/prior_decomposition/` — each owned by the script of the same name. Do not write aggregates into `results/tables/`; that belongs to the report.
   - `results/error_robustness/` — the separate MA(3) disturbance diagnostics and runs driven by `scripts/er_01_diagnose.py` / `er_02_estimate.py`; these do not enter the headline report until a full production sweep is complete.
-- `report/` holds only the report source and the compiled PDF (formerly `reports/`, then `paper/`). `nkpc_hsa_report.tex` and `nkpc_hsa_report.pdf` are **the only report deliverable** — there is no HTML edition and no second LaTeX document. The `.tex` reads its inputs from `../results/{tables,figures}/`, so compile from inside `report/`.
-- `scripts/build_report.py` is the single entry point that regenerates every report artifact, and the only place that knows the order the producing scripts must run in. Add a new artifact to its `STEPS`, never to a habit of running things by hand.
+- `report/` has two deliberately separate deliverables. `nkpc_hsa_report.tex/.pdf` is the preserved historical reduced-form/ablation report and is built only by `scripts/build_report.py`. `nkpc_hsa_restriction_report.tex/.pdf` is the F0/U/R1/R2/R3 report and is built only by `scripts/build_restriction_report.py`. Neither builder may modify or import the other report's artifacts.
+- `scripts/build_report.py` remains the single builder for the preserved historical report. Add historical artifacts to its `STEPS`; do not add theory-run artifacts there.
+- `scripts/10_estimate_theory_models.py`, `11_run_theory_diagnostics.py`, and `19_build_theory_report.py` are the estimate/diagnose/artifact sequence for the new theory namespace. `scripts/run_restriction_production.py` runs that sequence and compiles the restriction PDF. `build_restriction_report.py --allow-missing-runs` is preview-only; production builds fail if any required run is missing or stale.
 - `docs/` contains the human-readable estimation specification, the code/equation crosswalk, the estimation flow, and the data dictionary. It describes the current production code and must be updated whenever the code it cites moves.
 - `references/` contains literature PDFs and research notes (this is what the pre-2026 `docs/` directory held; do not confuse it with the `docs/` above).
 
@@ -28,6 +30,7 @@ code, not scrap. Pre-move history is preserved under the git tag
 ## Conventions
 
 - Kappa priors in config files are physical/economic units. Wrappers handle any internal `KAPPA_SCALE` conversion.
+- New restricted-model draws use `kappa_N_empirical`, never legacy `delta`. With the production N transform, `d_kappa_d_logN=10*kappa_N_empirical` and `100*kappa_N_empirical=b_x*zeta0*theta0`; `KAPPA_SCALE` is already accounted for at the sampler/storage boundary.
 - Output-gap data specs are configured in `configs/models.yaml`. `output_gap_BN`, `output_gap_HP`, and `labor_share_gap_HP` are all in 100-log-point units; the HP output version is generated from `100 * output`, and the labor-share version is generated from `100 * log(labor_share_index)` in `scripts/01_build_data.py` via `src/nkpc_hsa/dataprep/build.py`.
 - HSA competition series use `n_transform="log100_centered10"` by default: `(100 * log(N) - sample mean) / 10`. Coefficients on `Nhat` and `Nbar` are therefore estimated per ten-log-point deviation from the sample mean.
 - Reported `delta`, `theta`, `theta_0`, and `gamma` are already on the ten-log-point `N` scale. Do not multiply these by 10 again in tables or prior/posterior plots.

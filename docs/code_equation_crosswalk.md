@@ -1,5 +1,9 @@
 # Code ↔ equation crosswalk
 
+> The crosswalk below covers the historical reduced-form / ablation namespace.
+> The non-overwriting F0/U/R1/R2/R3 crosswalk and restriction taxonomy are in
+> `docs/theory_model_migration.md`.
+
 Compact lookup table. Full narrative in `docs/estimation_specification.md`;
 per-iteration detail in `docs/estimation_flow.md`.
 Paths are relative to the repository root. Line numbers are post-August-2026.

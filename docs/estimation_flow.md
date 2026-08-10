@@ -1,5 +1,9 @@
 # One complete MCMC iteration, model by model
 
+> This file preserves the historical reduced-form sampler flow. For the separate
+> F0/U/R1/R2/R3 dispatch and restricted coefficient blocks, see
+> `docs/theory_model_migration.md`.
+
 Companion to `docs/estimation_specification.md`. Every step gives: what is held fixed, what is
 drawn, the conditional posterior, the equation it comes from, the actual code, what identifies it,
 and what is passed on.

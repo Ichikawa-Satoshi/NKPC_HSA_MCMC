@@ -56,6 +56,31 @@ def configured_data_specs(
     return out
 
 
+def configured_theory_data_specs(
+    config: Mapping[str, Any],
+    requested: list[str] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Resolve the separate theory-model data grid with the study sample window."""
+    all_specs = dict(config.get("theory_data_specs", {}) or {})
+    names = list(requested or config.get("theory_run_data_specs", []) or [])
+    defaults = dict(config.get("defaults", {}) or {})
+    window = {
+        key: str(defaults[key])
+        for key in ("sample_start", "sample_end")
+        if defaults.get(key) is not None
+    }
+    out: dict[str, dict[str, Any]] = {}
+    for name in names:
+        if name not in all_specs:
+            raise KeyError(f"Unknown theory data spec {name!r}. Available: {sorted(all_specs)}")
+        resolved = {"name": name, **window, **dict(all_specs[name] or {})}
+        for key in ("sample_start", "sample_end"):
+            if resolved.get(key) is not None:
+                resolved[key] = str(resolved[key])
+        out[name] = resolved
+    return out
+
+
 def data_spec_label(data_spec: Mapping[str, Any] | str) -> str:
     if isinstance(data_spec, str):
         return data_spec

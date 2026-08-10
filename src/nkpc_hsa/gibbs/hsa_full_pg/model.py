@@ -391,8 +391,23 @@ def func_nkpc_hsa_full_pg(
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     static_theta = bool(_getd(opts, "static_theta", False))
+    # Theory-only switches use direct mapping access so they are not part of the
+    # historical sampler's initial-value surface audited against MA(3).
+    cross_restriction = bool(opts.get("cross_restriction", False))
+    restriction_level = str(opts.get("restriction_level", "historical_full"))
+    zeta0 = float(opts.get("zeta0", 6.0))
+    marginal_cost_loading = float(opts.get("marginal_cost_loading", 1.0))
+    require_path_positivity = bool(opts.get("require_path_positivity", False))
+    weak_third_law = restriction_level == "R2"
+    if cross_restriction and (not np.isfinite(zeta0) or zeta0 <= 1.0):
+        raise ValueError("Cross-restricted models require finite zeta0 > 1.")
     if static_theta:
         gamma = 0.0
+    if cross_restriction:
+        # delta is the sampler-internal coefficient. Since the stored physical
+        # kappa_N is delta / 100, the empirical identity
+        # 100*kappa_N = b_x*zeta0*theta0 is exactly delta=b_x*zeta0*theta0.
+        delta = marginal_cost_loading * zeta0 * theta0
     n_particles = int(_getd(opts, "n_particles", DEFAULT_N_PARTICLES))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
@@ -437,6 +452,9 @@ def func_nkpc_hsa_full_pg(
     pg_ess_mean_draws = np.zeros(n_store)
     pg_ess_min_draws = np.zeros(n_store)
     pg_moved_draws = np.zeros(n_store)
+    admissibility_violation_draws = np.zeros(n_store)
+    state_admissibility_rejections = 0
+    coefficient_admissibility_rejections = 0
 
     total_iter = n_burn + n_keep
     store_idx = 0
@@ -449,34 +467,109 @@ def func_nkpc_hsa_full_pg(
         y = pi_t - pi_expect
         y_adj = y - lambda_ez * zeta
 
-        columns = [a_t, x_t / KAPPA_SCALE, (x_t * Nbar) / KAPPA_SCALE, -Nhat]
-        prior_means = [pri["mu_alpha"], pri["mu_kappa0"], pri["mu_delta"], pri["mu_theta"]]
-        prior_vars = [pri["sigma_alpha"] ** 2, pri["sigma_kappa0"] ** 2, pri["sigma_delta"] ** 2, pri["sigma_theta"] ** 2]
-        beta_names = ["alpha", "kappa_0", "delta", "theta" if static_theta else "theta_0"]
-        if not static_theta:
-            columns.append(-(Nhat * Nbar))
-            prior_means.append(pri["mu_gamma"])
-            prior_vars.append(pri["sigma_gamma"] ** 2)
-            beta_names.append("gamma")
-        X = np.column_stack(columns)
-        beta = draw_with_constraints(
-            lambda: _sample_beta_gaussian(
-                y_adj, X, sigma2=sigma_eta2,
-                prior_mean=np.array(prior_means, dtype=float),
-                prior_var=np.array(prior_vars, dtype=float),
-                rng=rng,
-            ),
-            tuple(beta_names),
-            coefficient_constraints,
-            validators=_kappa_t_constraint_validators(Nbar, coefficient_constraints),
-            stats=constraint_stats,
-        )
-        alpha = float(beta[0])
-        kappa0 = float(beta[1])
-        delta = float(beta[2])
-        theta0 = float(beta[3])
-        if not static_theta:
-            gamma = float(beta[4])
+        if cross_restriction:
+            # The slope and entry regressors collapse into one theta0 column:
+            #   (b_x*zeta0*theta0) x Nbar/100 - theta0*Nhat.
+            columns = [
+                a_t,
+                x_t / KAPPA_SCALE,
+                marginal_cost_loading * zeta0 * (x_t * Nbar) / KAPPA_SCALE - Nhat,
+            ]
+            prior_means = [pri["mu_alpha"], pri["mu_kappa0"], pri["mu_theta"]]
+            prior_vars = [pri["sigma_alpha"] ** 2, pri["sigma_kappa0"] ** 2, pri["sigma_theta"] ** 2]
+            beta_names = ["alpha", "kappa_0", "theta" if static_theta else "theta_0"]
+            if not static_theta:
+                columns.append(-(Nhat * Nbar))
+                prior_means.append(pri["mu_gamma"])
+                prior_vars.append(pri["sigma_gamma"] ** 2)
+                beta_names.append("gamma")
+            X = np.column_stack(columns)
+
+            def _theory_valid(beta_draw: np.ndarray) -> bool:
+                theta_candidate = float(beta_draw[2])
+                gamma_candidate = 0.0 if static_theta else float(beta_draw[3])
+                delta_candidate = marginal_cost_loading * zeta0 * theta_candidate
+                kappa_path = float(beta_draw[1]) + delta_candidate * Nbar
+                theta_path = theta_candidate + gamma_candidate * Nbar
+                if float(beta_draw[1]) <= 0.0 or theta_candidate <= 0.0:
+                    return False
+                if weak_third_law and gamma_candidate > 0.0:
+                    return False
+                if require_path_positivity and (
+                    np.any(kappa_path <= 0.0) or np.any(theta_path <= 0.0)
+                ):
+                    return False
+                return True
+
+            theory_constraints = dict(coefficient_constraints or {})
+            theory_constraints["enabled"] = True
+            theory_constraints.setdefault("max_tries", 2000)
+            before_rejections = int(constraint_stats.get("rejections", 0))
+            beta = draw_with_constraints(
+                lambda: _sample_beta_gaussian(
+                    y_adj, X, sigma2=sigma_eta2,
+                    prior_mean=np.array(prior_means, dtype=float),
+                    prior_var=np.array(prior_vars, dtype=float),
+                    rng=rng,
+                ),
+                tuple(beta_names),
+                theory_constraints,
+                validators=[_theory_valid],
+                stats=constraint_stats,
+            )
+            coefficient_admissibility_rejections += int(constraint_stats.get("rejections", 0)) - before_rejections
+            alpha = float(beta[0])
+            kappa0 = float(beta[1])
+            theta0 = float(beta[2])
+            gamma = 0.0 if static_theta else float(beta[3])
+            delta = marginal_cost_loading * zeta0 * theta0
+        else:
+            columns = [a_t, x_t / KAPPA_SCALE, (x_t * Nbar) / KAPPA_SCALE, -Nhat]
+            prior_means = [pri["mu_alpha"], pri["mu_kappa0"], pri["mu_delta"], pri["mu_theta"]]
+            prior_vars = [pri["sigma_alpha"] ** 2, pri["sigma_kappa0"] ** 2, pri["sigma_delta"] ** 2, pri["sigma_theta"] ** 2]
+            beta_names = ["alpha", "kappa_0", "delta", "theta" if static_theta else "theta_0"]
+            if not static_theta:
+                columns.append(-(Nhat * Nbar))
+                prior_means.append(pri["mu_gamma"])
+                prior_vars.append(pri["sigma_gamma"] ** 2)
+                beta_names.append("gamma")
+            X = np.column_stack(columns)
+            unrestricted_theory = restriction_level == "U"
+
+            def _unrestricted_theory_valid(beta_draw: np.ndarray) -> bool:
+                if float(beta_draw[1]) <= 0.0:
+                    return False
+                if require_path_positivity:
+                    kappa_path = float(beta_draw[1]) + float(beta_draw[2]) * Nbar
+                    gamma_candidate = 0.0 if static_theta else float(beta_draw[4])
+                    theta_path = float(beta_draw[3]) + gamma_candidate * Nbar
+                    return bool(np.all(kappa_path > 0.0) and np.all(theta_path > 0.0))
+                return True
+
+            active_constraints = dict(coefficient_constraints or {})
+            validators = _kappa_t_constraint_validators(Nbar, coefficient_constraints)
+            if unrestricted_theory:
+                active_constraints["enabled"] = True
+                active_constraints.setdefault("max_tries", 2000)
+                validators = [*validators, _unrestricted_theory_valid]
+            beta = draw_with_constraints(
+                lambda: _sample_beta_gaussian(
+                    y_adj, X, sigma2=sigma_eta2,
+                    prior_mean=np.array(prior_means, dtype=float),
+                    prior_var=np.array(prior_vars, dtype=float),
+                    rng=rng,
+                ),
+                tuple(beta_names),
+                active_constraints,
+                validators=validators,
+                stats=constraint_stats,
+            )
+            alpha = float(beta[0])
+            kappa0 = float(beta[1])
+            delta = float(beta[2])
+            theta0 = float(beta[3])
+            if not static_theta:
+                gamma = float(beta[4])
         kappa_t = kappa0 + delta * Nbar
         kappa_t_eff = kappa_t / KAPPA_SCALE
         theta_t = theta0 + gamma * Nbar
@@ -525,19 +618,46 @@ def func_nkpc_hsa_full_pg(
         sigma_N2 = _sample_invgamma(pri["a_N"] + 0.5 * resid_N.size, pri["b_N"] + 0.5 * float(np.sum(resid_N ** 2)), rng)
 
         # ---------- JOINT Particle Gibbs state update (replaces alternating FFBS) ----------
-        pg = sample_states_particle_gibbs(
-            y=y, a_t=a_t, x_t=x_t, zeta=zeta, N_obs=N_obs,
-            alpha=alpha, kappa0_eff=kappa0 / KAPPA_SCALE, delta_eff=delta / KAPPA_SCALE,
-            theta0=theta0, gamma=gamma, lambda_ez=lambda_ez,
-            rho1=rho1, rho2=rho2, n_drift=n_drift,
-            sigma_eta2=sigma_eta2, sigma_u2=sigma_u2, sigma_eps2=sigma_eps2, sigma_N2=sigma_N2,
-            Nbar_ref=Nbar, Nhat_ref=Nhat, Nhat_ref_lag=Nhat_initial_lag,
-            m0_Nhat=m0_Nhat, P0_Nhat=P0_Nhat, m0_Nhat_lag=m0_Nhat_lag, P0_Nhat_lag=P0_Nhat_lag,
-            m0_Nbar=m0_Nbar, P0_Nbar=P0_Nbar, n_particles=n_particles, rng=rng,
+        old_Nhat, old_Nbar, old_lag = Nhat, Nbar, Nhat_initial_lag
+        if cross_restriction and static_theta:
+            ffbs = sample_states_joint_ffbs_gamma0(
+                y=y, a_t=a_t, x_t=x_t, zeta=zeta, N_obs=N_obs,
+                alpha=alpha, kappa0_eff=kappa0 / KAPPA_SCALE,
+                delta_eff=delta / KAPPA_SCALE, theta0=theta0,
+                lambda_ez=lambda_ez, rho1=rho1, rho2=rho2,
+                n_drift=n_drift, sigma_eta2=sigma_eta2,
+                sigma_u2=sigma_u2, sigma_eps2=sigma_eps2, sigma_N2=sigma_N2,
+                m0_Nhat=m0_Nhat, P0_Nhat=P0_Nhat,
+                m0_Nhat_lag=m0_Nhat_lag, P0_Nhat_lag=P0_Nhat_lag,
+                m0_Nbar=m0_Nbar, P0_Nbar=P0_Nbar, rng=rng,
+            )
+            Nhat = ffbs["Nhat"]
+            Nbar = ffbs["Nbar"]
+            pg = {"ess_mean": np.nan, "ess_min": np.nan, "moved_frac": np.nan}
+        else:
+            pg = sample_states_particle_gibbs(
+                y=y, a_t=a_t, x_t=x_t, zeta=zeta, N_obs=N_obs,
+                alpha=alpha, kappa0_eff=kappa0 / KAPPA_SCALE, delta_eff=delta / KAPPA_SCALE,
+                theta0=theta0, gamma=gamma, lambda_ez=lambda_ez,
+                rho1=rho1, rho2=rho2, n_drift=n_drift,
+                sigma_eta2=sigma_eta2, sigma_u2=sigma_u2, sigma_eps2=sigma_eps2, sigma_N2=sigma_N2,
+                Nbar_ref=Nbar, Nhat_ref=Nhat, Nhat_ref_lag=Nhat_initial_lag,
+                m0_Nhat=m0_Nhat, P0_Nhat=P0_Nhat, m0_Nhat_lag=m0_Nhat_lag, P0_Nhat_lag=P0_Nhat_lag,
+                m0_Nbar=m0_Nbar, P0_Nbar=P0_Nbar, n_particles=n_particles, rng=rng,
+            )
+            Nhat = pg["Nhat"]
+            Nbar = pg["Nbar"]
+            Nhat_initial_lag = pg["Nhat_lag"]
+        state_invalid = bool(
+            require_path_positivity
+            and (
+                np.any(kappa0 + delta * Nbar <= 0.0)
+                or np.any(theta0 + gamma * Nbar <= 0.0)
+            )
         )
-        Nhat = pg["Nhat"]
-        Nbar = pg["Nbar"]
-        Nhat_initial_lag = pg["Nhat_lag"]
+        if state_invalid:
+            Nhat, Nbar, Nhat_initial_lag = old_Nhat, old_Nbar, old_lag
+            state_admissibility_rejections += 1
         # ---------------------------------------------------------------------------------
 
         kappa_t = kappa0 + delta * Nbar
@@ -571,6 +691,7 @@ def func_nkpc_hsa_full_pg(
             pg_ess_mean_draws[store_idx] = pg["ess_mean"]
             pg_ess_min_draws[store_idx] = pg["ess_min"]
             pg_moved_draws[store_idx] = pg["moved_frac"]
+            admissibility_violation_draws[store_idx] = float(state_invalid)
             store_idx += 1
 
         if verbose and it % 2000 == 0:
@@ -580,14 +701,15 @@ def func_nkpc_hsa_full_pg(
             )
 
     if static_theta:
-        theta_keys = {"theta": _summary(theta0_draws)}
+        theta_keys = {
+            "theta_0" if cross_restriction else "theta": _summary(theta0_draws)
+        }
     else:
         theta_keys = {"theta_0": _summary(theta0_draws), "gamma": _summary(gamma_draws)}
 
-    return {
+    result = {
         "alpha": _summary(alpha_draws),
         "kappa_0": _summary(kappa0_draws),
-        "delta": _summary(delta_draws),
         **theta_keys,
         "phi_1": _summary(phi_draws),
         "lambda_ez": _summary(lambda_draws),
@@ -621,7 +743,7 @@ def func_nkpc_hsa_full_pg(
                 f"JOINT Particle Gibbs (conditional bootstrap SMC, {n_particles} particles) "
                 "replacing the alternating Nhat|Nbar and Nbar|Nhat FFBS blocks."
             ),
-            "state_sampler": "particle_gibbs",
+            "state_sampler": "joint_ffbs" if cross_restriction and static_theta else "particle_gibbs",
             "n_particles": n_particles,
             "kappa_scale": KAPPA_SCALE,
             "kappa_internal": "stored kappa_0, delta, and kappa_t multiplied by KAPPA_SCALE",
@@ -634,8 +756,26 @@ def func_nkpc_hsa_full_pg(
                 "max_tries": ar2_max_tries,
                 **_ar2_stats_summary(ar2_stats),
             },
+            "theory_restriction": {
+                "enabled": cross_restriction,
+                "restriction_level": restriction_level,
+                "zeta0": zeta0,
+                "marginal_cost_loading": marginal_cost_loading,
+                "require_path_positivity": require_path_positivity,
+                "coefficient_admissibility_rejections": coefficient_admissibility_rejections,
+                "state_admissibility_rejections": state_admissibility_rejections,
+            },
         },
     }
+    if cross_restriction:
+        result["kappa_N_empirical"] = _summary(delta_draws)
+        result["d_kappa_d_logN"] = _summary(10.0 * delta_draws)
+        result["zeta0"] = _summary(np.full_like(delta_draws, zeta0))
+        result["mu0"] = _summary(np.full_like(delta_draws, zeta0 / (zeta0 - 1.0)))
+        result["admissibility_violation"] = _summary(admissibility_violation_draws)
+    else:
+        result["delta"] = _summary(delta_draws)
+    return result
 
 
 __all__ = [

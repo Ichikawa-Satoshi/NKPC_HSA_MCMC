@@ -1,5 +1,11 @@
 # Estimation specification — NKPC / HSA project
 
+> **Migration note (August 2026).** This document is the code-verified
+> specification for the preserved historical reduced-form / ablation namespace
+> (`ces`, `hsa_steady`, `hsa_dynamic`, `hsa_const_theta`, `hsa_full`). It remains
+> reproducible and is not overwritten. The current fixed/moving-reference
+> F0/U/R1/R2/R3 design is specified in `docs/theory_model_migration.md`.
+
 **What this is.** A complete, code-verified description of what the production estimation code
 actually computes. The repository is the source of truth. Where the code and the report
 (`report/nkpc_hsa_report.tex`) disagree, both are shown and the discrepancy is labelled; the

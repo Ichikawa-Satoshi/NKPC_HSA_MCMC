@@ -29,6 +29,16 @@ def log_yoy(series_q: pd.Series) -> pd.Series:
     return 100 * (np.log(series_q) - np.log(series_q).shift(4))
 
 
+def qoq_pct(series_q: pd.Series) -> pd.Series:
+    """Exact quarter-on-quarter inflation in non-annualized percentage points."""
+    return 100 * (series_q / series_q.shift(1) - 1)
+
+
+def log_qoq(series_q: pd.Series) -> pd.Series:
+    """Quarter-on-quarter log inflation in non-annualized percentage points."""
+    return 100 * (np.log(series_q) - np.log(series_q).shift(1))
+
+
 def resample_quarterly_mean(df: pd.DataFrame, date_col: str, value_cols: list[str]) -> pd.DataFrame:
     x = df.copy()
     x[date_col] = to_datetime(x[date_col])
@@ -152,19 +162,25 @@ def load_monthly_inflation_series(
 
     if transform == "pct_yoy":
         quarterly[output_col] = yoy_pct(quarterly[raw_col])
+        quarterly[f"{output_col}_qoq"] = qoq_pct(quarterly[raw_col])
     elif transform == "log_yoy":
         quarterly[output_col] = log_yoy(quarterly[raw_col])
+        quarterly[f"{output_col}_qoq"] = log_qoq(quarterly[raw_col])
     else:
         raise ValueError(f"Unknown transform: {transform}")
 
-    return quarterly[[output_col]]
+    return quarterly[[output_col, f"{output_col}_qoq"]]
 
 
 def load_cleveland_fed_expectations(base: Path) -> pd.DataFrame:
     epi = pd.read_csv(base / "inflation" / "Clev_Fed_Inflation_Expectation.csv")
     epi["DATE"] = to_datetime(epi["Date"], fmt="%Y-%m-%d")
     epi["Epi"] = epi[" Epi"] * 100
-    tt_epi_m = pd.DataFrame({"DATE": epi["DATE"], "Epi": epi["Epi"]}).set_index("DATE").sort_index()
+    # The source is an annual-rate expectation. Epi_qoq is a transparent
+    # quarterly-rate equivalent (divide by four), not a relabelled one-quarter
+    # forecast; run metadata retains the one-year horizon.
+    epi["Epi_qoq"] = epi["Epi"] / 4.0
+    tt_epi_m = pd.DataFrame({"DATE": epi["DATE"], "Epi": epi["Epi"], "Epi_qoq": epi["Epi_qoq"]}).set_index("DATE").sort_index()
     return tt_epi_m.resample("QE").mean()
 
 
@@ -311,6 +327,7 @@ def build_dataset(base_dir: str | Path = "../data") -> pd.DataFrame:
         data,
         [
             "pi_cpi", "pi_ppi", "pi_cpi_core", "pi_pce", "pi_pce_core", "unemp_gap",
+            "pi_cpi_qoq", "pi_ppi_qoq", "pi_cpi_core_qoq", "pi_pce_qoq", "pi_pce_core_qoq",
             "markup_BN_inv", "markup_inv", "output_gap_BN", "HHI_TNIC", "HHI_TNIC_inv"
         ],
     )

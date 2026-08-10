@@ -6,13 +6,22 @@ from typing import Any, Mapping
 import numpy as np
 
 KAPPA_SCALE = 100.0
-KAPPA_LIKE_PARAMETERS = {"kappa", "kappa_0", "kappa_t", "delta"}
+KAPPA_LIKE_PARAMETERS = {
+    "kappa",
+    "kappa_0",
+    "kappa_t",
+    "delta",  # historical compatibility only
+    "kappa_N_empirical",
+    "d_kappa_d_logN",
+}
 CONSTRAINT_ALIASES = {
     "kappa0": "kappa_0",
     "kappat": "kappa_t",
     "theta0": "theta_0",
     "rho1": "rho_1",
     "rho2": "rho_2",
+    "kappa_N": "kappa_N_empirical",
+    "delta_kappa": "kappa_N_empirical",
 }
 KAPPA_UNIT_NOTE = (
     "Priors are specified in physical units. Samplers may use internal kappa "

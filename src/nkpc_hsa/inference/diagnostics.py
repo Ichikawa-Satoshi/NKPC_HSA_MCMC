@@ -11,6 +11,10 @@ KEY_PARAMETERS = (
     "kappa",
     "kappa_0",
     "delta",
+    "kappa_N_empirical",
+    "d_kappa_d_logN",
+    "zeta0",
+    "mu0",
     "theta",
     "theta_0",
     "gamma",
@@ -43,6 +47,7 @@ KEY_PARAMETERS = (
     "sigma_epsE",
     "Nbar",
     "Nhat",
+    "N_deviation",
     "Ebar",
     "Ehat",
 )
@@ -324,6 +329,44 @@ def check_estimation_success(idata, *, min_ess: float = 400.0, max_rhat: float =
             rows.append({"severity": "error", "parameter": "Nhat,Nbar", "warning": "latent N decomposition contains non-finite values"})
 
     return pd.DataFrame(rows, columns=["severity", "parameter", "warning"])
+
+
+def local_admissibility_diagnostics(idata) -> dict[str, float | bool | str | None]:
+    """Report whole-path positivity as a model-range diagnostic.
+
+    A high violation rate is not reduced to a generic failed draw. It explicitly
+    flags that the moving-reference linearization may span too wide an observed
+    N range.
+    """
+    posterior = getattr(idata, "posterior", None)
+    out: dict[str, float | bool | str | None] = {
+        "kappa_t_nonpositive_draw_share": None,
+        "theta_t_nonpositive_draw_share": None,
+        "local_approximation_range_warning": False,
+        "interpretation": "not available",
+    }
+    if posterior is None:
+        return out
+    shares: list[float] = []
+    for name, key in (
+        ("kappa_t", "kappa_t_nonpositive_draw_share"),
+        ("theta_t", "theta_t_nonpositive_draw_share"),
+    ):
+        if name not in posterior:
+            continue
+        values = np.asarray(posterior[name], dtype=float)
+        paths = values.reshape(-1, values.shape[-1]) if values.ndim >= 3 else values.reshape(-1, 1)
+        share = float(np.mean(np.any(paths <= 0.0, axis=1)))
+        out[key] = share
+        shares.append(share)
+    high = bool(shares and max(shares) >= 0.05)
+    out["local_approximation_range_warning"] = high
+    out["interpretation"] = (
+        "Path positivity fails frequently; the local linear approximation may cover too wide an observed N range."
+        if high
+        else "No frequent whole-path positivity failure detected."
+    )
+    return out
 
 
 def save_diagnostics(idata, out_dir: str | Path, *, var_names: Iterable[str] | None = None) -> pd.DataFrame:

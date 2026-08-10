@@ -1,5 +1,12 @@
 # Data dictionary
 
+> **Inflation-observation migration.** The processed data retains the legacy
+> four-quarter columns and now also creates non-annualized Q/Q percentage-point
+> columns (`pi_*_qoq` plus one-quarter lags). `Epi_qoq=Epi/4` is a
+> quarterly-rate equivalent of the one-year source, not a one-quarter forecast.
+> F0/U compare Q/Q and direct 4Q YoY in separate likelihoods; R1--R3 use Q/Q.
+> See `docs/theory_model_migration.md`.
+
 Source of truth: `src/nkpc_hsa/dataprep/func_data_build.py`, `src/nkpc_hsa/dataprep/build.py`,
 `src/nkpc_hsa/dataprep/transforms.py`, `src/nkpc_hsa/dataprep/competition.py`, `configs/models.yaml`.
 Generated dataset: `data/processed/model_ready.csv` (454 rows; the production-report sample is

@@ -234,3 +234,66 @@ models:
   - hsa_dynamic
   - hsa_full
   - hsa_const_theta
+
+# New theory-model namespace. The legacy ``models`` grid above is intentionally
+# unchanged and remains reproducible at its historical estimation revision.
+theory_models:
+  - hsa_f0
+  - hsa_u
+  - hsa_r1
+  - hsa_r2
+  - hsa_r3
+theory_defaults:
+  estimation_revision: 2026-08-moving-reference-hsa-v1
+  structural_frequency: quarterly
+  zeta0_treatment: fixed
+  zeta0: 6.0
+  N0_anchor: geometric_mean_over_estimation_sample
+  require_path_positivity: true
+  # Restricted models are deliberately limited to the quarterly observation
+  # until a four-quarter aggregation likelihood is implemented. The legacy YoY
+  # regression never receives the quarterly identity directly.
+  inflation_observations:
+    - qoq
+theory_run_data_specs:
+  - theory_inv_markup_qoq
+  - theory_inv_markup_yoy_4q
+theory_data_specs:
+  theory_inv_markup_qoq:
+    name: theory_inv_markup_qoq
+    label: Inverse markup gap, quarterly inflation
+    pi_col: pi_cpi_qoq
+    pi_prev_col: pi_cpi_qoq_prev
+    pi_expect_col: Epi_qoq
+    x_col: markup_BN_inv
+    x_prev_col: markup_BN_inv_prev
+    n_col: N_Gustavo
+    inflation_observation: qoq
+    inflation_transformation: exact_qoq_percent_change_nonannualized
+    expectation_horizon: one_year_source_converted_to_quarterly_rate
+    expectation_information_date: quarterly_average_of_monthly_vintage_unverified
+    expectation_transformation: annual_percent_divided_by_4
+    activity_mapping: real_marginal_cost_proxy
+    marginal_cost_loading: 1.0
+    activity_transformation: BN_inverse_markup_gap
+    models: [hsa_f0, hsa_u, hsa_r1, hsa_r2, hsa_r3]
+  theory_inv_markup_yoy_4q:
+    name: theory_inv_markup_yoy_4q
+    label: Inverse markup gap, four-quarter YoY inflation (unrestricted comparison only)
+    pi_col: pi_cpi
+    pi_prev_col: pi_cpi_prev
+    pi_expect_col: Epi
+    x_col: markup_BN_inv
+    x_prev_col: markup_BN_inv_prev
+    n_col: N_Gustavo
+    inflation_observation: yoy_4q
+    inflation_transformation: exact_four_quarter_percent_change
+    expectation_horizon: one_year
+    expectation_information_date: quarterly_average_of_monthly_vintage_unverified
+    expectation_transformation: annual_percent_as_loaded
+    activity_mapping: real_marginal_cost_proxy
+    marginal_cost_loading: 1.0
+    activity_transformation: BN_inverse_markup_gap
+    # Direct YoY is a reduced-form observation comparison. The quarterly
+    # structural equality is not imposed, so only F0 and U are admissible.
+    models: [hsa_f0, hsa_u]
