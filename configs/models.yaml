@@ -253,13 +253,15 @@ theory_defaults:
   # Annual-Q4 moving-reference states mix much more slowly than F0. The pilot
   # production run at 12,000 iterations produced minimum bulk ESS of 18--69 for
   # the latent-state/AR(2) block, so those results remain historical-incomplete.
-  # These settings target at least 25x the retained Markov transitions while
-  # thinning path storage to keep each NetCDF artifact manageable.
+  # A 120,000-iteration/four-chain follow-up removed nearly every flag but left
+  # rho_2 bulk ESS at 186--291 (and max R-hat 1.012). The moving models therefore
+  # use 400,000 iterations in the production configuration. Path draws are
+  # thinned more aggressively to keep each NetCDF artifact manageable.
   sampling_by_model:
     hsa_f0: {n_iter: 12000, burn: 4000, thin: 5, chains: 2}
-    hsa_u: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
-    hsa_r1: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
-    hsa_r2: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
+    hsa_u: {n_iter: 400000, burn: 50000, thin: 50, chains: 4}
+    hsa_r1: {n_iter: 400000, burn: 50000, thin: 50, chains: 4}
+    hsa_r2: {n_iter: 400000, burn: 50000, thin: 50, chains: 4}
     hsa_r3: {n_iter: 36000, burn: 8000, thin: 10, chains: 2}
   # Restricted models are deliberately limited to the quarterly observation
   # until a four-quarter aggregation likelihood is implemented. The legacy YoY
