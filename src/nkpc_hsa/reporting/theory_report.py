@@ -188,16 +188,49 @@ def _observation_comparison_table(
             _, metadata, idata = runs[slug]
             row: dict[str, Any] = {
                 "Model": metadata["model_hierarchy"],
-                "Inflation observation": design,
+                "Inflation": design,
                 "T": metadata["n_obs"],
-                "Convergence": metadata.get("convergence_status", "pending_diagnostics"),
+                "Status": metadata.get("convergence_status", "pending_diagnostics"),
             }
-            for parameter in ("kappa_0", "theta_0", "kappa_N_empirical"):
-                row[parameter] = (
+            for parameter, label in (
+                ("kappa_0", "kappa0"),
+                ("theta_0", "theta0"),
+                ("kappa_N_empirical", "kappaN"),
+            ):
+                row[label] = (
                     float(np.mean(np.asarray(idata.posterior[parameter], dtype=float)))
-                    if parameter in idata.posterior else np.nan
+                    if parameter in idata.posterior else "--"
                 )
             rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _admissibility_table(
+    runs: Mapping[str, tuple[Path, Mapping[str, Any], Any]],
+) -> pd.DataFrame:
+    rows = []
+    for slug in THEORY_MODELS:
+        if slug not in runs:
+            continue
+        _, metadata, _ = runs[slug]
+        sampling = dict(metadata.get("admissibility_sampling", {}) or {})
+        local = dict(metadata.get("local_admissibility_diagnostics", {}) or {})
+        proposals = max(1, int(metadata.get("chains", 1)) * int(metadata.get("n_iter", 0)))
+        coefficient_share = float(sampling.get("coefficient_rejections", 0) or 0) / proposals
+        state_share = float(sampling.get("state_path_rejection_share", 0.0) or 0.0)
+        kappa_share = float(local.get("kappa_t_nonpositive_draw_share", 0.0) or 0.0)
+        theta_share = float(local.get("theta_t_nonpositive_draw_share", 0.0) or 0.0)
+        moving = bool(metadata.get("moving_reference_approximation", False))
+        rows.append(
+            {
+                "Model": metadata["model_hierarchy"],
+                "Probe nonadmissible %": 100.0 * coefficient_share if moving else "--",
+                "State reject %": 100.0 * state_share if moving else "--",
+                "Stored kappa<=0 %": 100.0 * kappa_share,
+                "Stored theta<=0 %": 100.0 * theta_share,
+                "Local-range flag": "review" if moving and max(coefficient_share, state_share) >= 0.05 else "none",
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -295,6 +328,8 @@ def build_theory_report_inputs(
     output_dir: str | Path,
     *,
     allow_missing: bool = False,
+    report_builder_revision: str = "unknown",
+    report_builder_dirty: bool | None = None,
 ) -> dict[str, tuple[Path, dict[str, Any], Any]]:
     runs = load_current_theory_runs(runs_dir, inflation_observation="qoq")
     yoy_runs = load_current_theory_runs(runs_dir, inflation_observation="yoy_4q")
@@ -327,15 +362,19 @@ def build_theory_report_inputs(
         out / "inflation_observation_comparison.tex",
         escape=True,
     )
+    admissibility = _admissibility_table(runs)
+    write_latex_fragment(
+        admissibility if not admissibility.empty else pd.DataFrame({"Status": ["ADMISSIBILITY DIAGNOSTICS PENDING"]}),
+        out / "admissibility_diagnostics.tex",
+        escape=True,
+    )
     manifest = pd.DataFrame(
         [
             {
                 "Model": meta["model_hierarchy"],
-                "Run": path.name,
-                "Revision": meta["estimation_revision"],
-                "Code": str(meta["code_revision"])[:12],
+                "Run ID": meta["run_id"],
                 "Inflation": meta["inflation_observation"],
-                "Sample": f"{meta['sample_start']}--{meta['sample_end']}",
+                "T": meta["n_obs"],
                 "Status": meta.get("convergence_status", "pending_diagnostics"),
             }
             for path, meta, _ in [*runs.values(), *yoy_runs.values()]
@@ -348,6 +387,16 @@ def build_theory_report_inputs(
     )
     design = out / "current_design.tex"
     pending = bool(missing or missing_yoy)
+    all_metadata = [item[1] for item in [*runs.values(), *yoy_runs.values()]]
+    baseline = all_metadata[0] if all_metadata else {}
+    dirty_label = "unknown" if report_builder_dirty is None else ("yes" if report_builder_dirty else "no")
+    provenance_summary = (
+        "Estimation revision: \\texttt{" + str(baseline.get("estimation_revision", "pending")).replace("_", "\\_")
+        + "}; estimation code: \\texttt{" + str(baseline.get("code_revision", "pending"))[:12]
+        + "}; sample: " + str(baseline.get("sample_start", "pending")) + "--" + str(baseline.get("sample_end", "pending"))
+        + "; report builder code: \\texttt{" + str(report_builder_revision)[:12]
+        + "}; builder dirty: " + dirty_label + ".\\par\\medskip\n"
+    )
     generated_figures = [] if pending else [
         _plot_restriction_coefficients(runs, figures_dir / "restriction_coefficients.png"),
         _plot_path_comparison(runs, "kappa_t", figures_dir / "kappa_t_paths.png"),
@@ -374,8 +423,12 @@ def build_theory_report_inputs(
         + (
             "\\textbf{CURRENT THEORY ESTIMATES PENDING. Historical tables below are not used as evidence for R1--R3.}\n"
             if pending
-            else "\\input{../results/tables/theory/posterior_results.tex}\n"
+            else "\\par\\medskip\\noindent\\input{../results/tables/theory/posterior_results.tex}\n"
         )
+        +
+        "\\subsection{Local-model admissibility diagnostics}\n"
+        "The Gaussian probe column reports how often an unconstrained conditional coefficient draw would violate the imposed admissible region; it does not enter the posterior. High probe pressure is reported as a diagnostic that the local linear approximation or posterior geometry deserves review. State rejection is the share of proposed latent paths rejected by whole-path positivity.\\par\\medskip\n"
+        "\\noindent\\input{../results/tables/theory/admissibility_diagnostics.tex}\n"
         +
         "\\subsection{Q/Q versus four-quarter YoY observation design}\n"
         "The two transformations of a common price index are estimated in separate likelihoods and are never stacked as if independent. "
@@ -384,11 +437,12 @@ def build_theory_report_inputs(
         + (
             "\\textbf{CURRENT OBSERVATION-DESIGN COMPARISON PENDING.}\n"
             if pending
-            else "\\input{../results/tables/theory/inflation_observation_comparison.tex}\n"
+            else "\\par\\medskip\\noindent\\input{../results/tables/theory/inflation_observation_comparison.tex}\n"
         )
         +
         "\\subsection{Current-run provenance}\n"
-        "\\input{../results/tables/theory/run_manifest.tex}\n"
+        + provenance_summary
+        + "\\noindent\\input{../results/tables/theory/run_manifest.tex}\n"
         + (
             "\\subsection{Restriction-relevant posterior figures}\n"
             "\\begin{figure}[H]\\centering\n"

@@ -18,6 +18,22 @@ from nkpc_hsa.theory_models import THEORY_ESTIMATION_REVISION
 REPORT = ROOT / "report" / "nkpc_hsa_restriction_report.tex"
 
 
+def report_builder_revision() -> tuple[str, bool]:
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    dirty = bool(
+        subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+    return revision, dirty
+
+
 def ensure_report_results_link() -> None:
     repo_results = ROOT / "results"
     target = RESULTS_DIR.resolve()
@@ -74,10 +90,13 @@ def main() -> None:
     args = parser.parse_args()
 
     ensure_report_results_link()
+    builder_revision, builder_dirty = report_builder_revision()
     build_theory_report_inputs(
         args.runs_dir,
         args.tables_dir,
         allow_missing=args.allow_missing_runs,
+        report_builder_revision=builder_revision,
+        report_builder_dirty=builder_dirty,
     )
     if args.no_compile:
         print(f"wrote theory report inputs under {args.tables_dir}")

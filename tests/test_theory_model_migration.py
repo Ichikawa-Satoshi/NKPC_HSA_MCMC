@@ -155,6 +155,12 @@ def test_historical_and_restriction_reports_are_separate() -> None:
     assert "19_build_theory_report.py" not in historical_builder
     assert "tables/theory/current_design.tex" in restriction
     assert "tables/annual_q4" not in restriction
+    assert "admissibility_diagnostics.tex" in (
+        root / "src" / "nkpc_hsa" / "reporting" / "theory_report.py"
+    ).read_text(encoding="utf-8")
+    assert "report_builder_revision" in (
+        root / "scripts" / "build_restriction_report.py"
+    ).read_text(encoding="utf-8")
     assert 'add_argument("--quick"' not in production_driver
     assert "10_estimate_theory_models.py" in production_driver
     assert "11_run_theory_diagnostics.py" in production_driver
