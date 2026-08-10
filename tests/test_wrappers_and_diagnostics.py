@@ -5,7 +5,7 @@ import json
 import numpy as np
 
 from nkpc_hsa.inference.diagnostics import ar2_nonstationary_share, compute_diagnostics
-from nkpc_hsa.inference.wrappers import run_model
+from nkpc_hsa.inference.wrappers import _extract_draws_from_result, run_model
 
 
 def test_wrapper_saves_metadata(tmp_path) -> None:
@@ -110,6 +110,22 @@ def test_hsa_full_uses_sigma_N_measurement_error(tmp_path) -> None:
     assert "sigma_N" in idata.posterior
     assert np.all(idata.posterior["sigma_N"].values > 0.0)
     assert (run_dir / "tables" / "posterior_summary.tex").exists()
+
+
+def test_particle_gibbs_diagnostics_cross_the_wrapper_boundary() -> None:
+    result = {
+        "pg_diagnostics": {
+            "n_particles": 512,
+            "ess_mean": np.array([100.0, 120.0]),
+            "ess_min": np.array([3.0, 4.0]),
+            "moved_frac": np.array([0.25, 0.5]),
+        }
+    }
+
+    draws = _extract_draws_from_result(result)
+
+    assert set(draws) == {"pg_ess_mean", "pg_ess_min", "pg_moved_frac"}
+    np.testing.assert_array_equal(draws["pg_ess_min"], [3.0, 4.0])
 
 
 def test_chib_priors_are_threaded() -> None:

@@ -17,6 +17,7 @@ DATA = DATA_DIR / "processed" / "model_ready.csv"
 # never \input-s them, so they live under results/evidence/ rather than report/generated/.
 TABLE_DIR = RESULTS_DIR / "evidence" / "tables" / "report_additions"
 FIGURE_DIR = RESULTS_DIR / "evidence" / "figures"
+MAIN_COMPETITION_FREQUENCY = "annual_q4"
 
 
 def _current_posterior() -> Path:
@@ -40,6 +41,8 @@ def _current_posterior() -> Path:
         if str(metadata.get("period", "full") or "full") != "full":
             continue
         if str(metadata.get("constraint_spec", "unrestricted") or "unrestricted") != "unrestricted":
+            continue
+        if str(metadata.get("competition_measurement_frequency", "")) != MAIN_COMPETITION_FREQUENCY:
             continue
         if int(metadata.get("n_iter", 0) or 0) < 12000:
             continue

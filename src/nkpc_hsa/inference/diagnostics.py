@@ -20,6 +20,13 @@ KEY_PARAMETERS = (
     "rho_1",
     "rho_2",
     "n",
+    "rho_N1",
+    "rho_N2",
+    "rho_E1",
+    "rho_E2",
+    "rho_NE",
+    "n_N",
+    "n_E",
     "lambda_ez",
     "lambda_E",
     "rho",
@@ -30,6 +37,14 @@ KEY_PARAMETERS = (
     "sigma_eps",
     "sigma_N",
     "sigma_E",
+    "sigma_uN",
+    "sigma_uE",
+    "sigma_epsN",
+    "sigma_epsE",
+    "Nbar",
+    "Nhat",
+    "Ebar",
+    "Ehat",
 )
 
 

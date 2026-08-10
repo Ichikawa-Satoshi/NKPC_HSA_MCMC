@@ -1,20 +1,23 @@
-"""Predictive model comparison: one-step-ahead (prequential) log predictive density.
+"""Full-posterior forward-filtered fit comparison.
 
 Complements the Chib marginal likelihoods. For every model we score the SAME target
 series -- inflation -- by its one-step-ahead predictive density,
 
-    LPD = sum_t log p(pi_t | pi_{1:t-1}, x, [N_{1:t-1}]),
+    LPD = sum_t log p(pi_t | pi_{1:t-1}, x, [N_{1:t-1}], theta),
 
-integrating over posterior draws (log-mean-exp across draws). States are integrated out
-by the Kalman filter, so this is a genuine predictive score, not the circular plug-in
-score (which reused posterior-mean states smoothed with the same pi).
+then averages over parameter draws from the *full-sample* posterior. States are
+forward-filtered, but the parameter draws have seen every observation.  The result is
+therefore an in-sample, full-posterior diagnostic, not a genuine prequential or
+out-of-sample predictive score.
 
 The HSA models may use the firm count N as extra information; CES cannot. That
 asymmetry is the economic question itself ("does the firm count help explain
 inflation?"), and unlike the joint marginal likelihood it does not mix different
 target variables: every model is scored on p(pi).
 
-Also reports WAIC and PSIS-LOO on the pointwise inflation log-likelihood.
+The legacy WAIC/PSIS-LOO transforms are retained for historical comparison only. They
+are not standard WAIC/LOO because their input is a forward-filtered conditional density,
+not the pointwise likelihood used to fit the full posterior.
 
     python scripts/predictive_comparison.py [--draws 300]
 """
@@ -33,8 +36,12 @@ import _bootstrap  # noqa: F401
 from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, _coerce_model_data
-from nkpc_hsa.dataprep import transform_competition_series
+from nkpc_hsa.inference.wrappers import (
+    ESTIMATION_REVISION,
+    _coerce_model_data,
+    _prepare_competition_measurement,
+    model_sample_index,
+)
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 
 TAB = RESULTS_DIR / "evidence" / "tables"
@@ -73,6 +80,41 @@ def _flat(post, name):
 
 def _log_norm(x, mu, var):
     return -0.5 * (np.log(2.0 * np.pi * var) + (x - mu) ** 2 / var)
+
+
+def build_scoring_data(frame, spec, frequency):
+    """Use the estimator's exact sample and competition-observation construction."""
+    if "DATE" in frame.columns and not isinstance(frame.index, pd.DatetimeIndex):
+        frame = frame.copy()
+        frame["DATE"] = pd.to_datetime(frame["DATE"])
+        frame = frame.set_index("DATE")
+    model_data = _coerce_model_data(frame, data_spec=spec)
+    sample_index = model_sample_index(frame, spec)
+    context = _prepare_competition_measurement(
+        model="hsa_steady",
+        data=frame,
+        data_spec=spec,
+        model_data=model_data,
+        sample_index=sample_index,
+        n_transform=DEFAULT_N_TRANSFORM,
+        competition_measurement={"frequency": frequency, "annual_timing": "q4"},
+    )
+    n_obs = context.get("N_obs_used")
+    if n_obs is None:
+        raise ValueError(f"Could not construct competition observations for {frequency!r}.")
+    out = {key: np.asarray(model_data[key], float) for key in ["pi", "pi_prev", "pi_expect", "x", "x_prev"]}
+    out["N"] = np.asarray(n_obs, float)
+    return out
+
+
+def _linearized_state_observation(*, mean, x_t, delta, theta0, gamma):
+    """First-order representation whose value is exact at ``mean``."""
+    nhat, nbar = float(mean[0]), float(mean[2])
+    h = np.array([-(theta0 + gamma * nbar), 0.0, delta * x_t - gamma * nhat])
+    # f(mean) - grad f(mean)' mean for
+    # f = delta*x*Nbar - theta0*Nhat - gamma*Nbar*Nhat.
+    intercept = gamma * nhat * nbar
+    return h, intercept
 
 
 def prequential_ces(post, d, idx):
@@ -119,7 +161,10 @@ def prequential_hsa(post, d, idx, kind):
         F = np.array([[r1[s], r2[s], 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]])
         c = np.array([0.0, 0.0, nd[s]])
         Q = np.diag([su2[s], 1e-10, sp2[s]])
-        m = np.array([0.0, 0.0, d["N"][0]]); P = np.eye(3) * 10.0
+        # Match the estimating model's declared initial prior.  Substituting N[0]
+        # here both changed the model and used the first competition observation
+        # before its measurement update.
+        m = np.zeros(3); P = np.eye(3) * 10.0
         zeta = d["x"] - ph[s] * d["x_prev"]
         for t in range(T):
             if t > 0:
@@ -127,15 +172,25 @@ def prequential_hsa(post, d, idx, kind):
                 P = F @ P @ F.T + Q
             det = (a[s] * d["pi_prev"][t] + (1 - a[s]) * d["pi_expect"][t]
                    + k0[s] * d["x"][t] + lam[s] * zeta[t])
-            # inflation row loading on the state (linearised for gamma at current mean)
-            h = np.array([-(th0[s] + gm[s] * m[2]), 0.0, dl[s] * d["x"][t] - gm[s] * m[0]])
-            mu = det + h @ m
+            # Extended-Kalman linearisation for the bilinear full model.  The
+            # intercept is essential: without it the approximation does not even
+            # reproduce the nonlinear observation function at its expansion point.
+            h, state_intercept = _linearized_state_observation(
+                mean=m, x_t=d["x"][t], delta=dl[s], theta0=th0[s], gamma=gm[s]
+            )
+            mu = det + state_intercept + h @ m
             var = float(h @ P @ h + eta2[s])
             out[s, t] = _log_norm(d["pi"][t], mu, max(var, 1e-12))
-            # update with BOTH observations available at t
-            H = np.vstack([np.array([1.0, 0.0, 1.0]), h])
-            y = np.array([d["N"][t], d["pi"][t] - det])
-            R = np.diag([sN2[s], eta2[s]])
+            # Match the mixed-frequency likelihood: a missing annual N observation
+            # drops only that row, while the inflation row remains.
+            if np.isfinite(d["N"][t]):
+                H = np.vstack([np.array([1.0, 0.0, 1.0]), h])
+                y = np.array([d["N"][t], d["pi"][t] - det - state_intercept])
+                R = np.diag([sN2[s], eta2[s]])
+            else:
+                H = h[None, :]
+                y = np.array([d["pi"][t] - det - state_intercept])
+                R = np.array([[eta2[s]]])
             Sm = H @ P @ H.T + R
             K = P @ H.T @ np.linalg.inv(Sm)
             m = m + K @ (y - H @ m)
@@ -151,10 +206,12 @@ def plugin_score(post, d, model):
     the residuals with a Gaussian log-likelihood at the posterior-mean shock variance.
     It reuses the estimation sample and collapses the posterior to a point, so it is
     neither out-of-sample nor a posterior predictive density; it is reported next to the
-    prequential scores so the reader can see how far a crude criterion is from a proper one.
+    forward-filtered scores so the reader can compare two explicitly in-sample diagnostics.
     """
     mean = lambda name: float(np.mean(_flat(post, name)))
     alpha = mean("alpha")
+    Nhat = None
+    theta_t = None
     if model == "ces":
         kappa_t = np.full(d["pi"].size, mean("kappa"))
     else:
@@ -163,9 +220,27 @@ def plugin_score(post, d, model):
             kappa_t = np.full(d["pi"].size, mean("kappa"))
         else:
             kappa_t = mean("kappa_0") + mean("delta") * Nbar
+        if model in {"hsa_dynamic", "hsa_full"}:
+            Nhat = np.asarray(post["Nhat"], float).reshape(-1, d["pi"].size).mean(axis=0)
+            if model == "hsa_dynamic":
+                theta_t = np.full(d["pi"].size, mean("theta"))
+            else:
+                theta_name = "theta_0" if "theta_0" in post else "theta"
+                theta_t = np.full(d["pi"].size, mean(theta_name))
+                if "gamma" in post:
+                    theta_t = theta_t + mean("gamma") * Nbar
+    phi = mean("phi_1")
+    lam = 0.0 if "lambda_ez" not in post else mean("lambda_ez")
+    zeta = d["x"] - phi * d["x_prev"]
     fitted = alpha * d["pi_prev"] + (1.0 - alpha) * d["pi_expect"] + kappa_t * d["x"]
+    fitted = fitted + lam * zeta
+    if Nhat is not None and theta_t is not None:
+        fitted = fitted - theta_t * Nhat
     resid = d["pi"] - fitted
-    sigma2 = mean("sigma_e") ** 2
+    if "sigma_eta" in post:
+        sigma2 = mean("sigma_eta") ** 2
+    else:
+        sigma2 = max(mean("sigma_e") ** 2 - lam**2 * mean("sigma_zeta") ** 2, 1e-12)
     T = resid.size
     return float(-0.5 * T * np.log(2 * np.pi * sigma2) - 0.5 * np.sum(resid**2) / sigma2)
 
@@ -198,15 +273,15 @@ def main():
     args = ap.parse_args()
     designs = [args.frequency] if args.frequency else ["annual_q4", "quarterly_interpolated"]
     specs = configured_data_specs(load_model_config())
-    df = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv")
+    df = pd.read_csv(
+        DATA_DIR / "processed" / "model_ready.csv", parse_dates=["DATE"]
+    ).set_index("DATE")
     import arviz as az
 
     rows = []
     for freq in designs:
       for price, spec in UNEMP.items():
-          md = _coerce_model_data(df, data_spec=specs[spec])
-          d = {k: np.asarray(md[k], float) for k in ["pi", "pi_prev", "pi_expect", "x", "x_prev"]}
-          d["N"] = np.asarray(transform_competition_series(md["N"], transform=DEFAULT_N_TRANSFORM), float)
+          d = build_scoring_data(df, specs[spec], freq)
           base = None
           for model in MODELS:
               # CES has no latent firm-count state, so its likelihood and posterior are

@@ -46,7 +46,13 @@ def configured_data_specs(
     for name in names:
         if name not in all_specs:
             raise KeyError(f"Unknown data spec {name!r}. Available: {sorted(all_specs)}")
-        out[name] = {"name": name, **window, **dict(all_specs[name] or {})}
+        resolved = {"name": name, **window, **dict(all_specs[name] or {})}
+        # A cell-specific window overrides the defaults after ``window`` was
+        # normalized above, so normalize the merged payload as well.
+        for key in ("sample_start", "sample_end"):
+            if resolved.get(key) is not None:
+                resolved[key] = str(resolved[key])
+        out[name] = resolved
     return out
 
 

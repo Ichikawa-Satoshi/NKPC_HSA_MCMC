@@ -35,7 +35,7 @@ import _bootstrap  # noqa: F401
 from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 
 from nkpc_hsa.config import configured_data_specs, load_model_config
-from nkpc_hsa.inference.wrappers import run_model
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, run_model
 
 OUT = RESULTS_DIR / "prior_decomposition"
 DELTA_SD = {"baseline": 0.02, "tight": 0.01}
@@ -122,6 +122,9 @@ def main() -> None:
         kt = np.asarray(idata.posterior["kappa_t"], dtype=float)
         kt = kt.reshape(-1, kt.shape[-1])
         rows.append({
+            "estimation_revision": ESTIMATION_REVISION,
+            "competition_measurement_frequency": args.freq,
+            "n_iter": n_iter,
             "delta_prior_sd": DELTA_SD[dlab], "rho_prior_sd": RHO_SD[rlab],
             "delta_mean": d.mean(), "delta_lo": np.quantile(d, 0.025), "delta_hi": np.quantile(d, 0.975),
             "rho1_mean": r1.mean(),
@@ -187,7 +190,16 @@ def write_decomposition_macros(*, model: str = "hsa_steady") -> Path | None:
         path = OUT / f"decomposition_{model}_{spec}.csv"
         if not path.exists():
             continue
-        shares = _channel_shares(pd.read_csv(path))
+        table = pd.read_csv(path)
+        required = {"estimation_revision", "competition_measurement_frequency", "n_iter"}
+        missing = required.difference(table.columns)
+        if missing:
+            raise RuntimeError(
+                f"{path} lacks provenance columns {sorted(missing)}; rerun the decomposition"
+            )
+        if set(table["estimation_revision"].dropna()) != {ESTIMATION_REVISION}:
+            raise RuntimeError(f"{path} is stale for current revision {ESTIMATION_REVISION}")
+        shares = _channel_shares(table)
         if shares is None:
             continue
         found = True

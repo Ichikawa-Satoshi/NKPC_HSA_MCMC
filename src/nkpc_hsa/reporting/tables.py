@@ -73,7 +73,27 @@ COEFFICIENT_PARAMETERS = (
 )
 
 
-def write_latex_fragment(df: pd.DataFrame, path: str | Path, *, index: bool = False) -> None:
+def write_latex_fragment(
+    df: pd.DataFrame,
+    path: str | Path,
+    *,
+    index: bool = False,
+    escape: bool = True,
+    column_format: str | None = None,
+    tabularx: bool = False,
+) -> None:
+    """Write a table fragment.
+
+    ``escape=False`` when the cells are already LaTeX (parameter names such as
+    ``$\\kappa_0$`` must not be escaped). ``tabularx=True`` emits a ``tabularx``
+    spanning the line width, so an ``X`` column in ``column_format`` wraps
+    instead of running off the right-hand side; any column holding prose (a
+    description, an explanatory note) needs it.
+    """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(df.to_latex(index=index, float_format="%.4f", escape=True), encoding="utf-8")
+    body = df.to_latex(index=index, float_format="%.4f", escape=escape, column_format=column_format)
+    if tabularx:
+        body = body.replace("\\begin{tabular}{", "\\begin{tabularx}{\\linewidth}{", 1)
+        body = body.replace("\\end{tabular}", "\\end{tabularx}")
+    target.write_text(body, encoding="utf-8")

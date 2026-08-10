@@ -52,7 +52,14 @@ from nkpc_hsa.paths import project_path
 #                       1982Q1--2012Q4 window is applied after the PCHIP date fix.
 #                       This deliberately invalidates runs whose revision label
 #                       predates the corrected input alignment / window wiring.
-ESTIMATION_REVISION = "2026-08-sample-window-v1"
+# 2026-08-independent-audit-v1  SEC Q4 revenue is subtracted only within the
+#                       same XBRL concept; full-Sigma FFBS uses the correct
+#                       correlated-noise backward conditional; Particle-Gibbs
+#                       path-mixing diagnostics are persisted. Predictive/report
+#                       artifacts also enforce the estimator's sample and run
+#                       provenance. Earlier posterior files are not silently
+#                       promoted across these changes.
+ESTIMATION_REVISION = "2026-08-independent-audit-v1"
 
 
 @dataclass(frozen=True)
@@ -182,14 +189,20 @@ def _coerce_model_data(
         if "E" in out:
             e_transform = str(spec.get("e_transform", "log100_centered10"))
             e_model = transform_competition_series(out["E"], transform=e_transform)  # type: ignore[arg-type]
-            e_filter = str(spec.get("e_cycle_filter", "hp")).lower()
-            if e_filter != "hp":
-                raise ValueError(f"Unsupported establishment cycle filter: {e_filter!r}")
-            e_lambda = float(spec.get("e_hp_lambda", 1600.0))
-            ebar, ehat = hp_filter_series(pd.Series(e_model), lamb=e_lambda)
             out["E_model"] = np.asarray(e_model, dtype=float)
-            out["Ebar"] = ebar.to_numpy(dtype=float)
-            out["Ehat"] = ehat.to_numpy(dtype=float)
+            establishment_model = str(spec.get("establishment_model", "legacy_hp_loading")).lower()
+            if establishment_model == "joint_state":
+                out["E_obs"] = np.asarray(e_model, dtype=float)
+            elif establishment_model == "legacy_hp_loading":
+                e_filter = str(spec.get("e_cycle_filter", "hp")).lower()
+                if e_filter != "hp":
+                    raise ValueError(f"Unsupported establishment cycle filter: {e_filter!r}")
+                e_lambda = float(spec.get("e_hp_lambda", 1600.0))
+                ebar, ehat = hp_filter_series(pd.Series(e_model), lamb=e_lambda)
+                out["Ebar"] = ebar.to_numpy(dtype=float)
+                out["Ehat"] = ehat.to_numpy(dtype=float)
+            else:
+                raise ValueError(f"Unsupported establishment_model: {establishment_model!r}")
         return out
     return {k: np.asarray(v, dtype=float).reshape(-1) for k, v in data.items()}
 
@@ -335,14 +348,14 @@ def _prepare_competition_measurement(
             annual_transformed = None
 
     frequency = spec["frequency"]
-    if frequency == "quarterly_interpolated":
+    if frequency in {"quarterly_interpolated", "quarterly_observed"}:
         if N_interpolated is None:
             N_interpolated = _transform_competition_observation(N_quarterly_raw, n_transform)
             context["N_interpolated_comparison"] = N_interpolated
         obs = competition_observation_from_array(
             N_interpolated,
             q_index,
-            frequency="quarterly_interpolated",
+            frequency=frequency,
             annual_timing=spec["annual_timing"],
         )
         context["N_obs_used"] = obs.N_obs
@@ -385,6 +398,18 @@ def _extract_draws_from_result(result: Mapping[str, Any]) -> dict[str, np.ndarra
             for state_key, state_value in value.items():
                 draws[state_key] = np.asarray(state_value, dtype=float)
             continue
+        if key == "pg_diagnostics":
+            # The Particle-Gibbs sampler returns these as a plain mapping rather
+            # than the usual {"draws": ...} summary.  Persist the iteration-level
+            # diagnostics in posterior.nc; otherwise the only evidence about path
+            # degeneracy disappears at the production wrapper boundary.
+            for diagnostic_key, diagnostic_value in value.items():
+                if diagnostic_key == "n_particles":
+                    continue
+                diagnostic_array = np.asarray(diagnostic_value, dtype=float)
+                if diagnostic_array.ndim > 0:
+                    draws[f"pg_{diagnostic_key}"] = diagnostic_array
+            continue
         if isinstance(value, Mapping) and "draws" in value:
             draws[key] = np.asarray(value["draws"], dtype=float)
     if "sigma_e2" in draws:
@@ -395,6 +420,16 @@ def _extract_draws_from_result(result: Mapping[str, Any]) -> dict[str, np.ndarra
         draws["rho_1"] = draws.pop("rho1")
     if "rho2" in draws:
         draws["rho_2"] = draws.pop("rho2")
+    if "rho_N1" in draws:
+        draws.setdefault("rho_1", draws["rho_N1"])
+    if "rho_N2" in draws:
+        draws.setdefault("rho_2", draws["rho_N2"])
+    if "n_N" in draws:
+        draws.setdefault("n", draws["n_N"])
+    if "sigma_uN" in draws:
+        draws.setdefault("sigma_u", draws["sigma_uN"])
+    if "sigma_epsN" in draws:
+        draws.setdefault("sigma_eps", draws["sigma_epsN"])
     return draws
 
 
@@ -631,6 +666,13 @@ def _run_sampler(
                     "hsa_steady and hsa_const_theta."
                 )
             kwargs["Ehat_data"] = np.asarray(model_data["Ehat"], dtype=float)
+        if "E_obs" in model_data:
+            if model not in {"hsa_steady", "hsa_const_theta"}:
+                raise ValueError(
+                    "The six-state joint N--E system is defined for the linear-Gaussian "
+                    "hsa_steady and hsa_const_theta specifications."
+                )
+            kwargs["E_data"] = np.asarray(model_data["E_obs"], dtype=float)
         result = _call_sampler(funcs[model], kwargs, orth=orth)
         chain_draws.append(_extract_draws_from_result(result))
         chain_metadata.append({"chain": chain, "seed": chain_seed, "model_metadata": result.get("model", {})})
@@ -764,12 +806,14 @@ def run_model(
         "n_particles": n_particles if model == "hsa_full" else None,
         "no_inertia": no_inertia,
         "establishment_measurement": {
-            "enabled": bool("Ehat" in model_data_for_sampler),
+            "enabled": bool("Ehat" in model_data_for_sampler or "E_obs" in model_data_for_sampler),
+            "model": data_spec_dict.get("establishment_model"),
             "source_column": data_spec_dict.get("e_col", data_spec_dict.get("e_hat_col")),
             "cycle_filter": data_spec_dict.get("e_cycle_filter") if "Ehat" in model_data_for_sampler else None,
             "hp_lambda": data_spec_dict.get("e_hp_lambda") if "Ehat" in model_data_for_sampler else None,
-            "transform": data_spec_dict.get("e_transform") if "Ehat" in model_data_for_sampler else None,
+            "transform": data_spec_dict.get("e_transform") if ("Ehat" in model_data_for_sampler or "E_obs" in model_data_for_sampler) else None,
             "finite_Ehat_count": int(np.isfinite(model_data_for_sampler.get("Ehat", [])).sum()),
+            "finite_E_obs_count": int(np.isfinite(model_data_for_sampler.get("E_obs", [])).sum()),
         },
         "extra": extra_meta,
     }

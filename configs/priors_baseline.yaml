@@ -9,6 +9,9 @@ phi_1: [0.7, 0.2]
 rho_1: [0.5, 0.2]
 rho_2: [-0.5, 0.2]
 n: [0.0, 0.1]
+rho_E1: [0.5, 0.2]
+rho_E2: [-0.5, 0.2]
+n_E: [0.0, 0.1]
 lambda_E: [1.0, 1.0]
 a_e: 2.0
 b_e: 2.0
@@ -25,6 +28,14 @@ a_N: 2.0
 b_N: 0.01
 a_E: 2.0
 b_E: 0.01
+a_epsE: 2.0
+b_epsE: 0.01
+# Joint N/E cycle innovation covariance.  With p=2 and nu_NE=5, each
+# diagonal marginal is IG(2, 0.02), matching the baseline N-cycle prior.
+nu_NE: 5.0
+S_NE:
+  - [0.04, 0.0]
+  - [0.0, 0.04]
 a_z: 0.001
 b_z: 0.001
 # S_Sigma rows follow the shock order [e, zeta, u, eps]. With nu_Sigma = 8 the

@@ -19,6 +19,8 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
+import pytest
 import yaml
 
 from nkpc_hsa.dataprep.competition import (
@@ -34,6 +36,30 @@ DATA_DIR = data_root(ROOT)
 def _load_estimation_driver():
     path = ROOT / "scripts" / "13_estimate_cpi_ppi_report.py"
     spec = importlib.util.spec_from_file_location("estimate_report_driver", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return module
+
+
+def _load_additional_evidence_driver():
+    path = ROOT / "scripts" / "11_additional_report_evidence.py"
+    spec = importlib.util.spec_from_file_location("additional_evidence_driver", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, str(ROOT / "scripts"))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path.pop(0)
+    return module
+
+
+def _load_predictive_driver():
+    path = ROOT / "scripts" / "predictive_comparison.py"
+    spec = importlib.util.spec_from_file_location("predictive_comparison_driver", path)
     module = importlib.util.module_from_spec(spec)
     sys.path.insert(0, str(ROOT / "scripts"))
     try:
@@ -140,6 +166,59 @@ def test_run_directory_names_always_carry_the_design():
         name = _default_run_dir("hsa_steady", "spec", "baseline", "unrestricted", "rid",
                                 competition_frequency=freq).name
         assert freq in name, f"{freq} missing from {name!r}"
+
+
+def test_additional_evidence_selects_only_the_main_annual_design(tmp_path):
+    driver = _load_additional_evidence_driver()
+    driver.RESULTS_DIR = tmp_path
+    runs = tmp_path / "runs"
+    for run_id, frequency in (("older_annual", "annual_q4"), ("newer_pchip", "quarterly_interpolated")):
+        run = runs / run_id
+        run.mkdir(parents=True)
+        (run / "posterior.nc").touch()
+        (run / "metadata.json").write_text(
+            json.dumps(
+                {
+                    "run_id": run_id,
+                    "model": "hsa_steady",
+                    "data_spec": "unemployment_gap_core",
+                    "prior_spec": "baseline",
+                    "period": "full",
+                    "constraint_spec": "unrestricted",
+                    "n_iter": 12000,
+                    "estimation_revision": driver.ESTIMATION_REVISION,
+                    "competition_measurement_frequency": frequency,
+                }
+            ),
+            encoding="utf-8",
+        )
+
+    assert driver._current_posterior().parent.name == "older_annual"
+
+
+def test_predictive_scoring_uses_the_estimator_observation_pattern():
+    driver = _load_predictive_driver()
+    config = driver.load_model_config(ROOT / "configs" / "models.yaml")
+    frame = pd.read_csv(DATA_DIR / "processed" / "model_ready.csv")
+    spec = driver.configured_data_specs(config)["unemployment_gap_core"]
+
+    annual = driver.build_scoring_data(frame, spec, "annual_q4")
+    interpolated = driver.build_scoring_data(frame, spec, "quarterly_interpolated")
+
+    assert len(annual["N"]) == 124
+    assert np.isfinite(annual["N"]).sum() == 31
+    assert np.isfinite(interpolated["N"]).sum() == 124
+
+
+def test_full_model_linearization_is_exact_at_expansion_point():
+    driver = _load_predictive_driver()
+    mean = np.array([0.7, -0.1, 1.2])
+    x_t, delta, theta0, gamma = -0.8, 0.03, 0.15, -0.04
+    h, intercept = driver._linearized_state_observation(
+        mean=mean, x_t=x_t, delta=delta, theta0=theta0, gamma=gamma
+    )
+    expected = delta * x_t * mean[2] - theta0 * mean[0] - gamma * mean[0] * mean[2]
+    assert intercept + h @ mean == pytest.approx(expected)
 
 
 def test_metadata_readers_still_fall_back_to_interpolated():

@@ -36,7 +36,12 @@ from __future__ import annotations
 import numpy as np
 from numpy.linalg import inv
 
-__all__ = ["force_pd", "sample_joint_competition_states_ffbs"]
+__all__ = [
+    "build_joint_ne_system",
+    "force_pd",
+    "sample_joint_competition_states_ffbs",
+    "sample_joint_ne_states_ffbs",
+]
 
 
 def force_pd(S: np.ndarray, eps: float = 1e-10) -> np.ndarray:
@@ -49,6 +54,159 @@ def force_pd(S: np.ndarray, eps: float = 1e-10) -> np.ndarray:
 
 def _mvnrnd(mean: np.ndarray, cov: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     return rng.multivariate_normal(np.asarray(mean, dtype=float), force_pd(cov))
+
+
+def build_joint_ne_system(
+    *,
+    rho_N1: float,
+    rho_N2: float,
+    rho_E1: float,
+    rho_E2: float,
+    n_N: float,
+    n_E: float,
+    sigma_uN: float,
+    sigma_uE: float,
+    rho_NE: float,
+    sigma_epsN: float,
+    sigma_epsE: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return ``(F, c, Q)`` for the documented six-state N--E system.
+
+    The state order is fixed as
+    ``[Nhat_t, Nhat_{t-1}, Nbar_t, Ehat_t, Ehat_{t-1}, Ebar_t]``.
+    Standard deviations plus a correlation are used for the two cycle shocks,
+    which makes the intended covariance ordering explicit and guarantees a
+    positive-definite stochastic 2x2 block whenever ``abs(rho_NE) < 1``.
+    """
+    scales = np.asarray([sigma_uN, sigma_uE, sigma_epsN, sigma_epsE], dtype=float)
+    if np.any(~np.isfinite(scales)) or np.any(scales <= 0.0):
+        raise ValueError("All state innovation standard deviations must be finite and positive.")
+    if not np.isfinite(rho_NE) or abs(float(rho_NE)) >= 1.0:
+        raise ValueError("rho_NE must be finite and strictly between -1 and 1.")
+
+    F = np.array(
+        [
+            [rho_N1, rho_N2, 0.0, 0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, rho_E1, rho_E2, 0.0],
+            [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+        ],
+        dtype=float,
+    )
+    c = np.array([0.0, 0.0, n_N, 0.0, 0.0, n_E], dtype=float)
+    Q = np.zeros((6, 6), dtype=float)
+    Q[0, 0] = sigma_uN**2
+    Q[3, 3] = sigma_uE**2
+    Q[0, 3] = Q[3, 0] = rho_NE * sigma_uN * sigma_uE
+    Q[2, 2] = sigma_epsN**2
+    Q[5, 5] = sigma_epsE**2
+    return F, c, Q
+
+
+def sample_joint_ne_states_ffbs(
+    *,
+    N_obs: np.ndarray,
+    E_obs: np.ndarray,
+    y_tilde: np.ndarray,
+    h_nhat: np.ndarray,
+    h_nbar: np.ndarray,
+    rho_N1: float,
+    rho_N2: float,
+    rho_E1: float,
+    rho_E2: float,
+    n_N: float,
+    n_E: float,
+    sigma_eta2: float,
+    sigma_uN: float,
+    sigma_uE: float,
+    rho_NE: float,
+    sigma_epsN: float,
+    sigma_epsE: float,
+    sigma_N2: float,
+    sigma_E2: float,
+    m0: np.ndarray,
+    P0: np.ndarray,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Draw the complete six-state N--E path with one exact FFBS smoother.
+
+    Missing observations are selected row by row.  In particular a missing
+    annual firm count drops only the N row; the quarterly establishment and
+    inflation rows remain active.
+    """
+    N_obs = np.asarray(N_obs, dtype=float).reshape(-1)
+    E_obs = np.asarray(E_obs, dtype=float).reshape(-1)
+    y_tilde = np.asarray(y_tilde, dtype=float).reshape(-1)
+    T = N_obs.size
+    if E_obs.size != T or y_tilde.size != T:
+        raise ValueError("N_obs, E_obs, and y_tilde must have the same length.")
+    h_nhat = np.broadcast_to(np.asarray(h_nhat, dtype=float), (T,))
+    h_nbar = np.broadcast_to(np.asarray(h_nbar, dtype=float), (T,))
+    variances = np.asarray([sigma_eta2, sigma_N2, sigma_E2], dtype=float)
+    if np.any(~np.isfinite(variances)) or np.any(variances <= 0.0):
+        raise ValueError("All observation variances must be finite and positive.")
+    m0 = np.asarray(m0, dtype=float).reshape(-1)
+    P0 = np.asarray(P0, dtype=float)
+    if m0.shape != (6,) or P0.shape != (6, 6):
+        raise ValueError("The joint N--E initial prior must have dimensions 6 and 6x6.")
+
+    F, c, Q = build_joint_ne_system(
+        rho_N1=rho_N1,
+        rho_N2=rho_N2,
+        rho_E1=rho_E1,
+        rho_E2=rho_E2,
+        n_N=n_N,
+        n_E=n_E,
+        sigma_uN=sigma_uN,
+        sigma_uE=sigma_uE,
+        rho_NE=rho_NE,
+        sigma_epsN=sigma_epsN,
+        sigma_epsE=sigma_epsE,
+    )
+    m_pred = np.zeros((T, 6), dtype=float)
+    P_pred = np.zeros((T, 6, 6), dtype=float)
+    m_filt = np.zeros((T, 6), dtype=float)
+    P_filt = np.zeros((T, 6, 6), dtype=float)
+    I6 = np.eye(6)
+
+    for t in range(T):
+        if t == 0:
+            m_pred[t] = m0
+            P_pred[t] = force_pd(P0)
+        else:
+            m_pred[t] = c + F @ m_filt[t - 1]
+            P_pred[t] = force_pd(F @ P_filt[t - 1] @ F.T + Q)
+
+        rows = [np.array([h_nhat[t], 0.0, h_nbar[t], 0.0, 0.0, 0.0])]
+        values = [float(y_tilde[t])]
+        obs_vars = [float(sigma_eta2)]
+        if np.isfinite(N_obs[t]):
+            rows.append(np.array([1.0, 0.0, 1.0, 0.0, 0.0, 0.0]))
+            values.append(float(N_obs[t]))
+            obs_vars.append(float(sigma_N2))
+        if np.isfinite(E_obs[t]):
+            rows.append(np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0]))
+            values.append(float(E_obs[t]))
+            obs_vars.append(float(sigma_E2))
+        H = np.vstack(rows)
+        R = np.diag(obs_vars)
+        S = force_pd(H @ P_pred[t] @ H.T + R)
+        K = P_pred[t] @ H.T @ inv(S)
+        m_filt[t] = m_pred[t] + K @ (np.asarray(values) - H @ m_pred[t])
+        KH = K @ H
+        P_filt[t] = force_pd((I6 - KH) @ P_pred[t] @ (I6 - KH).T + K @ R @ K.T)
+
+    states = np.zeros((T, 6), dtype=float)
+    states[-1] = _mvnrnd(m_filt[-1], P_filt[-1], rng)
+    for t in range(T - 2, -1, -1):
+        P_next = force_pd(P_pred[t + 1])
+        A = P_filt[t] @ F.T @ inv(P_next)
+        mean = m_filt[t] + A @ (states[t + 1] - c - F @ m_filt[t])
+        cov = force_pd(P_filt[t] - A @ P_next @ A.T)
+        states[t] = _mvnrnd(mean, cov, rng)
+    return states[:, 2], states[:, 0], states[:, 5], states[:, 3], states
 
 
 def sample_joint_competition_states_ffbs(

@@ -38,12 +38,16 @@ NORMAL_PRIORS = {
     "phi_1": ("mu_phi_1", "sigma_phi_1", False),
     "rho_1": ("mu_rho1", "sigma_rho1", False),
     "rho_2": ("mu_rho2", "sigma_rho2", False),
+    "rho_E1": ("mu_rho_E1", "sigma_rho_E1", False),
+    "rho_E2": ("mu_rho_E2", "sigma_rho_E2", False),
     "n": ("mu_n", "sigma_n", False),
+    "n_E": ("mu_n_E", "sigma_n_E", False),
     "lambda_E": ("mu_lambda_E", "sigma_lambda_E", False),
 }
 SCALAR_PRIORS = [
     "a_e", "b_e", "a_z", "b_z", "a_u", "b_u", "a_eps", "b_eps",
-    "a_N", "b_N", "a_E", "b_E", "nu_Sigma",
+    "a_N", "b_N", "a_E", "b_E", "a_epsE", "b_epsE", "b_uE",
+    "nu_NE", "nu_Sigma",
 ]
 
 
@@ -69,8 +73,8 @@ def test_every_configured_key_reaches_the_sampler(path):
         elif key in SCALAR_PRIORS:
             if key not in internal:
                 unmapped.append(key)
-        elif key == "S_Sigma":
-            if "S_Sigma" not in internal:
+        elif key in {"S_NE", "S_Sigma"}:
+            if key not in internal:
                 unmapped.append(key)
         else:
             pytest.fail(f"{path.name}: key {key!r} is not covered by this test; extend the map")

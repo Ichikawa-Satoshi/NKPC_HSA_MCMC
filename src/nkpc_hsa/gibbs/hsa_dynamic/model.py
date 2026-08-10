@@ -944,6 +944,9 @@ def _sample_states_joint_ffbs_fullSigma(
 
     m_filt = np.zeros((T, 3), dtype=float)
     P_filt = np.zeros((T, 3, 3), dtype=float)
+    # Retained for the exact backward conditional when transition and
+    # measurement innovations are correlated under covariance_structure="full".
+    obs_system: list[tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = []
 
     y_pi = (
         pi_t
@@ -1001,16 +1004,46 @@ def _sample_states_joint_ffbs_fullSigma(
 
         m_filt[t] = m_pred[t] + K @ innov
         P_filt[t] = _force_pd(P_pred[t] - K @ S @ K.T)
+        obs_system.append((y_obs, H_t, R_t, C, v_mean))
 
     # ---------- Backward sampling ----------
     states = np.zeros((T, 3), dtype=float)
     states[-1] = _mvnrnd(m_filt[-1], P_filt[-1], rng)
 
     for t in range(T - 2, -1, -1):
-        A = P_filt[t] @ F.T @ inv(_force_pd(P_pred[t + 1]))
-
-        mean_s = m_filt[t] + A @ (states[t + 1] - m_pred[t + 1])
-        cov_s = _force_pd(P_filt[t] - A @ P_pred[t + 1] @ A.T)
+        y_next, H_next, _R_next, C_next, v_next = obs_system[t + 1]
+        cross_state = P_filt[t] @ F.T
+        if np.any(np.abs(C_next) > 0.0):
+            # With Cov(w_{t+1}, v_{t+1}) != 0, y_{t+1} still informs s_t even
+            # after conditioning on s_{t+1}: fixing s_{t+1} links w_{t+1} to
+            # s_t, and v_{t+1} is correlated with that innovation.  The usual
+            # RTS conditional p(s_t | s_{t+1}, y_{1:t}) therefore is not exact.
+            # Condition jointly on (s_{t+1}, y_{t+1}); observations after t+1
+            # are independent of s_t given s_{t+1}.
+            P_next = P_pred[t + 1]
+            S_next = _force_pd(
+                H_next @ P_next @ H_next.T
+                + _R_next
+                + H_next @ C_next
+                + C_next.T @ H_next.T
+            )
+            cov_next_y = P_next @ H_next.T + C_next
+            V = np.block(
+                [
+                    [P_next, cov_next_y],
+                    [cov_next_y.T, S_next],
+                ]
+            )
+            cross = np.hstack([cross_state, cross_state @ H_next.T])
+            z = np.concatenate([states[t + 1], y_next])
+            z_mean = np.concatenate([m_pred[t + 1], H_next @ m_pred[t + 1] + v_next])
+            gain = cross @ inv(_force_pd(V))
+            mean_s = m_filt[t] + gain @ (z - z_mean)
+            cov_s = _force_pd(P_filt[t] - gain @ V @ gain.T)
+        else:
+            A = cross_state @ inv(_force_pd(P_pred[t + 1]))
+            mean_s = m_filt[t] + A @ (states[t + 1] - m_pred[t + 1])
+            cov_s = _force_pd(P_filt[t] - A @ P_pred[t + 1] @ A.T)
 
         states[t] = _mvnrnd(mean_s, cov_s, rng)
 

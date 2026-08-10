@@ -50,6 +50,7 @@ from nkpc_hsa.gibbs.conditional_ml import (
 )
 from nkpc_hsa.reporting.cpi_ppi_spec import INFLATION_SPECS
 from nkpc_hsa.inference.wrappers import (
+    ESTIMATION_REVISION,
     _coerce_model_data,
     _prepare_competition_measurement,
     model_sample_index,
@@ -166,7 +167,16 @@ def main() -> None:
         data = build_data(specs[spec_name], df, frequency=args.frequency)
         for seed in seeds:
             started = time.perf_counter()
-            entry = {"price": price, "activity": activity, "spec": spec_name, "seed": seed}
+            entry = {
+                "price": price,
+                "activity": activity,
+                "spec": spec_name,
+                "seed": seed,
+                "estimation_revision": ESTIMATION_REVISION,
+                "competition_measurement_frequency": args.frequency,
+                "n_burn": args.n_burn,
+                "n_keep": args.n_keep,
+            }
             try:
                 # One m(x) per cell, handed to both models, so the run shows them
                 # conditioned on the identical quantity rather than assuming it.

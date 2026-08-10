@@ -28,14 +28,12 @@ def test_explicit_project_and_dropbox_roots(monkeypatch, tmp_path) -> None:
     assert project_path("configs", "models.yaml") == project / "configs" / "models.yaml"
 
 
-@pytest.mark.parametrize("missing", [PROJECT_DIR_ENV, DROPBOX_DIR_ENV])
-def test_required_root_must_be_configured(monkeypatch, missing) -> None:
-    monkeypatch.setenv(PROJECT_DIR_ENV, "/tmp/project")
-    monkeypatch.setenv(DROPBOX_DIR_ENV, "/tmp/dropbox")
-    monkeypatch.delenv(missing)
+def test_roots_are_discovered_without_environment(monkeypatch) -> None:
+    monkeypatch.delenv(PROJECT_DIR_ENV, raising=False)
+    monkeypatch.delenv(DROPBOX_DIR_ENV, raising=False)
 
-    with pytest.raises(RuntimeError, match=missing):
-        if missing == PROJECT_DIR_ENV:
-            project_root()
-        else:
-            dropbox_root()
+    discovered_project = project_root()
+    assert discovered_project.name == "NKPC_HSA_MCMC"
+    assert (discovered_project / "pyproject.toml").is_file()
+    assert dropbox_root().name == discovered_project.name
+    assert (dropbox_root() / "data").is_dir()

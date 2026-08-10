@@ -434,6 +434,7 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
     *,
     orth: bool = False,
     Ehat_data=None,
+    E_data=None,
 ) -> dict[str, Any]:
     """
     Gibbs sampler with Kalman/FFBS state draw for:
@@ -461,6 +462,27 @@ def func_nkpc_hsa_decomp_tv_kappa_kalman(
 
     Set orth=True to impose lambda_ez = 0.
     """
+    if E_data is not None:
+        if Ehat_data is not None:
+            raise ValueError("Supply E_data levels or legacy Ehat_data, not both.")
+        from nkpc_hsa.gibbs.joint_ne import func_nkpc_hsa_joint_ne
+
+        return func_nkpc_hsa_joint_ne(
+            pi_data=pi_data,
+            pi_prev_data=pi_prev_data,
+            Epi_data=Epi_data,
+            x_data=x_data,
+            x_prev_data=x_prev_data,
+            N_data=N_data,
+            E_data=E_data,
+            n_burn=n_burn,
+            n_keep=n_keep,
+            priors=priors,
+            opts=opts,
+            orth=orth,
+            const_theta=False,
+        )
+
     pi_t = _as_1d(pi_data)
     pi_tm1 = _as_1d(pi_prev_data)
     pi_expect = _as_1d(Epi_data)

@@ -17,7 +17,7 @@ DEFAULT_COMPETITION_MEASUREMENT: dict[str, str] = {
     "frequency": "annual_q4",
     "annual_timing": "q4",
 }
-VALID_COMPETITION_FREQUENCIES = {"quarterly_interpolated", "annual_q4"}
+VALID_COMPETITION_FREQUENCIES = {"quarterly_interpolated", "quarterly_observed", "annual_q4"}
 
 
 @dataclass(frozen=True)
@@ -204,8 +204,8 @@ def competition_observation_from_array(
     arr = np.asarray(N_obs, dtype=float).reshape(-1)
     if arr.size != len(q_index):
         raise ValueError("N_obs must have the same length as quarterly_index.")
-    if spec["frequency"] == "quarterly_interpolated" and np.any(~np.isfinite(arr)):
-        raise ValueError("quarterly_interpolated N_obs must be finite for every quarter.")
+    if spec["frequency"] in {"quarterly_interpolated", "quarterly_observed"} and np.any(~np.isfinite(arr)):
+        raise ValueError(f"{spec['frequency']} N_obs must be finite for every quarter.")
     return _metadata(arr, q_index, spec["frequency"], spec["annual_timing"])
 
 

@@ -19,6 +19,7 @@ import pandas as pd
 
 import _bootstrap  # noqa: F401
 from _bootstrap import RESULTS_DIR, ROOT
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 
 SRC = RESULTS_DIR / "evidence" / "tables" / "conditional_ml.csv"
 OUT = RESULTS_DIR / "tables" / "annual_q4"
@@ -35,6 +36,14 @@ def main() -> None:
             f"missing {SRC}; run scripts/chib_marginal_likelihood.py --all-cells first"
         )
     table = pd.read_csv(SRC)
+    required = {"estimation_revision", "competition_measurement_frequency", "n_burn", "n_keep"}
+    missing = required.difference(table.columns)
+    if missing:
+        raise SystemExit(f"{SRC} lacks provenance columns {sorted(missing)}; rerun the Chib calculation")
+    if set(table["estimation_revision"].dropna()) != {ESTIMATION_REVISION}:
+        raise SystemExit(f"{SRC} does not belong to current revision {ESTIMATION_REVISION}")
+    if set(table["competition_measurement_frequency"].dropna()) != {"annual_q4"}:
+        raise SystemExit(f"{SRC} is not the report's annual_q4 observation design")
     ok = table[table["error"].isna()] if "error" in table else table
     if ok.empty:
         raise SystemExit(f"{SRC} has no identified cells")

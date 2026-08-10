@@ -172,10 +172,13 @@ def prior_specs_to_internal(prior_specs: Mapping[str, Any] | None) -> dict[str, 
         ("phi_1", ("mu_phi_1", "sigma_phi_1")),
         ("rho_1", ("mu_rho1", "sigma_rho1")),
         ("rho_2", ("mu_rho2", "sigma_rho2")),
+        ("rho_E1", ("mu_rho_E1", "sigma_rho_E1")),
+        ("rho_E2", ("mu_rho_E2", "sigma_rho_E2")),
         ("lambda_ez", ("mu_lambda", "sigma_lambda")),
         ("lambda_E", ("mu_lambda_E", "sigma_lambda_E")),
         ("rho", ("mu_lambda", "sigma_lambda")),
         ("n", ("mu_n", "sigma_n")),
+        ("n_E", ("mu_n_E", "sigma_n_E")),
     ]:
         p = pair(key)
         if p is not None:
@@ -192,12 +195,15 @@ def prior_specs_to_internal(prior_specs: Mapping[str, Any] | None) -> dict[str, 
 
     for key in [
         "a_e", "b_e", "a_z", "b_z", "a_u", "b_u", "a_eps", "b_eps",
-        "a_N", "b_N", "a_E", "b_E", "nu_Sigma",
+        "a_N", "b_N", "a_E", "b_E", "a_epsE", "b_epsE", "b_uE",
+        "nu_NE", "nu_Sigma",
     ]:
         if key in specs:
             out[key] = float(specs[key])
     if "S_Sigma" in specs:
         out["S_Sigma"] = specs["S_Sigma"]
+    if "S_NE" in specs:
+        out["S_NE"] = specs["S_NE"]
     return out
 
 

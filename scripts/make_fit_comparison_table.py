@@ -1,10 +1,11 @@
-"""Build the fit-comparison table that shows the plug-in score next to proper scores.
+"""Build the fit-comparison table for the full-posterior fit diagnostics.
 
 The report has always described an in-sample plug-in fit score but never tabulated it,
-and it listed a proper predictive comparison as future work even though
-``scripts/predictive_comparison.py`` computes one. This table reports both, side by side,
-for the main mixed-frequency design, so the reader can see how far the crude criterion is
-from the proper ones rather than taking either on faith.
+and it listed a predictive comparison as future work.  The forward-filtered scores in
+``scripts/predictive_comparison.py`` still use parameters drawn from the full-sample
+posterior, so none is a genuine prequential or out-of-sample score.  WAIC and PSIS-LOO
+are additionally nonstandard because the inputs are conditional filtering densities,
+not the pointwise likelihood used to fit the posterior.
 
 Reads results/evidence/tables/predictive_comparison.csv (written by
 scripts/predictive_comparison.py) and writes the LaTeX fragment the report inputs.
@@ -20,6 +21,7 @@ import pandas as pd
 
 import _bootstrap  # noqa: F401
 from _bootstrap import RESULTS_DIR, ROOT
+from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION
 
 SRC = RESULTS_DIR / "evidence" / "tables" / "predictive_comparison.csv"
 OUT = RESULTS_DIR / "tables" / "annual_q4"
@@ -33,6 +35,10 @@ def main() -> None:
     if not SRC.exists():
         raise SystemExit(f"missing {SRC}; run scripts/predictive_comparison.py first")
     table = pd.read_csv(SRC)
+    if "estimation_revision" not in table or set(table["estimation_revision"].dropna()) != {ESTIMATION_REVISION}:
+        raise SystemExit(
+            f"{SRC} is stale or has no estimation revision; rerun scripts/predictive_comparison.py"
+        )
     main_design = table[table["design"] == "annual_q4"]
     if main_design.empty:
         raise SystemExit("predictive_comparison.csv has no annual_q4 rows")
@@ -45,14 +51,16 @@ def main() -> None:
          r"meaningful. \emph{Plug-in} is the in-sample score of the text: the inflation "
          r"equation evaluated at posterior-mean parameters and states, scored by a "
          r"Gaussian log-likelihood at the posterior-mean shock variance. "
-         r"\emph{LPD}$_1$ is the prequential one-step-ahead log predictive density, "
-         r"$\sum_t \log p(\pi_t\mid\pi_{1:t-1},x,N)$, integrated over the posterior. "
-         r"WAIC and PSIS-LOO are computed on the pointwise inflation log-likelihood. "
+         r"\emph{FF-LPD} is a one-step forward-filtered conditional log density, "
+         r"integrated over full-sample posterior draws; it is not prequential because "
+         r"those parameter draws have seen all observations. Heuristic WAIC and "
+         r"PSIS-LOO apply their usual transforms to these filtering densities and are "
+         r"not standard WAIC or LOO. "
          r"$\hat k$ is the maximum Pareto shape for the LOO importance weights; "
          r"$\hat k>0.7$ marks a cell where LOO is unreliable.}"),
         r"\label{tab:fit-comparison}", r"\small",
         r"\begin{tabular}{llccccc}", r"\toprule",
-        (r"Price & Model & Plug-in & LPD$_1$ & WAIC & PSIS-LOO & $\hat k$ \\"),
+        (r"Price & Model & Plug-in & FF-LPD & hWAIC & hPSIS-LOO & $\hat k$ \\"),
         r"\midrule",
     ]
     for price in PRICES:

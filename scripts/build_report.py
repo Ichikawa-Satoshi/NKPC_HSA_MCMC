@@ -48,7 +48,7 @@ STEPS: list[tuple[str, list[str], str, bool]] = [
     (
         "predictive_comparison.py",
         [],
-        "results/evidence/tables/predictive_comparison.csv (prequential LPD, WAIC, PSIS-LOO)",
+        "results/evidence/tables/predictive_comparison.csv (full-posterior forward-filter diagnostic)",
         True,
     ),
     (

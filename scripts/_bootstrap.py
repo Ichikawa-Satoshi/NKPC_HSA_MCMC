@@ -6,9 +6,11 @@ from pathlib import Path
 
 PROJECT_DIR_ENV = "NKPC_HSA_PROJECT_DIR"
 configured_project = os.environ.get(PROJECT_DIR_ENV, "").strip()
-if not configured_project:
-    raise RuntimeError(f"Required environment variable {PROJECT_DIR_ENV} is not set.")
-ROOT = Path(configured_project).expanduser().resolve()
+ROOT = (
+    Path(configured_project).expanduser().resolve()
+    if configured_project
+    else Path(__file__).resolve().parents[1]
+)
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))

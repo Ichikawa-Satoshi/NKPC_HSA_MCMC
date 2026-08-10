@@ -19,6 +19,7 @@ import pytest
 
 from nkpc_hsa.gibbs.common.joint_ffbs import sample_joint_competition_states_ffbs
 from nkpc_hsa.gibbs.hsa_full_pg.model import sample_states_joint_ffbs_gamma0
+from nkpc_hsa.gibbs.hsa_dynamic.model import _sample_states_joint_ffbs_fullSigma
 
 KAPPA_SCALE = 100.0
 
@@ -333,6 +334,124 @@ def test_const_theta_reduces_to_steady_when_theta_is_zero():
     )
     for a, b in zip(steady, const_theta):
         assert np.array_equal(a, b)
+
+
+def test_full_covariance_smoother_matches_dense_gaussian():
+    """The opt-in full-Sigma smoother must account for Cov(e_t, w_t).
+
+    This assembles the posterior precision directly from the correlated
+    (e,u,epsilon)|zeta innovation block.  It is independent of the Kalman and
+    backward recursions and catches use of the ordinary RTS backward kernel,
+    which is invalid when the same-time measurement and transition shocks are
+    correlated.
+    """
+    rng = np.random.default_rng(20260810)
+    T = 7
+    theta, rho1, rho2, drift = 0.37, 0.65, -0.18, -0.03
+    sigma_N2 = 0.04
+    m0 = np.array([0.15, -0.08, 0.3])
+    P0 = np.diag([0.8, 0.7, 0.9])
+    Sigma = np.array(
+        [
+            [0.20, 0.03, 0.04, -0.02],
+            [0.03, 0.30, 0.02, 0.01],
+            [0.04, 0.02, 0.15, 0.025],
+            [-0.02, 0.01, 0.025, 0.08],
+        ]
+    )
+    assert np.linalg.eigvalsh(Sigma).min() > 0
+    zeta = rng.normal(scale=0.25, size=T)
+    y_pi = rng.normal(scale=0.4, size=T)
+    N_obs = rng.normal(scale=0.5, size=T)
+    N_obs[[0, 2, 4, 6]] = np.nan
+
+    # Conditional moments of (e,u,epsilon) given zeta.
+    idx = [0, 2, 3]
+    B = Sigma[np.ix_(idx, [1])] / Sigma[1, 1]
+    cond_cov = Sigma[np.ix_(idx, idx)] - (
+        Sigma[np.ix_(idx, [1])] @ Sigma[np.ix_([1], idx)] / Sigma[1, 1]
+    )
+    cond_mean = zeta[:, None] @ B.T
+
+    dim = 1 + 2 * T
+    lag, hat, bar = 0, 1, 1 + T
+    precision = np.zeros((dim, dim))
+    rhs = np.zeros(dim)
+
+    def add(A, target, covariance):
+        nonlocal precision, rhs
+        inv_cov = np.linalg.inv(np.atleast_2d(covariance))
+        A = np.atleast_2d(A)
+        target = np.atleast_1d(target)
+        precision += A.T @ inv_cov @ A
+        rhs += A.T @ inv_cov @ target
+
+    for index, mean, variance in (
+        (hat, m0[0], P0[0, 0]),
+        (lag, m0[1], P0[1, 1]),
+        (bar, m0[2], P0[2, 2]),
+    ):
+        A = np.zeros(dim); A[index] = 1.0
+        add(A, mean, variance)
+
+    A0 = np.zeros(dim); A0[hat] = -theta
+    add(A0, y_pi[0] - cond_mean[0, 0], cond_cov[0, 0])
+    for t in range(1, T):
+        A = np.zeros((3, dim))
+        # Stack residuals as (e,u,epsilon): e = y_pi + theta*Nhat.
+        A[0, hat + t] = theta
+        A[1, hat + t] = 1.0
+        A[1, hat + t - 1] = -rho1
+        A[1, lag if t == 1 else hat + t - 2] = -rho2
+        A[2, bar + t] = 1.0
+        A[2, bar + t - 1] = -1.0
+        target = np.array(
+            [cond_mean[t, 0] - y_pi[t], cond_mean[t, 1], drift + cond_mean[t, 2]]
+        )
+        add(A, target, cond_cov)
+    for t, value in enumerate(N_obs):
+        if np.isfinite(value):
+            A = np.zeros(dim); A[hat + t] = 1.0; A[bar + t] = 1.0
+            add(A, value, sigma_N2)
+
+    analytic_cov = np.linalg.inv(precision)
+    analytic_mean = analytic_cov @ rhs
+
+    draws = 5000
+    hats = np.empty((draws, T)); bars = np.empty((draws, T))
+    draw_rng = np.random.default_rng(991)
+    zeros = np.zeros(T)
+    for i in range(draws):
+        bars[i], hats[i], _ = _sample_states_joint_ffbs_fullSigma(
+            N_obs=N_obs,
+            pi_t=y_pi,
+            pi_tm1=zeros,
+            pi_expect=zeros,
+            x_t=zeros,
+            zeta=zeta,
+            alpha=0.0,
+            kappa=0.0,
+            theta=theta,
+            rho1=rho1,
+            rho2=rho2,
+            n_drift=drift,
+            Sigma=Sigma,
+            sigma_N2=sigma_N2,
+            m0=m0,
+            P0=P0,
+            rng=draw_rng,
+        )
+
+    for empirical, indices, name in (
+        (hats, np.arange(hat, hat + T), "Nhat"),
+        (bars, np.arange(bar, bar + T), "Nbar"),
+    ):
+        expected_mean = analytic_mean[indices]
+        expected_sd = np.sqrt(np.diag(analytic_cov)[indices])
+        z = np.abs(empirical.mean(0) - expected_mean) / (expected_sd / np.sqrt(draws))
+        assert z.max() < 5.0, f"{name} mean off by {z.max():.2f} Monte Carlo se"
+        relative_sd = np.abs(empirical.std(0, ddof=1) - expected_sd) / expected_sd
+        assert relative_sd.max() < 0.08
 
 
 def test_missing_observations_drop_only_the_firm_count_row():

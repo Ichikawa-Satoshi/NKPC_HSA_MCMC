@@ -37,6 +37,38 @@ defaults:
     max_tries: 1000
     positive: []
     bounds: {}
+# SEC inverse-HHI extension: which cross-market aggregate of the SIC3
+# revenue-share HHIs is used as the competition series.  All four are built into
+# model_ready_sec_inverse_hhi.csv by scripts/15_build_extension_data.py; this
+# block selects which one an extension run grid uses.
+#
+# Within a market the HHI is always revenue-based.  These differ only in the
+# weight used to collapse ~250 markets into one number per quarter.  The
+# estimated equation is linear in N = (100 log N_raw - c)/10, so aggregating a
+# market-level kappa_m with expenditure weights implies the revenue-weighted
+# mean of log(1/HHI_m) -- revenue_log_weighted.  That is the recommended
+# headline; firm_weighted is what the August 2026 grid ran on and is kept so
+# those runs stay reproducible.
+sec_competition_variants:
+  default: firm_weighted
+  recommended: revenue_log_weighted
+  variants:
+    firm_weighted:
+      column: N_SEC_inverse_HHI
+      label: SEC inverse HHI, firm-count-weighted market mean
+      spec_suffix: ""
+    revenue_weighted:
+      column: N_SEC_inverse_HHI_revw
+      label: SEC inverse HHI, revenue-weighted market mean
+      spec_suffix: _revw
+    revenue_log_weighted:
+      column: N_SEC_inverse_HHI_logrevw
+      label: SEC inverse HHI, revenue-weighted geometric mean
+      spec_suffix: _logrevw
+    revenue_log_weighted_exfin:
+      column: N_SEC_inverse_HHI_logrevw_exfin
+      label: SEC inverse HHI, revenue-weighted geometric mean, excluding SIC 6000-6999
+      spec_suffix: _logrevw_exfin
 run_data_specs:
   - inv_markup
   - output_gap_bn
@@ -86,10 +118,10 @@ data_specs:
     label: Output gap BN, PPI
     pi_col: pi_ppi
     pi_prev_col: pi_ppi_prev
-    # The SPF does not publish a PPI expectation.  Keep the same external
-    # expectation series as in the CPI specifications so that CPI/PPI changes
-    # only the observed inflation measure.  The report treats this as a
-    # measurement comparison, not as a fully matched structural PPI equation.
+    # The Cleveland Fed series is a model-based one-year expected-inflation
+    # estimate, not an SPF forecast and not price-index-specific. Keep it here
+    # as a semi-structural comparison; relative to core CPI this also changes
+    # the inflation transform (simple percentage change versus log difference).
     pi_expect_col: Epi
     x_col: output_gap_BN
     x_prev_col: output_gap_BN_prev
@@ -127,9 +159,9 @@ data_specs:
     x_prev_col: unemp_gap_prev
     n_col: N_Gustavo
   unemployment_gap_core_establishment:
-    label: Unemployment gap, core CPI, quarterly establishment cycle
-    # BED births and deaths first overlap in 1993Q2. This experimental
-    # identification design deliberately uses the resulting 79-quarter window.
+    label: DEPRECATED legacy BED/HP direct-loading experiment
+    # Archived only; new work must use unemployment_gap_core_qcew_joint below.
+    # This legacy specification is excluded from every production run grid.
     sample_start: 1993-04-01
     sample_end: 2012-12-31
     pi_col: pi_cpi_core
@@ -142,6 +174,20 @@ data_specs:
     e_transform: log100_centered10
     e_cycle_filter: hp
     e_hp_lambda: 1600.0
+    establishment_model: legacy_hp_loading
+  unemployment_gap_core_qcew_joint:
+    label: Unemployment gap, core CPI, joint firm and QCEW establishment states
+    sample_start: 1982-01-01
+    sample_end: 2012-12-31
+    pi_col: pi_cpi_core
+    pi_prev_col: pi_cpi_core_prev
+    pi_expect_col: Epi
+    x_col: unemp_gap
+    x_prev_col: unemp_gap_prev
+    n_col: N_Gustavo
+    e_col: qcew_establishments
+    e_transform: log100_centered10
+    establishment_model: joint_state
   unemployment_gap_ppi:
     label: Unemployment gap, PPI
     pi_col: pi_ppi

@@ -152,7 +152,8 @@ $1-\alpha$ on lagged and expected inflation, we impose no structural
 cross-coefficient restrictions from the HSA theory and approximate $\kt$ as a
 \emph{linear} function of $\bar N_t$;
 \item we add backward-looking inertia ($\alpha$), which is absent from \eqref{eq:fm};
-\item expected inflation is an external survey measure (Section~\ref{sec:data});
+\item expected inflation is the Cleveland Fed's model-based one-year expected-inflation
+estimate (Section~\ref{sec:data}), not a direct survey forecast;
 \end{itemize}
 
 \section{Data}
@@ -163,11 +164,13 @@ are read from the selected run's metadata when the report is rebuilt; they are n
 maintained independently in the prose.
 
 \paragraph{Inflation.} We compare headline CPI, core CPI, and PPI. Expected inflation $\mathbb{E}\pi$ is
-the same external survey series in all specifications. Because the Survey of
-Professional Forecasters does not publish a PPI forecast, the PPI specifications use
-the same expectation series as CPI. The PPI estimates are therefore not a structural
+the same Cleveland Fed model-based one-year expected-inflation series in all
+specifications. It combines market and survey inputs but is not itself the Survey of
+Professional Forecasters. The PPI specifications use the same expectation series as
+CPI. The PPI estimates are therefore not a structural
 estimate matched through the expectation term, but a semi-structural external-validity
-check that changes only the observed inflation index. A measurement mismatch with the
+check that changes both the observed inflation index and, relative to core CPI, the
+inflation transformation (simple percentage change rather than log difference). A measurement mismatch with the
 expectation series also remains for core CPI.
 
 Headline CPI and PPI are simple four-quarter percentage changes; core CPI is a
@@ -175,8 +178,10 @@ four-quarter log difference. All three are sampled quarterly, so adjacent observ
 overlap in three of four quarters. Consequently the backward-looking coefficient
 $\alpha$ mixes genuine inertia with mechanical overlap, while the production likelihood
 treats the remaining inflation disturbance as serially independent. The companion
-\code{error\_robustness} implementation replaces it with an invertible MA(3), the order
-implied by this overlap. Its full production sweep is deliberately not folded into the
+\code{error\_robustness} implementation replaces it with an invertible MA(3), an order
+motivated by the three-quarter overlap. Overlap alone does not mechanically imply that
+the residual in this hybrid equation is MA(3); that requires an explicit aggregation
+model for the underlying quarterly disturbance. Its full production sweep is deliberately not folded into the
 headline tables until those runs have been completed; the current headline posterior is
 therefore the i.i.d.-disturbance specification throughout, not a mixture of the two.
 
@@ -765,36 +770,39 @@ Savage--Dickey Bayes factor for $\delta\neq 0$ (Table~\ref{tab:mc}).
 \emph{in-sample plug-in} score. It evaluates the inflation equation at posterior-mean
 parameters and states (bars denote posterior means),
 \begin{equation}
-\hat\pi_t=\bar\alpha\,\pi_{t-1}+(1-\bar\alpha)\,\mathbb{E}_t\pi_{t+1}+\bar\kt\,x_t,
+\hat\pi_t=\bar\alpha\,\pi_{t-1}+(1-\bar\alpha)\,\mathbb{E}_t\pi_{t+1}
++\bar\kt\,x_t+\bar\lambda\,(x_t-\bar\phi x_{t-1}),
 \qquad \bar\kt=\bar\kappa_0+\bar\delta\,\bar N_t
 \;\;(\text{CES: }\bar\kt=\bar\kappa),
 \end{equation}
 and scores the residuals $r_t=\pi_t-\hat\pi_t$ by a Gaussian log-likelihood at the
 posterior-mean shock variance,
 \begin{equation}
-S=-\frac{T}{2}\log\!\big(2\pi\bar\sigma_e^2\big)-\frac{1}{2\bar\sigma_e^2}\sum_{t=1}^{T}r_t^2 .
+S=-\frac{T}{2}\log\!\big(2\pi\bar\sigma_\eta^2\big)-\frac{1}{2\bar\sigma_\eta^2}\sum_{t=1}^{T}r_t^2 .
 \end{equation}
 This reuses the estimation sample and collapses the posterior to a point, so it is
 neither an out-of-sample forecast nor a posterior predictive density.
 
-We now report it \emph{alongside} three proper scores rather than in place of them:
-the prequential one-step-ahead log predictive density
-$\mathrm{LPD}_1=\sum_t\log p(\pi_t\mid\pi_{1:t-1},x,N)$, integrated over the posterior;
-WAIC; and PSIS-LOO. Keeping the plug-in score visible is the point of the table---it lets
-the reader see how much a crude criterion overstates the case:
+We report it alongside a forward-filtered conditional log density (FF-LPD), integrated
+over parameter draws from the full-sample posterior. This is a useful in-sample
+diagnostic, but it is not prequential: although each state filter excludes the current
+inflation observation before scoring it, the parameter draws have seen the full sample.
+The displayed heuristic WAIC and PSIS-LOO columns apply their usual transformations to
+those filtering densities. They are not standard WAIC or LOO, whose pointwise input is
+the likelihood used to fit the posterior, and therefore are not model-selection evidence:
 
 \input{../results/tables/annual_q4/fit_comparison.tex}
 
 For HSA steady against CES the plug-in score gives $\FitCorePluginDiff$ on core CPI where
-$\mathrm{LPD}_1$ gives $\FitCoreLpdDiff$ and WAIC and LOO give $\FitCoreWaicDiff$ and
+$\mathrm{FF\mbox{-}LPD}$ gives $\FitCoreLpdDiff$ and the heuristic WAIC and LOO transforms give $\FitCoreWaicDiff$ and
 $\FitCoreLooDiff$; on headline CPI
 it gives $\FitHeadlinePluginDiff$ against $\FitHeadlineLpdDiff$, $\FitHeadlineWaicDiff$
 and $\FitHeadlineLooDiff$. The plug-in score overstates the
 improvement by a factor of roughly $\FitPluginOverstateMin$ to $\FitPluginOverstateMax$
-against the prequential score, which is what one expects from a
+against the forward-filter diagnostic, which is what one expects from a
 criterion that rewards a model for the extra latent states it fitted to this same sample.
-The \emph{ordering} nevertheless survives: on both CPI indices the time-varying slope
-improves every score, on PPI no score meaningfully separates the models (LPD$_1$
+The numerical ordering survives within these diagnostics: on both CPI indices the time-varying slope
+improves every column, while on PPI no column meaningfully separates the models (FF-LPD
 $\FitPPILpdDiff$, WAIC $\FitPPIWaicDiff$,
 LOO $\FitPPILooDiff$), and HSA dynamic---the entry channel without a time-varying slope---never
 beats HSA steady. Two caveats. First, the LOO column is unreliable wherever the maximum Pareto
@@ -803,12 +811,10 @@ $\hat k$ exceeds $0.7$, which is \FitLooFlaggedCount{} of the \FitLooCellCount{}
 That includes the CES baseline for the core-CPI comparison, so the $\FitCoreLooDiff$ LOO difference
 quoted above rests on one number that PSIS itself flags; the WAIC difference of
 $\FitCoreWaicDiff$,
-which does not depend on importance sampling, is the more trustworthy of the two, and it
-agrees. The PPI cells should simply not be read off the LOO column. Second, all four
-scores are computed on the estimation sample---LPD$_1$ is prequential in the sense that
-each $\pi_t$ is scored against a predictive density formed without $\pi_t$, but the
-parameters were estimated on the full sample---so none of this is a genuine
-out-of-sample exercise.
+which does not depend on importance sampling, is numerically more stable than the LOO
+transform but remains nonstandard here. The PPI cells should simply not be read off the
+LOO column. None of these columns is a genuine out-of-sample exercise, and the ordering
+must not be promoted to a predictive or marginal-likelihood conclusion.
 
 \paragraph{Bayes factor (Savage--Dickey), stated precisely.} We test $\delta=0$
 \emph{within the HSA state model}: $M_1$ is HSA steady with $\delta$ free and
@@ -1222,8 +1228,8 @@ subsample estimation of the corrected revision is done, we do not include pre-20
 post-1988 numbers in the conclusions.
 
 \paragraph{Error structure (pending).} A fourth robustness question is whether the
-conclusion survives replacing the i.i.d. inflation disturbance with the invertible MA(3)
-implied by overlapping four-quarter inflation. The companion implementation has
+conclusion survives replacing the i.i.d. inflation disturbance with an invertible MA(3)
+motivated by overlapping four-quarter inflation. The companion implementation has
 smoke-tested cells but not yet the full production run-set, so it is not evidence used
 in the conclusions or headline tables.
 
@@ -1315,8 +1321,8 @@ structural-break dummies, and placebo interactions.
 PPI forecast series (e.g.\ the Livingston Survey) so the expectation term matches the
 price index.
 \item \textbf{Genuinely out-of-sample evaluation.} Table~\ref{tab:fit-comparison} now
-reports prequential LPD$_1$, WAIC and PSIS-LOO next to the plug-in score, but all four
-are computed on the estimation sample. A rolling out-of-sample exercise---re-estimating
+reports a full-posterior FF-LPD and heuristic WAIC/PSIS-LOO transforms next to the
+plug-in score, but none is a genuine prequential criterion. A rolling out-of-sample exercise---re-estimating
 on an expanding window and scoring only genuinely future quarters---remains open, and
 would be the only way to settle whether the time-varying slope forecasts better or merely
 fits better. The PPI and HSA-full cells additionally have maximum Pareto $\hat k>0.7$, so

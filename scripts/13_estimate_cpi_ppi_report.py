@@ -130,6 +130,21 @@ def _estimate_one(job: dict[str, object]) -> tuple[tuple[str, str, str], float, 
     return (model, data_spec_name, prior), time.perf_counter() - started, run_id
 
 
+def _filter_keys(
+    keys: list[tuple[str, str, str]],
+    models: list[str] | None,
+    specs: list[str] | None,
+    priors: list[str] | None,
+) -> list[tuple[str, str, str]]:
+    """Narrow the required cell set. No filter means the full grid, as before."""
+    selected = keys
+    for index, wanted in enumerate((models, specs, priors)):
+        if wanted:
+            allowed = set(wanted)
+            selected = [key for key in selected if key[index] in allowed]
+    return selected
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Estimate every current-revision run required by the CPI/PPI report.")
     parser.add_argument("--config", type=Path, default=ROOT / "configs" / "models.yaml")
@@ -143,9 +158,14 @@ def main() -> None:
     parser.add_argument("--no-build", action="store_true", help="Estimate only; skip the report build.")
     parser.add_argument("--compile", action="store_true", help="Also run xelatex after building the report.")
     parser.add_argument("--quick", action="store_true", help="Run 80 iterations per cell for pipeline testing only.")
+    # Cell filters. The report needs the whole grid, but a pipeline smoke test
+    # needs a handful of cells, so allow the required set to be narrowed.
+    parser.add_argument("--only-models", nargs="+", help="Restrict to these models.")
+    parser.add_argument("--only-specs", nargs="+", help="Restrict to these data specs.")
+    parser.add_argument("--only-priors", nargs="+", help="Restrict to these priors.")
     parser.add_argument(
         "--competition-frequency",
-        choices=["quarterly_interpolated", "annual_q4"],
+        choices=["quarterly_interpolated", "quarterly_observed", "annual_q4"],
         default=None,
         help="Observation design. Defaults to configs/models.yaml "
              "defaults.competition_measurement.frequency.",
@@ -163,7 +183,10 @@ def main() -> None:
         args.competition_frequency = str(
             (defaults.get("competition_measurement", {}) or {}).get("frequency", "annual_q4")
         )
-    required = report_run_keys() if args.competition_frequency == "quarterly_interpolated" else annual_q4_run_keys()
+    required = annual_q4_run_keys() if args.competition_frequency == "annual_q4" else report_run_keys()
+    required = _filter_keys(required, args.only_models, args.only_specs, args.only_priors)
+    if not required:
+        raise SystemExit("No cells match the --only-* filters.")
     data = pd.read_csv(args.data, parse_dates=["DATE"]).set_index("DATE")
     expected_samples = {
         name: _sample_signature(data, _resolved_data_spec(config, name))
