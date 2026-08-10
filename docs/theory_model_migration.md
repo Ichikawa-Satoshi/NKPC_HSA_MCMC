@@ -205,6 +205,11 @@ kernel for the exact linearly truncated Gaussian conditional. This replaces an
 independent rejection loop that can fail when whole-path positivity has low
 conditional probability. One unconstrained probe per iteration is retained
 only as an admissibility-pressure diagnostic; it does not enter the posterior.
+The annual-Q4 production configuration gives the slow moving-reference models
+longer, four-chain runs based on the failed 12,000-iteration pilot ESS, while F0
+retains its shorter converged configuration. Independent model/spec runs are
+executed as separate subprocesses with bounded parallelism; diagnostics and the
+PDF build remain strictly downstream of successful completion of every run.
 
 ## 11. Provenance and stale-artifact validation
 

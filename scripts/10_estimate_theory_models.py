@@ -37,14 +37,16 @@ def main() -> None:
     if args.competition_frequency:
         measurement["frequency"] = args.competition_frequency
 
-    n_iter = 80 if args.quick else int(defaults.get("n_iter", 12000))
-    burn = 40 if args.quick else int(defaults.get("burn", 4000))
-    thin = 2 if args.quick else int(defaults.get("thin", 5))
-    chains = 2 if args.quick else int(defaults.get("chains", 2))
+    sampling_by_model = dict(theory_defaults.get("sampling_by_model", {}) or {})
     for spec_name, spec in specs.items():
         allowed = set(spec.get("models", models) or models)
         models_for_spec = [model for model in models if model in allowed]
         for model in models_for_spec:
+            sampling = dict(sampling_by_model.get(model, {}) or {})
+            n_iter = 80 if args.quick else int(sampling.get("n_iter", defaults.get("n_iter", 12000)))
+            burn = 40 if args.quick else int(sampling.get("burn", defaults.get("burn", 4000)))
+            thin = 2 if args.quick else int(sampling.get("thin", defaults.get("thin", 5)))
+            chains = 2 if args.quick else int(sampling.get("chains", defaults.get("chains", 2)))
             print(f"Estimating {model} [{spec_name}]...")
             run_model(
                 model,

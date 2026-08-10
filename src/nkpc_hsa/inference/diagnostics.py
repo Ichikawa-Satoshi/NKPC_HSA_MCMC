@@ -79,6 +79,12 @@ def _scalarized_diagnostic_idata(idata, params: Iterable[str]):
             continue
         values = np.asarray(posterior[name], dtype=float)
         if values.ndim == 2:
+            finite = values[np.isfinite(values)]
+            if finite.size and float(np.ptp(finite)) <= 1e-14:
+                # Fixed/derived constants (for example fixed zeta0 and mu0) do
+                # not have a Monte Carlo convergence problem. ArviZ may report
+                # an artificial ESS near the chain count for zero variance.
+                continue
             scalar_draws[name] = values
             continue
         if values.ndim < 2:

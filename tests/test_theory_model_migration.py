@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+import arviz as az
 from pathlib import Path
 
+from nkpc_hsa.config import load_model_config
 from nkpc_hsa.gibbs.hsa_full.model import _sample_beta_gaussian_linear_constraints
+from nkpc_hsa.inference.diagnostics import compute_diagnostics
+from nkpc_hsa.inference.wrappers import _extract_draws_from_result
 from nkpc_hsa.models.common import KAPPA_SCALE
 from nkpc_hsa.provenance import StaleArtifactError, stamp_artifact_metadata, validate_artifact_metadata
 from nkpc_hsa.theory_models import (
@@ -72,6 +76,28 @@ def test_truncated_gaussian_coefficient_update_preserves_path_positivity() -> No
     draws_array = np.asarray(draws)
     assert np.all(draws_array @ constraints.T >= -1e-10)
     assert np.std(draws_array[:, 0]) > 0.01
+
+
+def test_fixed_theory_constants_and_non_applicable_pg_fields_do_not_fail_diagnostics() -> None:
+    idata = az.from_dict(
+        {"posterior": {"mu0": np.full((2, 100), 1.2), "alpha": np.arange(200).reshape(2, 100)}}
+    )
+    summary = compute_diagnostics(idata)
+    assert "mu0" not in set(summary["parameter"])
+    extracted = _extract_draws_from_result(
+        {"pg_diagnostics": {"n_particles": 0, "ess_mean": np.full(20, np.nan)}}
+    )
+    assert "pg_ess_mean" not in extracted
+
+
+def test_production_sampling_expands_slow_moving_reference_chains() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = load_model_config(root / "configs" / "models.yaml")
+    sampling = config["theory_defaults"]["sampling_by_model"]
+    assert sampling["hsa_f0"]["n_iter"] == 12000
+    assert sampling["hsa_u"]["n_iter"] >= 120000
+    assert sampling["hsa_r1"]["chains"] >= 4
+    assert sampling["hsa_r2"]["chains"] >= 4
 
 
 def test_restricted_gap_proxy_needs_explicit_bx() -> None:

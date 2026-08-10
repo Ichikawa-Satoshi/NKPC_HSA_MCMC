@@ -250,6 +250,17 @@ theory_defaults:
   zeta0: 6.0
   N0_anchor: geometric_mean_over_estimation_sample
   require_path_positivity: true
+  # Annual-Q4 moving-reference states mix much more slowly than F0. The pilot
+  # production run at 12,000 iterations produced minimum bulk ESS of 18--69 for
+  # the latent-state/AR(2) block, so those results remain historical-incomplete.
+  # These settings target at least 25x the retained Markov transitions while
+  # thinning path storage to keep each NetCDF artifact manageable.
+  sampling_by_model:
+    hsa_f0: {n_iter: 12000, burn: 4000, thin: 5, chains: 2}
+    hsa_u: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
+    hsa_r1: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
+    hsa_r2: {n_iter: 120000, burn: 20000, thin: 20, chains: 4}
+    hsa_r3: {n_iter: 36000, burn: 8000, thin: 10, chains: 2}
   # Restricted models are deliberately limited to the quarterly observation
   # until a four-quarter aggregation likelihood is implemented. The legacy YoY
   # regression never receives the quarterly identity directly.

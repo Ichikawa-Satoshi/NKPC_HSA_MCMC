@@ -440,7 +440,7 @@ def _extract_draws_from_result(result: Mapping[str, Any]) -> dict[str, np.ndarra
                 if diagnostic_key == "n_particles":
                     continue
                 diagnostic_array = np.asarray(diagnostic_value, dtype=float)
-                if diagnostic_array.ndim > 0:
+                if diagnostic_array.ndim > 0 and np.any(np.isfinite(diagnostic_array)):
                     draws[f"pg_{diagnostic_key}"] = diagnostic_array
             continue
         if isinstance(value, Mapping) and "draws" in value:

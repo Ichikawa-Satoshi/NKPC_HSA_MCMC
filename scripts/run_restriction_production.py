@@ -9,9 +9,12 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from _bootstrap import DATA_DIR, ROOT
+from nkpc_hsa.config import configured_theory_data_specs, load_model_config
+from nkpc_hsa.theory_models import THEORY_MODELS
 
 
 def _run(script: str, args: list[str]) -> None:
@@ -46,20 +49,41 @@ def main() -> None:
         default="annual_q4",
     )
     parser.add_argument("--rebuild-data", action="store_true")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Independent model/spec subprocesses to run concurrently.",
+    )
     args = parser.parse_args()
+    if args.workers <= 0:
+        raise SystemExit("--workers must be positive")
 
     _require_clean_revision()
     if args.rebuild_data:
         _run("01_build_data.py", [])
-    _run(
-        "10_estimate_theory_models.py",
-        [
-            "--config", args.config,
-            "--priors", args.priors,
-            "--data", args.data,
-            "--competition-frequency", args.competition_frequency,
-        ],
-    )
+    config = load_model_config(args.config)
+    models = list(config.get("theory_models", THEORY_MODELS))
+    tasks: list[list[str]] = []
+    for spec_name, spec in configured_theory_data_specs(config).items():
+        allowed = set(spec.get("models", models) or models)
+        for model in models:
+            if model not in allowed:
+                continue
+            tasks.append(
+                [
+                    "--config", args.config,
+                    "--priors", args.priors,
+                    "--data", args.data,
+                    "--competition-frequency", args.competition_frequency,
+                    "--data-spec", spec_name,
+                    "--model", model,
+                ]
+            )
+    with ThreadPoolExecutor(max_workers=min(args.workers, len(tasks))) as executor:
+        futures = [executor.submit(_run, "10_estimate_theory_models.py", task) for task in tasks]
+        for future in futures:
+            future.result()
     _run("11_run_theory_diagnostics.py", [])
     _run("build_restriction_report.py", [])
 
