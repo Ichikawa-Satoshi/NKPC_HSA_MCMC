@@ -405,6 +405,7 @@ def build_theory_report_inputs(
     generated_figures = [path for path in generated_figures if path is not None]
     design.write_text(
         "\\section{Current research design: fixed and moving local references}\n"
+        "\\mbox{}\\par\\vspace{-0.7\\baselineskip}\n"
         "The current specification starts from the quarterly, fixed-reference local Rotemberg--HSA equation. "
         "F0 is its fixed-$N_0$ empirical benchmark. U, R1, R2, and R3 add a slow-moving local reference; "
         "this moving-reference step is a semi-structural approximation and is not Eq. 21 itself.\n\n"
@@ -426,7 +427,8 @@ def build_theory_report_inputs(
             else "\\par\\medskip\\noindent\\input{../results/tables/theory/posterior_results.tex}\n"
         )
         +
-        "\\subsection{Local-model admissibility diagnostics}\n"
+        "\\par\\medskip\\subsection{Local-model admissibility diagnostics}\n"
+        "\\mbox{}\\par\\vspace{-0.7\\baselineskip}\n"
         "The Gaussian probe column reports how often an unconstrained conditional coefficient draw would violate the imposed admissible region; it does not enter the posterior. High probe pressure is reported as a diagnostic that the local linear approximation or posterior geometry deserves review. State rejection is the share of proposed latent paths rejected by whole-path positivity.\\par\\medskip\n"
         "\\noindent\\input{../results/tables/theory/admissibility_diagnostics.tex}\n"
         +
