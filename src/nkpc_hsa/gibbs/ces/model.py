@@ -114,6 +114,8 @@ def func_nkpc_ces(
     seed = _getd(opts, "seed", None)
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = _getd(opts, "progress_callback", None)
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
     # Reduced-run support for Chib's marginal likelihood: pin named blocks and
@@ -232,6 +234,9 @@ def func_nkpc_ces(
             sigma_zeta2_draws[store_idx] = sigma_zeta2
             rho_draws[store_idx] = rho_corr
             store_idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
         if verbose and it % 5000 == 0:
             print(f"Iter {it}/{total_iter}: alpha={alpha:.3f}, kappa={kappa:.3f}")

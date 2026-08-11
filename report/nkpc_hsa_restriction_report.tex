@@ -5,8 +5,12 @@
 \usepackage{booktabs}
 \usepackage{caption}
 \usepackage{float}
+\usepackage{tabularx}
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
+\usepackage{etoolbox}
+% Start every top-level section on a new page, as the historical report does.
+\pretocmd{\section}{\clearpage}{}{}
 
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\kt}{\kappa_t}
@@ -20,74 +24,593 @@
 \date{Automatically built from provenance-validated production runs}
 
 \begin{document}
+% Every quantitative claim in the body text is one of these macros. Numbers are
+% not typed into the prose by hand -- see
+% src/nkpc_hsa/reporting/theory_evidence.py::write_result_macros.
+\IfFileExists{../results/tables/theory/theory_macros.tex}{%
+  \input{../results/tables/theory/theory_macros.tex}}{}
+% Fallbacks come after the generated file: \providecommand does not overwrite an
+% existing definition, so a "??" placed first would silently win.
+\providecommand{\TheorySampleStart}{??}
+\providecommand{\TheorySampleEnd}{??}
+\providecommand{\TheoryObservationCount}{??}
+\providecommand{\TheoryZetaZero}{??}
+\providecommand{\TheoryMuZero}{??}
+\providecommand{\TheoryMarginalCostLoading}{??}
+\providecommand{\TheoryNZeroAnchor}{??}
+\providecommand{\TheoryPriorSpec}{??}
+\providecommand{\TheoryCodeRevision}{??}
+\providecommand{\TheoryFZeroKappaZero}{??}
+\providecommand{\TheoryFZeroThetaZero}{??}
+\providecommand{\TheoryFZeroRmse}{??}
+\providecommand{\TheoryFZeroConditionalDIC}{??}
+\providecommand{\TheoryFZeroFreeCoefficients}{??}
+\providecommand{\TheoryUKappaZero}{??}
+\providecommand{\TheoryUKappaN}{??}
+\providecommand{\TheoryUKappaNLo}{??}
+\providecommand{\TheoryUKappaNHi}{??}
+\providecommand{\TheoryUThetaZero}{??}
+\providecommand{\TheoryUGamma}{??}
+\providecommand{\TheoryUGammaLo}{??}
+\providecommand{\TheoryUGammaHi}{??}
+\providecommand{\TheoryURestrictionValue}{??}
+\providecommand{\TheoryUGapMean}{??}
+\providecommand{\TheoryUGapLo}{??}
+\providecommand{\TheoryUGapHi}{??}
+\providecommand{\TheoryUProbGapPositive}{??}
+\providecommand{\TheoryUImpliedZetaMedian}{??}
+\providecommand{\TheoryUProbZetaAboveOne}{??}
+\providecommand{\TheoryUStateRejectPercent}{??}
+\providecommand{\TheoryUProbePercent}{??}
+\providecommand{\TheoryURmse}{??}
+\providecommand{\TheoryUConditionalDIC}{??}
+\providecommand{\TheoryUFreeCoefficients}{??}
+\providecommand{\TheoryROneKappaN}{??}
+\providecommand{\TheoryROneKappaNLo}{??}
+\providecommand{\TheoryROneKappaNHi}{??}
+\providecommand{\TheoryROneDKappaDLogN}{??}
+\providecommand{\TheoryROneThetaZero}{??}
+\providecommand{\TheoryROneGamma}{??}
+\providecommand{\TheoryROneRmse}{??}
+\providecommand{\TheoryROneConditionalDIC}{??}
+\providecommand{\TheoryROneFreeCoefficients}{??}
+\providecommand{\TheoryROneStateRejectPercent}{??}
+\providecommand{\TheoryROneProbePercent}{??}
+\providecommand{\TheoryRTwoKappaN}{??}
+\providecommand{\TheoryRTwoThetaZero}{??}
+\providecommand{\TheoryRTwoGamma}{??}
+\providecommand{\TheoryRTwoGammaLo}{??}
+\providecommand{\TheoryRTwoGammaHi}{??}
+\providecommand{\TheoryRTwoConditionalDIC}{??}
+\providecommand{\TheoryRThreeKappaN}{??}
+\providecommand{\TheoryRThreeKappaNLo}{??}
+\providecommand{\TheoryRThreeKappaNHi}{??}
+\providecommand{\TheoryRThreeThetaZero}{??}
+\providecommand{\TheoryRThreeConditionalDIC}{??}
+\providecommand{\TheoryWorstScalarESS}{??}
+\providecommand{\TheoryWorstScalarRhat}{??}
+\providecommand{\TheoryWorstPathESS}{??}
+\providecommand{\TheoryWorstPathRhat}{??}
+
 \maketitle
 
 \begin{abstract}
-This restriction-version report is separate from
-\code{nkpc\_hsa\_report.pdf}, which remains the historical reduced-form and
-ablation report. The present document compares a fixed-reference local
-Rotemberg--HSA benchmark (F0) with an unrestricted moving-reference model (U),
-the local HSA cross-restricted model (R1), its weak Third-law extension (R2),
-and a constant-pass-through local benchmark (R3). Every numerical table and
-figure is generated only from the signed theory-run namespace. Historical
+This restriction-version report is separate from \code{nkpc\_hsa\_report.pdf},
+which remains the historical reduced-form and ablation report. The present
+document asks one question: does the local Rotemberg--HSA cross-equation
+restriction survive contact with the data? It compares a fixed-reference local
+benchmark (F0) with an unrestricted moving-reference model (U), the
+cross-restricted model (R1), its weak Third-law extension (R2), and a
+constant-pass-through benchmark (R3), on \TheoryObservationCount{} quarters from
+\TheorySampleStart{} to \TheorySampleEnd. Every numerical table, figure and
+in-text number is generated from the signed theory-run namespace; historical
 artifacts are never substituted for a missing current run.
 \end{abstract}
 
 \tableofcontents
 
-\clearpage
-\section{Research question and evidence ladder}
-The empirical design separates four logically different objects: fixed-reference
-theory identities, maintained HSA laws, domain and local-model admissibility,
-and the moving-reference approximation. The evidence ladder is
+% ===========================================================================
+\section{Why we estimate this equation: the local Rotemberg--HSA Phillips curve}
+
+\subsection{The HSA Phillips curve}
+The mechanism under test is that the slope of the Phillips curve depends on how
+many firms compete. In a Rotemberg economy with a CES demand structure, the
+slope of the inflation equation with respect to real marginal cost is governed
+by the demand elasticity $\zeta$ and the adjustment-cost parameter $\chi$,
+through $\kappa=(\zeta-1)/\chi$. The HSA extension makes $\zeta$ itself a
+function of the number of competitors $N$: entry raises the elasticity each
+firm faces, so a market with more firms passes cost shocks into prices faster.
+Falling firm counts then flatten the Phillips curve, which is the empirical
+regularity this project was built to assess.
+
+Three statements are logically distinct, and this report keeps them apart
+throughout. The \emph{Second law} says that competition raises pass-through:
+$\theta_0>0$ and $\kappa_N>0$. The \emph{weak Third law} says that the entry
+channel itself weakens as the reference level of competition rises:
+$\gamma\le0$. The \emph{cross-equation restriction} says something stronger
+than either --- that the same structural object governs both channels, so the
+slope response and the entry coefficient are not free to move independently.
+
+\subsection{Two ways competition enters}
+The estimating equation lets competition act through two separate objects, and
+the distinction is what makes a cross-equation restriction meaningful at all.
+
+The \emph{reference level} $\Nbar_t$ is a slow-moving local anchor: the level of
+competition around which the firm's problem is linearised. It shifts the
+coefficients themselves, $\kt=\kappa_0+\kappa_N\Nbar_t$ and
+$\theta_t=\theta_0+\gamma\Nbar_t$. The \emph{cycle} $\Nhat_t$ is the deviation
+of observed competition from that anchor, and it enters the inflation equation
+directly as a regressor with coefficient $\theta_t$.
+
+F0 shuts the first channel off. It fixes the reference at a single $N_0$, so
+$\kt=\kappa_0$ for every period and only the cycle matters. Everything the
+restricted models say about $\kappa_N$ is therefore invisible in F0, which is
+why F0 is a benchmark and not a nested special case.
+
+\subsection{From theory to the estimating equation}
+With $\Nbar$ measured in ten log points from the anchor
+($\Nbar=10(\log N-\log N_0)$, anchor $N_0=\TheoryNZeroAnchor$ in the raw units
+of the competition series) and inflation in percentage points, the quarterly
+structural identity $d\kappa/d\log N=\zeta\Theta$ maps into the stored
+empirical coefficients as
 \[
-\text{fixed-reference theory}\to F0\to
-\text{moving reference}\to U\to R1\to R2,
-\qquad R3=R1+\{\gamma=0\}.
+  \frac{d\kappa}{d\log N}=10\,\kappa_N,
+  \qquad
+  100\,\kappa_N=b_x\,\zeta_0\,\theta_0 .
 \]
-F0 is not nested in U/R1/R2/R3. Within the moving-reference family,
-$U\supset R1\supset R2$. R3 is an equality-restricted local benchmark and is
-not described as a full Co-PaTh model.
+The second equality is the cross-equation restriction. It is imposed with
+$\zeta_0=\TheoryZetaZero$ held fixed (implying a flexible-price markup
+$\mu_0=\TheoryMuZero$) and an explicitly configured marginal-cost loading
+$b_x=\TheoryMarginalCostLoading$. The loading is never defaulted to one: a
+regression on an activity \emph{gap} would need its own $b_x$, and the code
+refuses to impose the identity without one.
 
-% Generated by scripts/19_build_theory_report.py. The generator fails on stale,
-% dirty-code, under-iterated, non-converged, or definition-mismatched runs.
-\clearpage
-\IfFileExists{../results/tables/theory/current_design.tex}{%
-  \input{../results/tables/theory/current_design.tex}
-}{%
-  \section{Current production results unavailable}
-  Run \code{python scripts/run\_restriction\_production.py} from a clean,
-  committed revision. The builder will not use historical results as a fallback.
-}
+\subsection{Distance from the theory}
+The moving reference is where this report departs from Eq.~21 of the underlying
+theory. The theory is a fixed-reference local approximation; letting $\Nbar_t$
+drift is a semi-structural device that keeps the local approximation near the
+data as competition trends over three decades. The taxonomy below states, for
+each object in the model, whether it is a theory identity, a maintained law, a
+domain condition, an empirical approximation, or something deliberately left
+free.
 
-\clearpage
-\section{Interpretation of nested comparisons}
-The $U\rightarrow R1$ comparison isolates tension with the local HSA
-cross-equation restriction. The $R1\rightarrow R2$ comparison isolates tension
-with the weak Third law, while $R1\rightarrow R3$ assesses whether locally
-constant pass-through is too restrictive. A restriction is not presumed to
-improve fit. Posterior geometry, convergence, admissibility rejection, and fit
-must be read together.
+\par\medskip
+\input{../results/tables/theory/restriction_taxonomy.tex}
 
-\clearpage
-\section{Observation-design discipline}
-Quarterly structural frequency is fixed in every run. Q/Q and four-quarter YoY
-are alternative observation designs and are never stacked in one likelihood.
-The current direct YoY regression is available only as an F0/U comparison; R1--R3
-remain Q/Q-only until a likelihood that aggregates four quarterly structural
-equations is implemented. Thus the quarterly restriction
-$100\kappa_N=b_x\zeta_0\theta_0$ is never imposed directly on a reduced-form
-four-quarter coefficient.
+\par\medskip\noindent
+Two identities of the fixed-reference theory --- $\kappa_0=(\zeta_0-1)/\chi$
+and $\theta_0=(10/\chi)(1-\rho_0)/\rho_0$ --- are deliberately \emph{not}
+imposed. Imposing them would pin $\chi$ from the level of the slope, and the
+level of the slope is exactly the quantity the moving-reference approximation is
+least entitled to. A model that imposes them is future work (R4), not a
+variant estimated here.
 
-\clearpage
-\section{Reproducibility and stale-artifact policy}
-The run manifest records code revision, model definition and hierarchy, exact
-restrictions, maintained laws, admissibility conditions, inflation and
-expectation transformations, activity and competition proxies, $N_0$,
-$\zeta_0/\mu_0$ treatment, sample, sampler, chains, seeds, and convergence.
-The report build fails if a comparison would mix incompatible revisions,
-samples, transformations, observation designs, proxies, priors, or model
-definitions. The historical report and its result directory are not scanned by
-this builder.
+% ===========================================================================
+\section{Data}
+Every run in this report uses one data cell, so that a difference between two
+rows of any table is a difference in restrictions and never in data. The cell
+pairs quarterly CPI inflation with a Beveridge--Nelson inverse-markup gap as the
+real marginal cost proxy, and an annual firm count observed in Q4.
+
+\par\medskip
+\input{../results/tables/theory/data_summary.tex}
+
+\par\medskip\noindent
+Two features of the competition series matter for what follows. It is observed
+annually while the model is quarterly, so \TheoryObservationCount{} quarters
+carry roughly one competition observation in four; the state-space treatment
+below handles the missing quarters as missing, not as interpolated data. And the
+series trends: the moving reference in Figure~\ref{fig:decomposition} travels
+several ten-log-point units over the sample, which is precisely the range over
+which a \emph{local} linear approximation has to be defended rather than
+assumed.
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/data_series.png}{%
+  \includegraphics[width=0.80\linewidth]{data_series.png}}{\textit{Data figure pending.}}
+\caption{The observed series behind every restriction run.}
+\end{figure}
+
+% ===========================================================================
+\section{Econometric model and estimation}
+
+\subsection{Model variants}
+Five models are estimated. Within the moving-reference family the nesting is
+$U\supset R1\supset R2$, and R3 is $R1+\{\gamma=0\}$. F0 is not nested in that
+family, because its reference is fixed rather than restricted.
+
+\par\medskip
+\input{../results/tables/theory/model_hierarchy.tex}
+
+\subsection{The inflation equation actually estimated}
+Write $y_t=\pi_t-E_t\pi_{t+1}$ and $a_t=\pi_{t-1}-E_t\pi_{t+1}$. The equation
+carried to the data is
+\[
+  y_t=\alpha\,a_t
+      +\underbrace{(\kappa_0+\kappa_N\Nbar_t)}_{\kt}\,x_t
+      -\underbrace{(\theta_0+\gamma\Nbar_t)}_{\theta_t}\,\Nhat_t
+      +\lambda\,\zeta_t+\eta_t,
+  \qquad \zeta_t=x_t-\phi_1x_{t-1},
+\]
+with $\eta_t\sim N(0,\sigma_\eta^2)$. The term $\lambda\zeta_t$ carries the
+correlation between the inflation disturbance and the activity innovation, so
+$\sigma_\eta^2$ is the conditional variance and $\sigma_e^2=\lambda^2
+\sigma_\zeta^2+\sigma_\eta^2$ the total.
+
+Under the cross-equation restriction the two competition regressors collapse
+into one. Substituting $\kappa_N=b_x\zeta_0\theta_0/100$,
+\[
+  \kappa_N\,x_t\Nbar_t-\theta_0\Nhat_t
+  =\theta_0\Big[\tfrac{b_x\zeta_0}{100}\,x_t\Nbar_t-\Nhat_t\Big],
+\]
+so R1--R3 sample one fewer coefficient than U and $\kappa_N$ is \emph{derived}
+rather than drawn. This is the sense in which the restriction is exact rather
+than a shrinkage prior: it removes a dimension from the coefficient block.
+
+\subsection{State-space representation}
+F0 and the moving-reference family use genuinely different state systems.
+
+F0 carries a single competition deviation $q_t$ around the fixed anchor, with an
+AR(2) transition and a measurement equation that is active only in the quarters
+where the annual series is observed. Its state vector is $(q_t,q_{t-1})$; there
+is no $\Nbar$ state to move.
+
+U, R1, R2 and R3 carry both a random-walk-with-drift reference $\Nbar_t$ and an
+AR(2) cycle $\Nhat_t$, observed jointly through
+$N^{obs}_t=\Nhat_t+\Nbar_t+\nu_t$ with $\nu_t\sim N(0,\sigma_N^2)$. Because the
+reference multiplies the coefficients, the observation equation is bilinear in
+the states whenever $\kappa_N\neq0$ or $\gamma\neq0$ --- which is why the state
+update is not a plain FFBS for those models.
+
+\subsection{Priors}
+All five models are estimated under one prior specification,
+\code{\TheoryPriorSpec}. Coefficient priors are stated in physical units and
+converted internally; variance priors for the $N$ block are in squared
+ten-log-point units, matched to the scale of the transformed competition series.
+
+\par\medskip
+\input{../results/tables/theory/baseline_priors.tex}
+
+\par\medskip\noindent
+One asymmetry deserves to be stated before any table is read. In U, $\kappa_N$
+carries its own prior. In R1--R3 it has none, because it is a deterministic
+function of $\theta_0$; its prior is whatever the $\theta_0$ prior induces
+through $\kappa_N=b_x\zeta_0\theta_0/100$. A difference between U's and R1's
+posterior for $\kappa_N$ is therefore partly a difference in priors, and
+Appendix~\ref{app:priorpost} shows exactly how much.
+
+\subsection{The coefficient block: a truncated-Gaussian coordinate Gibbs}
+The maintained laws and the domain conditions are hard constraints, not soft
+penalties: $\kappa_0>0$, $\theta_0>0$, $\gamma\le0$ in R2, and --- when path
+positivity is required --- $\kt>0$ and $\theta_t>0$ in \emph{every} period. All
+of these are linear in the coefficient vector, so the conditional posterior is a
+Gaussian truncated to a polyhedron $A\beta\ge\ell$.
+
+Because $\kt$ and $\theta_t$ are affine in $\Nbar_t$, requiring positivity at
+the smallest and largest observed $\Nbar$ is equivalent to requiring it at every
+date, and the constraint matrix needs only those two rows per path. The block is
+then updated with a coordinate Gibbs sweep that is invariant for the exact
+truncated conditional. Independent rejection sampling was abandoned here for a
+reason visible in the diagnostics: the probe column of
+Table~\ref{tab:admissibility} shows that a majority of unconstrained draws would
+fall outside the admissible region, so a rejection sampler would stall.
+
+\subsection{The state update: particle Gibbs and the $\gamma=0$ joint FFBS}
+For U, R1 and R2 the bilinear observation equation rules out an exact FFBS, and
+the latent paths are updated by a conditional bootstrap particle Gibbs sweep.
+For R3, $\gamma=0$ makes the joint state linear-Gaussian again, so R3 uses an
+exact joint FFBS instead; F0 uses an exact FFBS on its own two-state system.
+
+Whole-path positivity is enforced on the state draw by proposing from the
+unconstrained conditional and keeping the previous path when the proposal
+violates it. Since the proposal is the exact conditional, this is an
+independence Metropolis step whose acceptance ratio is one inside the admissible
+set --- the target is the correctly truncated conditional, not an approximation
+of it. The rejection share is reported, because a high one is evidence that the
+local approximation is being asked to span too wide an $N$ range.
+
+\subsection{Iterations, saved draws, and convergence criteria}
+The moving-reference models mix far more slowly than F0, and the production
+lengths reflect measured pilot behaviour rather than a round number: a 12{,}000
+iteration pilot left latent-state ESS in the tens, and a 120{,}000 iteration
+follow-up still left $\rho_2$ short, so U, R1 and R2 run at 400{,}000 iterations
+on four chains. A run enters this report only if its diagnostics pass; the
+builder refuses runs that are quick, dirty-code, stale, or unconverged.
+
+\par\medskip
+\input{../results/tables/theory/sampling_design.tex}
+
+% ===========================================================================
+\section{Main results}
+Table~\ref{tab:posterior} collects the restriction-relevant coefficients. Three
+things stand out, and the rest of the report is an attempt to take each one
+seriously.
+
+First, the slope level is estimated tightly and consistently: $\kappa_0$ is
+\TheoryFZeroKappaZero{} in F0, \TheoryUKappaZero{} in U, and essentially
+unchanged across R1--R3. Nothing in the restriction hierarchy disturbs it.
+
+Second, the unrestricted slope response is near zero and two-sided:
+$\kappa_N=\TheoryUKappaN$ in U with a 95\% interval of
+$[\TheoryUKappaNLo,\TheoryUKappaNHi]$. Under the restriction it is positive and
+bounded away from zero, $\kappa_N=\TheoryROneKappaN$ with interval
+$[\TheoryROneKappaNLo,\TheoryROneKappaNHi]$ in R1, because the restriction ties
+it to $\theta_0$, which the entry channel does identify.
+
+Third, $\gamma$ is barely informed by the data. In U it is
+$\TheoryUGamma$ with interval $[\TheoryUGammaLo,\TheoryUGammaHi]$, and
+Appendix~\ref{app:priorpost} shows its posterior sitting almost on top of its
+prior. The weak Third law in R2 therefore does most of its work through the
+constraint itself, moving $\gamma$ to $\TheoryRTwoGamma$ with interval
+$[\TheoryRTwoGammaLo,\TheoryRTwoGammaHi]$.
+
+\par\medskip
+\input{../results/tables/theory/posterior_results.tex}
+\captionof{table}{Restriction-relevant posterior coefficients.}\label{tab:posterior}
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/restriction_coefficients.png}{%
+  \includegraphics[width=0.92\linewidth]{restriction_coefficients.png}}{\textit{Figure pending.}}
+\caption{Restriction-relevant posterior coefficients, 90\% intervals.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/kappa_t_paths.png}{%
+  \includegraphics[width=0.86\linewidth]{kappa_t_paths.png}}{\textit{Figure pending.}}
+\caption{Posterior slope paths $\kt$ by model.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/theta_t_paths.png}{%
+  \includegraphics[width=0.86\linewidth]{theta_t_paths.png}}{\textit{Figure pending.}}
+\caption{Posterior entry-coefficient paths $\theta_t$ by model.}
+\end{figure}
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/competition_decomposition.png}{%
+  \includegraphics[width=0.86\linewidth]{competition_decomposition.png}}{\textit{Figure pending.}}
+\caption{Reference level $\Nbar_t$ and cycle $\Nhat_t$, for the models that
+separate the two.}\label{fig:decomposition}
+\end{figure}
+
+% ===========================================================================
+\section{The cross-equation restriction against the unrestricted posterior}
+This is the section the report exists for. U estimates $\kappa_N$ and $\theta_0$
+separately, so inside U one can ask directly how far the posterior sits from the
+line the restriction would impose.
+
+At U's own $\theta_0$, the restriction would require
+$\kappa_N=\TheoryURestrictionValue$. U's posterior mean is
+$\TheoryUKappaN$. The gap has posterior mean $\TheoryUGapMean$ with a 90\%
+interval of $[\TheoryUGapLo,\TheoryUGapHi]$ and
+$P(\text{gap}>0)=\TheoryUProbGapPositive$. The interval contains zero
+comfortably, so \emph{the data do not reject the restriction}. But the point
+estimate is an order of magnitude below the restricted value, so neither do the
+data support it: the unrestricted posterior is simply not informative enough
+about $\kappa_N$ to discriminate.
+
+The same conclusion appears more sharply if the identity is inverted. Solving
+$100\kappa_N=b_x\zeta_0\theta_0$ for the elasticity gives an implied $\zeta_0$
+with posterior median $\TheoryUImpliedZetaMedian$ and
+$P(\zeta_0>1)=\TheoryUProbZetaAboveOne$ --- barely better than a coin flip that
+the implied elasticity is even in the region where a markup exists. The honest
+reading is that $\zeta_0$ is not identified by this data cell, which is why the
+production design fixes it at $\TheoryZetaZero$ rather than sampling it.
+
+\par\medskip
+\input{../results/tables/theory/cross_restriction.tex}
+\captionof{table}{The cross-equation restriction inside U. R1--R3 satisfy the
+equality by construction; their rows verify that the constraint is exact, not
+approximate, and show where it places the pair.}\label{tab:cross}
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/cross_restriction.png}{%
+  \includegraphics[width=0.72\linewidth]{cross_restriction.png}}{\textit{Figure pending.}}
+\caption{U's $(\theta_0,\kappa_N)$ posterior cloud against the line
+$100\kappa_N=b_x\zeta_0\theta_0$, with the restricted posteriors marked on it.}
+\end{figure}
+
+\noindent The figure makes the geometry plain. The restriction line passes
+through the U cloud, but the cloud is wide in the $\kappa_N$ direction and
+almost uninformative about its sign, while it is much tighter in $\theta_0$.
+The restriction is not fighting the data; it is supplying identification the
+data do not have.
+
+% ===========================================================================
+\section{Does the restriction improve fit?}
+The restriction removes a coefficient. Table~\ref{tab:fit} asks what that costs
+in the fit of the inflation equation.
+
+\par\medskip
+\input{../results/tables/theory/conditional_fit.tex}
+\captionof{table}{In-sample fit of the inflation equation, evaluated at the
+stored latent paths.}\label{tab:fit}
+
+\par\medskip\noindent
+\textbf{What this table is, and what it is not.} The residuals are computed at
+each stored draw from the same arithmetic the sampler's own regression uses, so
+the numbers are exact for the equation as estimated. But they are
+\emph{conditional} on the latent competition path: a model with a richer state
+block is not charged for that richness, and the effective-parameter count $p_D$
+counts coefficient flexibility only. This is a diagnostic of whether imposing
+the restriction moves the fitted inflation equation. It is not a marginal
+likelihood, and it must not be read as a Bayes factor. The formal nested
+comparison is an open item in Section~\ref{sec:open}.
+
+Read that way, the answer is clean: the restriction is nearly free. Conditional
+DIC moves from \TheoryUConditionalDIC{} in U to \TheoryROneConditionalDIC{} in
+R1 --- R1 is in fact marginally \emph{better}, because it spends
+\TheoryROneFreeCoefficients{} coefficients instead of U's
+\TheoryUFreeCoefficients{} for the same residual fit. RMSE is
+\TheoryURmse{} against \TheoryROneRmse. F0, with the fewest coefficients and no
+moving reference at all, is not worse than either. On the inflation equation
+alone, this data cell cannot tell these models apart.
+
+% ===========================================================================
+\section{Q/Q versus four-quarter YoY observation design}
+The two inflation transformations are alternative observations of one price
+index, and they are estimated in separate likelihoods --- never stacked as if
+they were independent information.
+
+The restricted models are Q/Q-only in this revision, and this is a
+identification decision rather than a convenience. The cross-equation identity
+is a statement about a \emph{quarterly} structural coefficient. A direct
+four-quarter regression estimates a reduced-form coefficient whose relation to
+the quarterly one depends on the dynamics being aggregated, so imposing
+$100\kappa_N=b_x\zeta_0\theta_0$ on it would attach the structural meaning to
+the wrong object. The code enforces this: a restricted model with
+\code{inflation\_observation=yoy\_4q} raises rather than runs. F0 and U carry the
+observation-design comparison instead, because neither imposes the identity.
+
+\par\medskip
+\input{../results/tables/theory/inflation_observation_comparison.tex}
+
+\par\medskip\noindent
+The comparison is reassuring for the level of the slope and unhelpful for its
+response: $\kappa_0$ and $\theta_0$ are similar across the two designs, while
+$\kappa_N$ changes sign between them in U. That is the same non-identification
+seen in Section~5, viewed from a second angle.
+
+% ===========================================================================
+\section{Scope condition and the limits of identification}
+Three limits bound what this report can claim, and each is measured rather than
+asserted.
+
+\textbf{The local approximation spans a wide $N$ range.} The reference in
+Figure~\ref{fig:decomposition} moves several ten-log-point units over the
+sample. A local linearisation is being asked to hold across that whole span,
+and the admissibility diagnostics are the instrument for detecting strain.
+
+\textbf{Admissibility pressure is high.} In U, \TheoryUProbePercent\% of
+unconstrained Gaussian probe draws would violate the imposed region, and
+\TheoryUStateRejectPercent\% of proposed latent paths are rejected by whole-path
+positivity; R1 is comparable. The probe share does not enter the posterior --- it
+is a measurement of how much the constraints are doing --- but a share this high
+is exactly the signal the diagnostic was built to raise, and every moving-reference
+model is flagged for review on it.
+
+\textbf{$\gamma$ and $\zeta_0$ are not identified by this cell.} $\gamma$'s
+posterior tracks its prior, and the implied elasticity has
+$P(\zeta_0>1)=\TheoryUProbZetaAboveOne$. Claims that rest on either --- the weak
+Third law, or a markup read off the estimated elasticity --- are not supported by
+this data cell, whatever the restricted models' point estimates look like.
+
+\par\medskip
+\input{../results/tables/theory/admissibility_diagnostics.tex}
+\captionof{table}{Local-model admissibility diagnostics. The probe column counts
+unconstrained conditional draws that would violate the admissible region; it is
+a diagnostic and does not enter the posterior.}\label{tab:admissibility}
+
+% ===========================================================================
+\section{Robustness}
+Two robustness dimensions are settled in this revision and two are not.
+
+\textbf{Settled: observation design.} Section~7 estimates the same cell under
+both inflation transformations for the two models entitled to it.
+
+\textbf{Settled: restriction depth.} The hierarchy is itself a robustness
+exercise. R1 against U isolates the cross-equation identity; R2 against R1
+isolates the weak Third law; R3 against R1 isolates constant pass-through. All
+four models are estimated on identical data, priors, and sample, and the builder
+refuses to tabulate them together if any of those differ.
+
+\textbf{Not settled: prior sensitivity.} The historical report varies the prior
+set (\code{tight}, \code{weak}) across every cell. The restriction namespace has
+only \code{\TheoryPriorSpec} runs. Given that $\gamma$'s posterior is
+prior-dominated and R1's $\kappa_N$ prior is induced rather than stated, a
+prior sweep is the single most valuable missing robustness check here, not an
+optional extra.
+
+\textbf{Not settled: sampled $\zeta_0$.} $\zeta_0$ is fixed at
+\TheoryZetaZero{} throughout. Section~5 shows the data cannot pin it, so a
+sampled-$\zeta_0$ specification would need either a different data cell or an
+informative external prior.
+
+% ===========================================================================
+\section{Conclusion}
+On this data cell, the local Rotemberg--HSA cross-equation restriction is
+neither rejected nor confirmed --- and the reason is identification, not
+tension. The unrestricted model's posterior for $\kappa_N$ is centred near zero
+with a wide two-sided interval that comfortably contains the restricted value,
+so the restriction survives; but the same width means the data would have
+tolerated almost any value, so surviving is weak evidence.
+
+What the restriction does supply is identification. It converts a
+near-uninformative $\kappa_N$ into one that is positive and bounded away from
+zero, at essentially no cost in the fit of the inflation equation and with one
+fewer free coefficient. The Second law is maintained rather than tested by that
+route; the weak Third law is maintained rather than tested outright, since
+$\gamma$ is prior-dominated.
+
+The fixed-reference benchmark F0 is the quiet result. It fits as well as
+anything else here with the fewest coefficients and no moving reference at all.
+Any claim that the moving-reference machinery earns its keep needs the marginal
+likelihood that this revision does not yet compute.
+
+% ===========================================================================
+\section{Status and open items}\label{sec:open}
+\begin{enumerate}
+  \item \textbf{Marginal likelihood for the theory namespace.} Chib's method is
+    implemented for the historical models only. Without it there is no formal
+    test of the nested restrictions, and Section~6 must be read as a
+    conditional in-sample diagnostic. This is the largest gap.
+  \item \textbf{Prior robustness sweep.} \code{tight} and \code{weak} runs for
+    all five models; required to separate the restriction's effect from its
+    induced prior on $\kappa_N$.
+  \item \textbf{U is not literally unrestricted.} With path positivity on by
+    default, U maintains $\kt>0$ and $\theta_t>0$ at every date, so its model
+    definition records \code{second\_law: false} while the domain condition is
+    doing part of the same work. The $U\to R1$ comparison isolates the
+    cross-equation identity, not the Second law.
+  \item \textbf{A four-quarter aggregation likelihood.} Until four quarterly
+    structural equations can be aggregated without changing coefficient meaning,
+    R1--R3 remain Q/Q-only.
+  \item \textbf{Admissibility pressure.} Every moving-reference model is flagged
+    for local-range review. Either the sample must be split into ranges over
+    which the linearisation is defensible, or the approximation must be replaced.
+  \item \textbf{R4.} The fixed-reference identities $\kappa_0=(\zeta_0-1)/\chi$
+    and $\theta_0=(10/\chi)(1-\rho_0)/\rho_0$ remain deliberately un-imposed.
+\end{enumerate}
+
+% ===========================================================================
+\appendix
+\section{Appendix: convergence diagnostics}
+Across all five models the worst scalar bulk ESS is \TheoryWorstScalarESS{} at a
+maximum $\hat R$ of \TheoryWorstScalarRhat, and the worst latent-path bulk ESS is
+\TheoryWorstPathESS{} at \TheoryWorstPathRhat. The binding parameter is $\rho_2$
+in the moving-reference models --- the second AR(2) coefficient of the
+competition cycle --- which is why those chains are run two orders of magnitude
+longer than F0's.
+
+\par\medskip
+\input{../results/tables/theory/convergence_summary.tex}
+
+\section{Appendix: every run behind this report}
+\input{../results/tables/theory/current_design.tex}
+\input{../results/tables/theory/run_manifest.tex}
+
+\par\medskip\noindent
+The run manifest, together with each run's own \code{metadata.json}, records
+code revision, model definition and hierarchy, exact restrictions, maintained
+laws, admissibility conditions, inflation and expectation transformations,
+activity and competition proxies, $N_0$, the $\zeta_0/\mu_0$ treatment, sample,
+sampler, chains, seeds, and convergence. The build fails if a comparison would
+mix incompatible revisions, samples, transformations, observation designs,
+proxies, priors, or model definitions. Neither the historical report nor
+\code{results/runs} is read by this builder.
+
+\section{Appendix: prior against posterior}\label{app:priorpost}
+The panels below are the evidence for two claims made in the body: that $\gamma$
+is prior-dominated in every model that leaves it free, and that $\kappa_N$'s
+posterior in R1--R3 is materially narrower than U's because the restriction
+supplies information the data do not.
+
+\begin{figure}[H]\centering
+\IfFileExists{../results/figures/theory/prior_vs_posterior.png}{%
+  \includegraphics[width=0.94\linewidth]{prior_vs_posterior.png}}{\textit{Figure pending.}}
+\caption{Prior against posterior, every model and restriction-relevant
+coefficient. In panels where a model has no such coefficient it is simply
+absent; colours are fixed per model across all panels.}
+\end{figure}
 
 \end{document}

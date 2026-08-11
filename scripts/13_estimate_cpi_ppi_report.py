@@ -15,6 +15,8 @@ from _bootstrap import DATA_DIR, RESULTS_DIR, ROOT
 from nkpc_hsa.config import configured_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import ESTIMATION_REVISION, model_sample_index, run_model
+from nkpc_hsa.progress import STYLES as PROGRESS_STYLES
+from nkpc_hsa.progress import ProgressReporter
 from nkpc_hsa.reporting.cpi_ppi_spec import annual_q4_run_keys, report_run_keys
 
 
@@ -158,6 +160,15 @@ def main() -> None:
     parser.add_argument("--no-build", action="store_true", help="Estimate only; skip the report build.")
     parser.add_argument("--compile", action="store_true", help="Also run xelatex after building the report.")
     parser.add_argument("--quick", action="store_true", help="Run 80 iterations per cell for pipeline testing only.")
+    parser.add_argument(
+        "--progress",
+        choices=list(PROGRESS_STYLES),
+        default=None,
+        help=(
+            "Progress display over the cell set. 'auto' (default) draws a bar on a terminal "
+            "and stays silent when the output is redirected; 'plain' prints periodic lines."
+        ),
+    )
     # Cell filters. The report needs the whole grid, but a pipeline smoke test
     # needs a handful of cells, so allow the required set to be narrowed.
     parser.add_argument("--only-models", nargs="+", help="Restrict to these models.")
@@ -231,15 +242,25 @@ def main() -> None:
 
     completed = 0
     if jobs:
+        # The cells are estimated in separate processes with no channel back to
+        # this one, so the bar advances per completed cell rather than per draw.
+        reporter = ProgressReporter(
+            len(jobs),
+            label=f"estimation ({args.competition_frequency})",
+            style=args.progress,
+        )
         with ProcessPoolExecutor(max_workers=max(1, args.jobs)) as executor:
             futures = {executor.submit(_estimate_one, job): job["key"] for job in jobs}
-            for future in as_completed(futures):
-                key, elapsed, run_id = future.result()
-                completed += 1
-                print(
-                    f"[{completed}/{len(jobs)}] {'/'.join(key)} completed in {elapsed:.1f}s ({run_id})",
-                    flush=True,
-                )
+            try:
+                for future in as_completed(futures):
+                    key, elapsed, run_id = future.result()
+                    completed += 1
+                    reporter.write_line(
+                        f"[{completed}/{len(jobs)}] {'/'.join(key)} completed in {elapsed:.1f}s ({run_id})"
+                    )
+                    reporter.update(completed, force=True)
+            finally:
+                reporter.finish()
 
     # Rebuild every report artifact, not just the ones script 12 owns. Calling
     # 12 directly here is what left the headline table, the fit comparison and

@@ -31,6 +31,7 @@ from nkpc_hsa.models.common import (
     prior_specs_to_internal,
 )
 from nkpc_hsa.paths import project_path
+from nkpc_hsa.progress import ProgressReporter
 from nkpc_hsa.provenance import stamp_artifact_metadata
 from nkpc_hsa.theory_models import (
     RESTRICTION_TAXONOMY,
@@ -629,6 +630,9 @@ def _run_sampler(
     n_particles: int = 512,
     no_inertia: bool = False,
     theory_options: Mapping[str, Any] | None = None,
+    progress: str | None = "off",
+    progress_label: str = "",
+    progress_key: str | None = None,
 ) -> tuple[dict[str, np.ndarray], dict[str, Any]]:
     from nkpc_hsa.models.ces import func_nkpc_ces
     from nkpc_hsa.models.hsa_const_theta import func_nkpc_hsa_const_theta
@@ -661,66 +665,79 @@ def _run_sampler(
     chain_draws: list[dict[str, np.ndarray]] = []
     chain_metadata: list[dict[str, Any]] = []
 
-    for chain, child in enumerate(child_seeds):
-        chain_seed = int(child.generate_state(1)[0])
-        kwargs: dict[str, Any] = {
-            "pi_data": model_data["pi"],
-            "pi_prev_data": model_data["pi_prev"],
-            "Epi_data": model_data["pi_expect"],
-            "x_data": model_data["x"],
-            "x_prev_data": model_data["x_prev"],
-            "n_burn": burn,
-            "n_keep": n_iter - burn,
-            "priors": priors_internal,
-            "opts": {
-                "seed": chain_seed,
-                "store_every": thin,
-                "verbose": False,
-                "coefficient_constraints": constraints_internal,
-                "enforce_stationary": enforce_stationary,
-                "ar2_max_tries": ar2_max_tries,
-            },
-        }
-        if model == "hsa_dynamic":
-            kwargs["opts"]["covariance_structure"] = covariance_structure
-        if no_inertia:
-            if model != "hsa_steady":
-                raise ValueError("no_inertia is only implemented for hsa_steady.")
-            kwargs["opts"]["no_inertia"] = True
-        if model == "hsa_full":
-            # Particle count for the conditional-SMC state update. Passed
-            # explicitly so the operating point is recorded in run metadata
-            # rather than living as a module constant.
-            kwargs["opts"]["n_particles"] = int(n_particles)
-        if is_theory_model(model):
-            kwargs["opts"].update(dict(theory_options or {}))
-            kwargs["opts"]["restriction_level"] = theory_model_definition(model).hierarchy
-            if model in {"hsa_u", "hsa_r1", "hsa_r2"}:
+    # One reporter for the whole cell rather than one per chain, so the bar
+    # crosses a cell once instead of restarting at every chain.
+    reporter = ProgressReporter(
+        chains * n_iter,
+        label=progress_label or model,
+        key=progress_key or progress_label or model,
+        style=progress,
+    )
+
+    try:
+        for chain, child in enumerate(child_seeds):
+            chain_seed = int(child.generate_state(1)[0])
+            kwargs: dict[str, Any] = {
+                "pi_data": model_data["pi"],
+                "pi_prev_data": model_data["pi_prev"],
+                "Epi_data": model_data["pi_expect"],
+                "x_data": model_data["x"],
+                "x_prev_data": model_data["x_prev"],
+                "n_burn": burn,
+                "n_keep": n_iter - burn,
+                "priors": priors_internal,
+                "opts": {
+                    "seed": chain_seed,
+                    "store_every": thin,
+                    "verbose": False,
+                    "coefficient_constraints": constraints_internal,
+                    "enforce_stationary": enforce_stationary,
+                    "ar2_max_tries": ar2_max_tries,
+                    "progress_callback": reporter.callback(offset=chain * n_iter),
+                },
+            }
+            if model == "hsa_dynamic":
+                kwargs["opts"]["covariance_structure"] = covariance_structure
+            if no_inertia:
+                if model != "hsa_steady":
+                    raise ValueError("no_inertia is only implemented for hsa_steady.")
+                kwargs["opts"]["no_inertia"] = True
+            if model == "hsa_full":
+                # Particle count for the conditional-SMC state update. Passed
+                # explicitly so the operating point is recorded in run metadata
+                # rather than living as a module constant.
                 kwargs["opts"]["n_particles"] = int(n_particles)
-        if model != "ces":
-            if "N_obs" in model_data:
-                kwargs["N_data"] = np.asarray(model_data["N_obs"], dtype=float)
-            elif "N" not in model_data:
-                raise KeyError(f"{model} requires an N series.")
-            else:
-                kwargs["N_data"] = transform_competition_series(model_data["N"], transform=n_transform)  # type: ignore[arg-type]
-        if "Ehat" in model_data:
-            if model not in {"hsa_steady", "hsa_const_theta"}:
-                raise ValueError(
-                    "The establishment-cycle observation is currently implemented only for "
-                    "hsa_steady and hsa_const_theta."
-                )
-            kwargs["Ehat_data"] = np.asarray(model_data["Ehat"], dtype=float)
-        if "E_obs" in model_data:
-            if model not in {"hsa_steady", "hsa_const_theta"}:
-                raise ValueError(
-                    "The six-state joint N--E system is defined for the linear-Gaussian "
-                    "hsa_steady and hsa_const_theta specifications."
-                )
-            kwargs["E_data"] = np.asarray(model_data["E_obs"], dtype=float)
-        result = _call_sampler(funcs[model], kwargs, orth=orth)
-        chain_draws.append(_extract_draws_from_result(result))
-        chain_metadata.append({"chain": chain, "seed": chain_seed, "model_metadata": result.get("model", {})})
+            if is_theory_model(model):
+                kwargs["opts"].update(dict(theory_options or {}))
+                kwargs["opts"]["restriction_level"] = theory_model_definition(model).hierarchy
+                if model in {"hsa_u", "hsa_r1", "hsa_r2"}:
+                    kwargs["opts"]["n_particles"] = int(n_particles)
+            if model != "ces":
+                if "N_obs" in model_data:
+                    kwargs["N_data"] = np.asarray(model_data["N_obs"], dtype=float)
+                elif "N" not in model_data:
+                    raise KeyError(f"{model} requires an N series.")
+                else:
+                    kwargs["N_data"] = transform_competition_series(model_data["N"], transform=n_transform)  # type: ignore[arg-type]
+            if "Ehat" in model_data:
+                if model not in {"hsa_steady", "hsa_const_theta"}:
+                    raise ValueError(
+                        "The establishment-cycle observation is currently implemented only for "
+                        "hsa_steady and hsa_const_theta."
+                    )
+                kwargs["Ehat_data"] = np.asarray(model_data["Ehat"], dtype=float)
+            if "E_obs" in model_data:
+                if model not in {"hsa_steady", "hsa_const_theta"}:
+                    raise ValueError(
+                        "The six-state joint N--E system is defined for the linear-Gaussian "
+                        "hsa_steady and hsa_const_theta specifications."
+                    )
+                kwargs["E_data"] = np.asarray(model_data["E_obs"], dtype=float)
+            result = _call_sampler(funcs[model], kwargs, orth=orth)
+            chain_draws.append(_extract_draws_from_result(result))
+            chain_metadata.append({"chain": chain, "seed": chain_seed, "model_metadata": result.get("model", {})})
+    finally:
+        reporter.finish()
     return _stack_chains(chain_draws), {
         "chains": chain_metadata,
         "priors_internal": priors_internal,
@@ -757,6 +774,11 @@ def run_model(
     zeta0: float = 6.0,
     zeta0_treatment: str = "fixed",
     require_path_positivity: bool = True,
+    # Off unless a caller asks for it: several drivers estimate cells in parallel
+    # worker processes that share one terminal, and a bar per worker is noise.
+    # A driver that owns the display passes "auto" (or None, which honours
+    # NKPC_HSA_PROGRESS) down from its own --progress option.
+    progress: str | None = "off",
 ):
     if isinstance(data_spec, (str, Path)):
         data_spec_dict = _load_yaml(data_spec)
@@ -861,6 +883,9 @@ def run_model(
             "marginal_cost_loading": float(marginal_cost_loading),
             "require_path_positivity": bool(require_path_positivity),
         } if theory_definition is not None else None,
+        progress=progress,
+        progress_label=f"{model} [{data_spec_name}]",
+        progress_key=f"{model}:{data_spec_name}",
     )
     code_revision, code_dirty = _code_revision()
     N_raw = np.asarray(model_data.get("N", []), dtype=float)

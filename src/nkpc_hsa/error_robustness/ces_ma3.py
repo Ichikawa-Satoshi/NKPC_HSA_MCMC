@@ -169,6 +169,8 @@ def func_nkpc_ces_ma3(
     seed = getd(opts, "seed", None)
     store_every = int(max(1, getd(opts, "store_every", 1)))
     verbose = bool(getd(opts, "verbose", False))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = getd(opts, "progress_callback", None)
     rng = np.random.default_rng(seed)
 
     proposal = (
@@ -309,6 +311,9 @@ def func_nkpc_ces_ma3(
                 psi_draws[store_idx] = psi
                 e_acf_draws[store_idx] = gamma[1:] / sigma_e2
             store_idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
         if verbose and it % 5000 == 0:
             acc = proposal.acceptance_rate if proposal is not None else float("nan")

@@ -12,6 +12,7 @@ import pandas as pd
 
 from nkpc_hsa.provenance import StaleArtifactError, validate_artifact_metadata
 from nkpc_hsa.reporting.tables import write_latex_fragment
+from nkpc_hsa.reporting.theory_evidence import MODEL_COLORS, _as_quarter
 from nkpc_hsa.theory_models import (
     RESTRICTION_TAXONOMY,
     STRUCTURAL_FREQUENCY,
@@ -259,8 +260,9 @@ def _plot_path_comparison(
         except Exception:
             x = np.arange(paths.shape[1])
         label = str(metadata.get("model_hierarchy", slug))
-        line = ax.plot(x, center, lw=1.7, label=label)[0]
-        ax.fill_between(x, lo, hi, color=line.get_color(), alpha=0.10)
+        color = MODEL_COLORS.get(slug)
+        ax.plot(x, center, lw=1.7, color=color, label=label)
+        ax.fill_between(x, lo, hi, color=color, alpha=0.10)
     ax.axhline(0.0, color="black", lw=0.8, alpha=0.45)
     ax.set_title(f"Posterior {parameter} paths: median and 90% interval")
     ax.set_ylabel(parameter)
@@ -323,6 +325,63 @@ def _plot_restriction_coefficients(
     return output_path
 
 
+def _write_or_placeholder(
+    frame: pd.DataFrame,
+    path: Path,
+    placeholder: str,
+    *,
+    escape: bool = True,
+    column_format: str | None = None,
+    tabularx: bool = False,
+) -> None:
+    """Always leave a fragment on disk so the report never \\input a missing file."""
+    if frame is None or frame.empty:
+        write_latex_fragment(pd.DataFrame({"Status": [placeholder]}), path, escape=True)
+        return
+    write_latex_fragment(frame, path, escape=escape, column_format=column_format, tabularx=tabularx)
+
+
+def _write_evidence_fragments(runs: Mapping[str, tuple[Path, dict[str, Any], Any]], out: Path) -> None:
+    """Data, priors, sampling design, restriction check, fit, and convergence."""
+    from nkpc_hsa.reporting import theory_evidence
+
+    _write_or_placeholder(
+        theory_evidence.data_summary_table(runs),
+        out / "data_summary.tex",
+        "DATA SUMMARY PENDING",
+        escape=False,
+        column_format="lp{0.16\\linewidth}p{0.28\\linewidth}rrrr",
+    )
+    _write_or_placeholder(
+        theory_evidence.priors_table(runs),
+        out / "baseline_priors.tex",
+        "PRIOR SPECIFICATION PENDING",
+        escape=False,
+        column_format="llp{0.42\\linewidth}",
+    )
+    _write_or_placeholder(
+        theory_evidence.sampling_design_table(runs),
+        out / "sampling_design.tex",
+        "SAMPLING DESIGN PENDING",
+    )
+    _write_or_placeholder(
+        theory_evidence.cross_restriction_table(runs),
+        out / "cross_restriction.tex",
+        "CROSS-RESTRICTION CHECK PENDING",
+    )
+    _write_or_placeholder(
+        theory_evidence.conditional_fit_table(runs),
+        out / "conditional_fit.tex",
+        "CONDITIONAL FIT PENDING",
+    )
+    _write_or_placeholder(
+        theory_evidence.convergence_table(runs),
+        out / "convergence_summary.tex",
+        "CONVERGENCE SUMMARY PENDING",
+    )
+    theory_evidence.write_result_macros(runs, out / "theory_macros.tex")
+
+
 def build_theory_report_inputs(
     runs_dir: str | Path,
     output_dir: str | Path,
@@ -346,7 +405,7 @@ def build_theory_report_inputs(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     figures_dir = out.parent.parent / "figures" / "theory"
-    write_latex_fragment(_restriction_table(), out / "restriction_taxonomy.tex", escape=True, column_format="p{0.27\\linewidth}p{0.68\\linewidth}")
+    write_latex_fragment(_restriction_table(), out / "restriction_taxonomy.tex", escape=True, column_format="p{0.26\\linewidth}p{0.66\\linewidth}")
     write_latex_fragment(_model_table(), out / "model_hierarchy.tex", escape=True)
     posterior = _posterior_table(runs)
     write_latex_fragment(
@@ -385,79 +444,38 @@ def build_theory_report_inputs(
         out / "run_manifest.tex",
         escape=True,
     )
-    design = out / "current_design.tex"
+    _write_evidence_fragments(runs, out)
     pending = bool(missing or missing_yoy)
     all_metadata = [item[1] for item in [*runs.values(), *yoy_runs.values()]]
     baseline = all_metadata[0] if all_metadata else {}
     dirty_label = "unknown" if report_builder_dirty is None else ("yes" if report_builder_dirty else "no")
-    provenance_summary = (
-        "Estimation revision: \\texttt{" + str(baseline.get("estimation_revision", "pending")).replace("_", "\\_")
+    # The report's prose lives in report/nkpc_hsa_restriction_report.tex, exactly
+    # as the historical report keeps its own. This fragment carries only the
+    # provenance line, so a preview build and a production build differ in the
+    # numbers they show and never in the argument they make.
+    (out / "current_design.tex").write_text(
+        (
+            "\\textbf{CURRENT THEORY ESTIMATES PENDING: "
+            + ", ".join(missing + missing_yoy)
+            + ". Historical artifacts are not substituted.}\\par\\medskip\n"
+            if pending else ""
+        )
+        + "Estimation revision: \\texttt{" + str(baseline.get("estimation_revision", "pending")).replace("_", "\\_")
         + "}; estimation code: \\texttt{" + str(baseline.get("code_revision", "pending"))[:12]
-        + "}; sample: " + str(baseline.get("sample_start", "pending")) + "--" + str(baseline.get("sample_end", "pending"))
+        + "}; sample: " + _as_quarter(baseline.get("sample_start", "pending"))
+        + "--" + _as_quarter(baseline.get("sample_end", "pending"))
         + "; report builder code: \\texttt{" + str(report_builder_revision)[:12]
-        + "}; builder dirty: " + dirty_label + ".\\par\\medskip\n"
-    )
-    generated_figures = [] if pending else [
-        _plot_restriction_coefficients(runs, figures_dir / "restriction_coefficients.png"),
-        _plot_path_comparison(runs, "kappa_t", figures_dir / "kappa_t_paths.png"),
-        _plot_path_comparison(runs, "theta_t", figures_dir / "theta_t_paths.png"),
-    ]
-    generated_figures = [path for path in generated_figures if path is not None]
-    design.write_text(
-        "\\section{Current research design: fixed and moving local references}\n"
-        "\\mbox{}\\par\\vspace{-0.7\\baselineskip}\n"
-        "The current specification starts from the quarterly, fixed-reference local Rotemberg--HSA equation. "
-        "F0 is its fixed-$N_0$ empirical benchmark. U, R1, R2, and R3 add a slow-moving local reference; "
-        "this moving-reference step is a semi-structural approximation and is not Eq. 21 itself.\n\n"
-        "\\subsection{Restriction taxonomy}\n"
-        "\\input{../results/tables/theory/restriction_taxonomy.tex}\n"
-        "\\subsection{Model hierarchy and non-nesting}\n"
-        "Within the moving-reference family, $U \\supset R1 \\supset R2$ and R3 is $R1+\\{\\gamma=0\\}$. "
-        "F0 is not nested in that family because its reference is fixed.\n"
-        "\\input{../results/tables/theory/model_hierarchy.tex}\n"
-        "\\subsection{Quarterly structural scaling}\n"
-        "With $\\bar N=10(\\log N-\\log N_0)$ and inflation in percentage points, "
-        "$d\\kappa/d\\log N=10\\kappa_N$ and the restricted marginal-cost specification has "
-        "$100\\kappa_N=b_x\\zeta_0\\theta_0$. The equality is never imposed directly on a gap proxy "
-        "without an explicit $b_x$, or on the legacy direct 4Q-YoY regression.\n"
-        "\\subsection{Current posterior results}\n"
-        + (
-            "\\textbf{CURRENT THEORY ESTIMATES PENDING. Historical tables below are not used as evidence for R1--R3.}\n"
-            if pending
-            else "\\par\\medskip\\noindent\\input{../results/tables/theory/posterior_results.tex}\n"
-        )
-        +
-        "\\par\\medskip\\subsection{Local-model admissibility diagnostics}\n"
-        "\\mbox{}\\par\\vspace{-0.7\\baselineskip}\n"
-        "The Gaussian probe column reports how often an unconstrained conditional coefficient draw would violate the imposed admissible region; it does not enter the posterior. High probe pressure is reported as a diagnostic that the local linear approximation or posterior geometry deserves review. State rejection is the share of proposed latent paths rejected by whole-path positivity.\\par\\medskip\n"
-        "\\noindent\\input{../results/tables/theory/admissibility_diagnostics.tex}\n"
-        +
-        "\\subsection{Q/Q versus four-quarter YoY observation design}\n"
-        "The two transformations of a common price index are estimated in separate likelihoods and are never stacked as if independent. "
-        "F0 and U provide the direct observation-design comparison. R1--R3 remain Q/Q-only in this revision because a direct YoY regression "
-        "does not preserve the meaning of the quarterly structural cross-equation coefficient.\n"
-        + (
-            "\\textbf{CURRENT OBSERVATION-DESIGN COMPARISON PENDING.}\n"
-            if pending
-            else "\\par\\medskip\\noindent\\input{../results/tables/theory/inflation_observation_comparison.tex}\n"
-        )
-        +
-        "\\subsection{Current-run provenance}\n"
-        + provenance_summary
-        + "\\noindent\\input{../results/tables/theory/run_manifest.tex}\n"
-        + (
-            "\\subsection{Restriction-relevant posterior figures}\n"
-            "\\begin{figure}[H]\\centering\n"
-            "\\includegraphics[width=0.92\\linewidth]{restriction_coefficients.png}\n"
-            "\\caption{Restriction-relevant posterior coefficients.}\\end{figure}\n"
-            "\\begin{figure}[H]\\centering\n"
-            "\\includegraphics[width=0.88\\linewidth]{kappa_t_paths.png}\n"
-            "\\caption{Posterior slope paths by model.}\\end{figure}\n"
-            "\\begin{figure}[H]\\centering\n"
-            "\\includegraphics[width=0.88\\linewidth]{theta_t_paths.png}\n"
-            "\\caption{Posterior entry-coefficient paths by model.}\\end{figure}\n"
-            if len(generated_figures) == 3 else ""
-        ),
+        + "}; builder dirty: " + dirty_label + ".\\par\\medskip\n",
         encoding="utf-8",
     )
+    if not pending:
+        from nkpc_hsa.reporting import theory_evidence
+
+        _plot_restriction_coefficients(runs, figures_dir / "restriction_coefficients.png")
+        _plot_path_comparison(runs, "kappa_t", figures_dir / "kappa_t_paths.png")
+        _plot_path_comparison(runs, "theta_t", figures_dir / "theta_t_paths.png")
+        theory_evidence.plot_data_series(runs, figures_dir / "data_series.png")
+        theory_evidence.plot_cross_restriction(runs, figures_dir / "cross_restriction.png")
+        theory_evidence.plot_competition_decomposition(runs, figures_dir / "competition_decomposition.png")
+        theory_evidence.plot_prior_vs_posterior(runs, figures_dir / "prior_vs_posterior.png")
     return runs

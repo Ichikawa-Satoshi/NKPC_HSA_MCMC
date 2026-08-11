@@ -1,0 +1,1345 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{threeparttable}
+\usepackage{pdflscape}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\onehalfspacing
+\setlist[itemize]{topsep=0.2em,itemsep=0.15em,leftmargin=1.4em}
+\setlist[enumerate]{topsep=0.2em,itemsep=0.2em,leftmargin=1.6em}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\HSA}{\mathrm{HSA}}
+\newcommand{\CES}{\mathrm{CES}}
+\newcommand{\LCP}{\mathrm{LCP\text{-}HSA}}
+\newcommand{\LHSA}{\mathrm{L\text{-}HSA}}
+\newcommand{\LU}{\mathrm{L\text{-}U}}
+
+\title{\textbf{Data, Model, and Estimation Design}\\
+\large Competition and Inflation under HSA Demand: A Nine-Cell Identification-First Local State-Space Design}
+\author{}
+\date{Final Research Design Blueprint}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document specifies a pre-declared nine-cell, identification-first semi-structural design for studying whether an empirical business-demography competition coordinate changes inflation dynamics through a competition-dependent marginal-cost or slack slope and a short-run market-participation channel. The nine cells combine three quarterly inflation/expectation blocks---PPI with GDP-deflator expectations, CPI with CPI expectations, and core CPI with CPI expectations---with three activity measures---inverse markup, a Beveridge--Nelson output gap, and a negative unemployment gap.
+
+The cells are not given symmetric structural interpretations. The PPI--inverse-markup cell is the unique quantitative HSA cell and is used to evaluate the local cross-equation restriction
+\[
+\kappa_1=\zeta_0\theta_0.
+\]
+The remaining eight cells are pre-declared mechanism-robustness or transportability exercises and do not receive the quantitative HSA equality. Annual firm counts anchor the empirical competition coordinate, while quarterly business-demography indicators provide additional information about its stationary competition cycle. Full-joint and modular-cut analyses are reported side by side. Identification diagnostics are co-primary with model evidence.
+
+The flexible-price/steady-state reference markup is estimated jointly rather than imposed in a preliminary calibration. The same reference markup determines the inverse-markup marginal-cost deviation and the HSA reference elasticity, eliminating sample-mean normalization from the theory-linked cell. Bayes factors measure integrated within-cell model evidence, time-series-respecting predictive scores evaluate predictive performance, and posterior predictive checks diagnose absolute fit. None of these evidence measures overrides weak-identification diagnostics.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ================================================================
+\section{Objective and Scope}
+% ================================================================
+
+The design studies whether product-market competition changes inflation dynamics through two empirically distinct channels:
+\begin{enumerate}
+\item a competition-dependent marginal-cost or slack slope; and
+\item a short-run market-participation channel whose loading may itself vary with the competitive environment.
+\end{enumerate}
+
+The analysis is deliberately semi-structural. The business-demography system is used to construct a latent empirical competition coordinate, while HSA theory supplies a local cross-equation restriction only in the empirical cell for which the inflation and marginal-cost measures are sufficiently close to the producer-pricing objects in the theory.
+
+The empirical analysis is organized around a pre-declared \(3\times3\) matrix of nine data cells. The nine cells are not treated symmetrically in structural interpretation. One cell is the primary quantitative HSA cell; the remaining eight are mechanism-robustness or transportability exercises.
+
+The design distinguishes:
+\begin{itemize}
+\item quantitative HSA consistency;
+\item robustness of the competition mechanisms; and
+\item transportability of those mechanisms across alternative inflation and slack measures.
+\end{itemize}
+
+No result from a secondary cell is used to redefine the primary HSA restriction ex post.
+
+% ================================================================
+\section{Research Questions}
+% ================================================================
+
+\subsection{RQ1: Competition-Dependent Slope}
+
+Does the slow competitive environment change the response of inflation to marginal cost or macroeconomic slack?
+
+The empirical object is
+\begin{equation}
+\kappa_1
+=
+\left.
+\frac{\partial}{\partial \bar q}
+\left(
+\frac{\partial \pi}{\partial x}
+\right)
+\right|_{\bar q=0}.
+\end{equation}
+
+\subsection{RQ2: Short-Run Participation Channel}
+
+Conditional on the maintained timing, measurement, and shock-orthogonality assumptions, is the short-run competition cycle associated with inflation through a distinct participation-channel loading?
+
+The empirical object is
+\begin{equation}
+\theta_0
+=
+-
+\left.
+\frac{\partial\pi}{\partial\hat q}
+\right|_{\bar q=0}.
+\end{equation}
+
+This coefficient is not interpreted as a nonparametrically identified causal effect.
+
+\subsection{RQ3: Local HSA Restriction}
+
+In the theory-near PPI/inverse-markup cell, are the slope and participation channels quantitatively linked as HSA predicts?
+
+The local restriction is
+\begin{equation}
+\boxed{
+\kappa_1=\zeta_0\theta_0.
+}
+\label{eq:local_hsa_restriction}
+\end{equation}
+
+For the unrestricted model define
+\begin{equation}
+\delta_{HSA}
+=
+\kappa_1-\zeta_0\theta_0.
+\label{eq:delta_hsa}
+\end{equation}
+
+This restriction is tested only in the primary quantitative HSA cell.
+
+\subsection{RQ4: State Dependence of the Participation Loading}
+
+Does the participation-channel loading vary with the slow competitive environment?
+
+Write
+\begin{equation}
+\theta(\bar q)
+=
+\theta_0+\gamma\bar q+O(\bar q^2).
+\end{equation}
+
+The primary empirical interpretation of \(\gamma\) is the local state dependence of the empirical participation-channel loading.
+
+A direct interpretation of \(\gamma\) as a derivative of structural pass-through additionally requires that the mapping between the theoretical effective-variety coordinate and the empirical competition coordinate have locally constant scale at the reference environment.
+
+Thus \(\gamma=0\) means local constancy of the empirical participation loading. It is interpreted as locally constant structural pass-through only under this additional proxy-mapping condition.
+
+\subsection{RQ5: Transportability}
+
+Are the signs, magnitudes, and state dependence of the competition mechanisms stable across alternative inflation indexes and alternative marginal-cost/slack measures?
+
+% ================================================================
+\section{Nine Pre-Declared Empirical Cells}
+% ================================================================
+
+Quarterly inflation is considered for three price indexes:
+\begin{enumerate}
+\item PPI;
+\item headline CPI;
+\item core CPI.
+\end{enumerate}
+
+The activity or marginal-cost block is considered under three measures:
+\begin{enumerate}
+\item inverse markup;
+\item Beveridge--Nelson (BN) output gap;
+\item negative unemployment gap.
+\end{enumerate}
+
+The resulting design is shown in \cref{tab:nine_cells}.
+
+\begin{table}[htbp]
+\centering
+\caption{Nine pre-declared empirical cells}
+\label{tab:nine_cells}
+\begin{tabular}{p{0.36\textwidth}ccc}
+\toprule
+Inflation / expectation block & Inverse markup & BN output gap & Negative unemployment gap \\
+\midrule
+PPI / GDP-deflator expectation & Cell 1 & Cell 2 & Cell 3 \\
+CPI / CPI expectation & Cell 4 & Cell 5 & Cell 6 \\
+Core CPI / CPI expectation & Cell 7 & Cell 8 & Cell 9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The nine cells are frozen before empirical comparison.
+
+\subsection{Tier 1: Quantitative HSA Cell}
+
+\paragraph{Cell 1: PPI \(\times\) inverse markup.}
+This is the unique primary quantitative HSA cell.
+
+PPI is the closest observed inflation measure to the producer-pricing equation underlying the HSA restriction, while inverse markup provides the closest direct empirical mapping to real marginal cost.
+
+Only this cell receives the quantitative restriction in \cref{eq:local_hsa_restriction}.
+
+\subsection{Tier 2: Mechanism Robustness}
+
+The following cells move one major dimension away from the theory-near benchmark:
+\begin{itemize}
+\item Cell 2: PPI \(\times\) BN output gap;
+\item Cell 3: PPI \(\times\) negative unemployment gap;
+\item Cell 4: CPI \(\times\) inverse markup.
+\end{itemize}
+
+These cells ask whether the estimated competition mechanisms survive alternative measures of marginal cost/slack or an alternative inflation index.
+
+They do not receive the quantitative HSA equality.
+
+\subsection{Tier 3: Macro Transportability}
+
+The remaining cells are:
+\begin{itemize}
+\item Cell 5: CPI \(\times\) BN output gap;
+\item Cell 6: CPI \(\times\) negative unemployment gap;
+\item Cell 7: core CPI \(\times\) inverse markup;
+\item Cell 8: core CPI \(\times\) BN output gap;
+\item Cell 9: core CPI \(\times\) negative unemployment gap.
+\end{itemize}
+
+These cells study whether the competition mechanisms transport to conventional or underlying consumer-price Phillips curves.
+
+No structural HSA equality is imposed in these cells.
+
+% ================================================================
+\section{Inflation and Expectation Measures}
+% ================================================================
+
+For price index \(j\in\{PPI,CPI,Core\}\), quarterly annualized inflation is
+\begin{equation}
+\pi_t^j
+=
+400
+\left(
+\log P_t^j-\log P_{t-1}^j
+\right).
+\label{eq:inflation_general}
+\end{equation}
+
+All expectation regressors are one-quarter-ahead forecasts whenever available and are expressed in corresponding quarterly annualized units.
+
+\subsection{PPI Cells}
+
+The preferred conditioning variable is a one-quarter-ahead PPI expectation.
+
+If a sufficiently long PPI expectation series is unavailable, a one-quarter-ahead GDP-deflator expectation is used as an observed conditioning proxy. It is not relabeled as a PPI expectation.
+
+The baseline therefore conditions on
+\begin{equation}
+g_t^{GDP}
+\end{equation}
+as a nuisance expectation regressor.
+
+A mandatory robustness exercise introduces an explicit PPI--GDP expectation bridge whenever sufficient information exists to identify it.
+
+\subsection{CPI Cells}
+
+Headline CPI inflation is paired with a one-quarter-ahead CPI expectation.
+
+\subsection{Core CPI Cells}
+
+If a direct core-CPI expectation is unavailable, headline CPI expectation is used as a conditioning proxy. It is explicitly labeled as a headline-CPI expectation proxy rather than an expected core-inflation measure.
+
+A headline-to-core expectation bridge is a robustness exercise when sufficient data are available.
+
+% ================================================================
+\section{Marginal-Cost and Slack Measures}
+% ================================================================
+
+\subsection{Inverse Markup}
+
+Let
+\begin{equation}
+\mu_t
+\end{equation}
+denote the observed markup. Real marginal cost is \(1/\mu_t\).
+
+No sample-mean normalization is used in the structural inverse-markup cells.
+
+Instead, define the marginal-cost deviation relative to the same reference environment used for the HSA elasticity:
+\begin{equation}
+\boxed{
+x_t^{IM}
+=
+\log(1/\mu_t)
+-
+\log(1/\mu_{\mathrm{ref}}^f)
+=
+\log
+\left(
+\frac{\mu_{\mathrm{ref}}^f}{\mu_t}
+\right).
+}
+\label{eq:inverse_markup_gap}
+\end{equation}
+
+Thus \(x_t^{IM}=0\) has an economic interpretation: observed real marginal cost equals its reference flexible-price/steady-state value.
+
+This eliminates dependence on an arbitrary sample-mean centering constant.
+
+\subsection{BN Output Gap}
+
+Let
+\begin{equation}
+x_t^{BN}
+\end{equation}
+denote the pre-declared BN output gap.
+
+The zero of the measure already has the interpretation of output being at its estimated permanent component, so no additional centering is applied.
+
+\subsection{Negative Unemployment Gap}
+
+Let
+\begin{equation}
+u_t^{gap}=u_t-u_t^\ast.
+\end{equation}
+
+Define
+\begin{equation}
+x_t^{U}
+=
+-u_t^{gap}.
+\end{equation}
+
+The sign convention makes larger values correspond to a tighter labor market.
+
+No additional normalization is applied.
+
+The unemployment and BN measures are not interpreted as being in raw log marginal-cost units. Therefore their coefficients are not directly subject to the HSA quantitative equality.
+
+% ================================================================
+\section{HSA Theory and Local Restriction}
+% ================================================================
+
+Let
+\begin{equation}
+n=\log N
+\end{equation}
+denote the theoretical effective number of active firms or varieties.
+
+Under the maintained Rotemberg-HSA producer-pricing environment,
+\begin{equation}
+\kappa^{th}(n)
+=
+\frac{\zeta(n)-1}{\chi},
+\end{equation}
+and
+\begin{equation}
+\Theta^{th}(n)
+=
+\frac{1}{\chi}
+\frac{1-\rho(n)}{\rho(n)}.
+\end{equation}
+
+The HSA identity is
+\begin{equation}
+\frac{d\kappa^{th}(n)}{dn}
+=
+\zeta(n)\Theta^{th}(n).
+\label{eq:hsa_identity}
+\end{equation}
+
+Locally relate the empirical competition coordinate to the theoretical coordinate by
+\begin{equation}
+q=b_N(n-n_0),
+\qquad b_N>0.
+\end{equation}
+
+Under a common local rescaling,
+\begin{equation}
+\frac{d\kappa(q)}{dq}
+=
+\zeta(q)\theta(q).
+\end{equation}
+
+At the reference environment
+\begin{equation}
+\bar q=0,
+\qquad
+\hat q=0,
+\end{equation}
+the primary quantitative HSA restriction is \cref{eq:local_hsa_restriction}.
+
+This is a pointwise local restriction, not a globally exact coefficient function.
+
+It is imposed only in Cell 1.
+
+% ================================================================
+\section{Competition Measurement System}
+% ================================================================
+
+The latent empirical competition coordinate is
+\begin{equation}
+q_t=\bar q_t+\hat q_t,
+\label{eq:q_decomposition}
+\end{equation}
+where:
+\begin{itemize}
+\item \(\bar q_t\) is a slowly moving competitive environment;
+\item \(\hat q_t\) is a stationary competition cycle.
+\end{itemize}
+
+The state decomposition is a measurement and regularization device rather than an HSA law.
+
+\subsection{Annual Firm Counts}
+
+Let
+\begin{equation}
+q_y^A
+\end{equation}
+denote the centered annual firm-count coordinate.
+
+For a point-in-time annual observation at quarter \(t_y\),
+\begin{equation}
+q_y^A
+=
+\bar q_{t_y}
++
+\hat q_{t_y}
++
+\nu_y^N,
+\qquad
+\nu_y^N
+\sim
+\Normal(0,\sigma_N^2).
+\label{eq:annual_measurement}
+\end{equation}
+
+The loading of one defines the scale of the empirical competition coordinate.
+
+The annual firm count is treated as the defining empirical business-demography coordinate, not as an exact observation of theoretical effective varieties.
+
+No additional latent time-varying proxy wedge is included in the baseline unless more than one independently informative annual competition measure is available, because a single annual series cannot separately identify the common competition state and a flexible persistent proxy wedge.
+
+Instead, the design uses:
+\begin{itemize}
+\item sensitivity to \(\sigma_N\);
+\item alternative annual competition proxies;
+\item market-universe checks;
+\item a multiple-proxy measurement model if multiple credible annual measures become available.
+\end{itemize}
+
+\subsection{Quarterly Business-Demography Measurements}
+
+Let
+\begin{equation}
+e_{jt},
+\qquad j=1,\ldots,J_E,
+\end{equation}
+denote economically comparable quarterly business-demography indicators.
+
+The baseline measurement equation is
+\begin{equation}
+e_{jt}
+=
+\bar e_{jt}
++
+b_j\hat q_t
++
+\xi_{jt}^E,
+\qquad
+\xi_{jt}^E\sim\Normal(0,\sigma_{E,j}^2),
+\label{eq:quarterly_measurement}
+\end{equation}
+where each series receives its own slow component \(\bar e_{jt}\).
+
+The slow establishment or business-demography components are not tied to \(\bar q_t\).
+
+The loading \(b_j\) is estimated.
+
+Only quarterly indicators that provide genuinely distinct measurement information are included. Additional series are not added merely to increase the number of measurement rows.
+
+If only one credible quarterly establishment series is available, the system reduces to
+\begin{equation}
+e_t
+=
+\bar e_t+b_E\hat q_t+\xi_t^E.
+\end{equation}
+
+A mandatory conservative sensitivity allows each quarterly indicator to contain an additional idiosyncratic stationary cycle:
+\begin{align}
+e_{jt}
+&=
+\bar e_{jt}
++
+b_j\hat q_t
++
+r_{jt}^E
++
+\xi_{jt}^E,\\
+r_{jt}^E
+&=
+\rho_{E,j}r_{j,t-1}^E+\omega_{jt}^E,
+\qquad |\rho_{E,j}|<1.
+\end{align}
+
+If the common loading or the posterior sharpening of \(\hat q_t\) disappears under this specification, the quarterly data are not considered sufficiently informative about the common competition cycle.
+
+% ================================================================
+\section{State Laws}
+% ================================================================
+
+The baseline competition-state laws are
+\begin{align}
+\bar q_t
+&=
+d_q+\bar q_{t-1}+\eta_t^q,
+&
+\eta_t^q
+&\sim\Normal(0,\sigma_{\bar q}^2),
+\\
+\hat q_t
+&=
+\phi_q\hat q_{t-1}+u_t^q,
+&u_t^q
+&\sim\Normal(0,\sigma_{\hat q}^2),
+\qquad |\phi_q|<1.
+\end{align}
+
+Each quarterly business-demography slow component obeys a pre-declared smooth law, with a random walk with drift as the baseline:
+\begin{equation}
+\bar e_{jt}
+=
+d_{e,j}+\bar e_{j,t-1}+\eta_{jt}^{e}.
+\end{equation}
+
+Alternative smooth laws for \(\bar q_t\), \(\hat q_t\), and \(\bar e_{jt}\) are identification sensitivities rather than alternative economic theories.
+
+% ================================================================
+\section{Joint Reference-Markup Block}
+% ================================================================
+
+The flexible-price/steady-state reference markup is estimated jointly rather than fixed in a preliminary calibration.
+
+Parameterize
+\begin{equation}
+h_\mu
+=
+\log(\mu_{\mathrm{ref}}^f-1),
+\end{equation}
+so that
+\begin{equation}
+\mu_{\mathrm{ref}}^f
+=
+1+\exp(h_\mu)>1.
+\end{equation}
+
+The associated HSA elasticity is
+\begin{equation}
+\boxed{
+\zeta_0
+=
+\frac{\mu_{\mathrm{ref}}^f}
+{\mu_{\mathrm{ref}}^f-1}
+=
+1+\exp(-h_\mu).
+}
+\label{eq:zeta_reference}
+\end{equation}
+
+This parameterization guarantees the economically required domain.
+
+A baseline low-frequency markup block is
+\begin{equation}
+\log\mu_t^{obs}
+=
+\log\mu_{\mathrm{ref}}^f
++
+\lambda_\mu\bar q_t
++
+r_t^\mu
++
+v_t^\mu,
+\qquad
+v_t^\mu\sim\Normal(0,\sigma_{\mu,v}^2),
+\label{eq:markup_bridge}
+\end{equation}
+with
+\begin{equation}
+r_t^\mu
+=
+\rho_\mu r_{t-1}^\mu+\omega_t^\mu,
+\qquad
+|\rho_\mu|<1,
+\qquad
+\omega_t^\mu\sim\Normal(0,\sigma_{\mu,r}^2).
+\end{equation}
+
+This equation is an empirical bridge between observed markups and the reference flexible-price markup. It is not treated as an identity equating observed cyclical markups with their flexible-price counterparts.
+
+For every posterior draw,
+\begin{equation}
+x_t^{IM}
+=
+\log
+\left(
+\frac{\mu_{\mathrm{ref}}^f}{\mu_t^{obs}}
+\right),
+\end{equation}
+and, in Cell 1,
+\begin{equation}
+\kappa_1=\zeta_0\theta_0
+\end{equation}
+is imposed draw by draw.
+
+Thus reference-markup uncertainty is propagated directly into both the marginal-cost gap and the HSA restriction.
+
+% ================================================================
+\section{Inflation Equation}
+% ================================================================
+
+For each empirical cell \(c\), the encompassing local equation is
+\begin{equation}
+\boxed{
+\begin{aligned}
+\pi_{c,t}
+={}&
+a_c
++\beta_{b,c}\pi_{c,t-1}
++\beta_{f,c}f_{c,t}^{cond}
++\kappa_{0,c}x_{c,t}
++\kappa_{1,c}\bar q_tx_{c,t}\\
+&-\theta_{0,c}\hat q_t
+-\gamma_c\bar q_t\hat q_t
++\varepsilon_{c,t}^{\pi},
+\end{aligned}
+}
+\label{eq:inflation_equation}
+\end{equation}
+with
+\begin{equation}
+\varepsilon_{c,t}^{\pi}
+\sim
+\Normal(0,\sigma_{\pi,c}^2)
+\end{equation}
+in the baseline.
+
+The lagged- and expected-inflation coefficients are estimated separately.
+
+No sum-to-one restriction is imposed.
+
+The coefficient interpretations are
+\begin{equation}
+\kappa_{1,c}
+=
+\frac{\partial}{\partial\bar q}
+\left(
+\frac{\partial\pi_c}{\partial x_c}
+\right),
+\end{equation}
+\begin{equation}
+\theta_{0,c}
+=
+-
+\left.
+\frac{\partial\pi_c}{\partial\hat q}
+\right|_{\bar q=0},
+\end{equation}
+and
+\begin{equation}
+\gamma_c
+=
+-
+\frac{\partial^2\pi_c}
+{\partial\bar q\,\partial\hat q}.
+\end{equation}
+
+% ================================================================
+\section{Two-Scale Approximation}
+% ================================================================
+
+The baseline is a two-scale varying-coefficient approximation.
+
+The slow state \(\bar q_t\) indexes the competitive environment. Conditional on that environment, \(x_t\) and \(\hat q_t\) are treated as fast cyclical variables.
+
+Thus
+\begin{equation}
+\kappa(\bar q_t)
+\simeq
+\kappa_0+\kappa_1\bar q_t,
+\end{equation}
+and
+\begin{equation}
+\theta(\bar q_t)
+\simeq
+\theta_0+\gamma\bar q_t.
+\end{equation}
+
+The retained terms are therefore
+\begin{equation}
+\kappa_0x_t
++\kappa_1\bar q_tx_t
+-\theta_0\hat q_t
+-\gamma\bar q_t\hat q_t.
+\end{equation}
+
+The baseline exclusion of
+\begin{equation}
+\hat q_tx_t
+\end{equation}
+is not an HSA zero restriction.
+
+It is the maintained approximation that fast-by-fast interactions are excluded while slow-environment variation in fast-variable coefficients is retained.
+
+A mandatory sensitivity adds
+\begin{equation}
+\lambda_{qx}\hat q_tx_t
+\end{equation}
+symmetrically to the relevant restricted and unrestricted models.
+
+A stronger sensitivity imposes
+\begin{equation}
+\lambda_{qx}=\kappa_1,
+\end{equation}
+corresponding to a first-order single-coordinate expansion in total
+\begin{equation}
+q_t=\bar q_t+\hat q_t.
+\end{equation}
+
+If the principal result changes materially under either specification, the conclusion is reported as dependent on the two-scale approximation.
+
+% ================================================================
+\section{Model Families}
+% ================================================================
+
+\subsection{Cell 1: Quantitative HSA Hierarchy}
+
+Cell 1 uses four nested models.
+
+\paragraph{M0: No competition channel.}
+\begin{equation}
+\kappa_1=\theta_0=\gamma=0.
+\end{equation}
+
+\paragraph{M1: Local constant-participation HSA.}
+\begin{equation}
+\kappa_1=\zeta_0\theta_0,
+\qquad
+\gamma=0.
+\end{equation}
+
+\paragraph{M2: Local HSA.}
+\begin{equation}
+\kappa_1=\zeta_0\theta_0,
+\qquad
+\theta_0,\gamma\text{ free}.
+\end{equation}
+
+\paragraph{M3: Local unrestricted competition.}
+\begin{equation}
+\kappa_1,\theta_0,\gamma
+\text{ free}.
+\end{equation}
+
+The primary HSA residual under M3 is \cref{eq:delta_hsa}.
+
+\subsection{Cells 2--9: Robustness and Transportability Hierarchy}
+
+The HSA equality is not imposed.
+
+Each cell uses:
+
+\paragraph{R0: No competition channel.}
+\begin{equation}
+\kappa_1=\theta_0=\gamma=0.
+\end{equation}
+
+\paragraph{R1: Competition with locally constant participation loading.}
+\begin{equation}
+\kappa_1,\theta_0
+\text{ free},
+\qquad
+\gamma=0.
+\end{equation}
+
+\paragraph{R2: Unrestricted local competition.}
+\begin{equation}
+\kappa_1,\theta_0,\gamma
+\text{ free}.
+\end{equation}
+
+Thus the secondary cells answer two clean questions:
+\begin{enumerate}
+\item do competition-related terms improve the inflation model?;
+\item if so, is state dependence of the participation loading empirically required?
+\end{enumerate}
+
+No \(\delta_{HSA}\) is interpreted structurally outside Cell 1.
+
+% ================================================================
+\section{Full-Joint and Modular-Cut Designs}
+% ================================================================
+
+Let \(C\) collect annual and quarterly business-demography measurements.
+
+Let \(S\) collect competition states and their measurement parameters.
+
+For inverse-markup cells, let \(\psi_\mu\) collect reference-markup parameters and latent markup components.
+
+\subsection{Modular Cut}
+
+The primary measurement-supported cut for inverse-markup cells is
+\begin{equation}
+p_{cut}(S,\psi_\mu,\beta_c)
+=
+p(S\mid C)
+\,p(\psi_\mu\mid \mu^{obs},S)
+\,p(\beta_c\mid\pi_c,X_c,S,\psi_\mu).
+\label{eq:cut_inverse_markup}
+\end{equation}
+
+This ordering has a deliberate interpretation:
+\begin{enumerate}
+\item business-demography data determine competition states;
+\item markup data determine the reference-markup block conditional on those states;
+\item inflation determines inflation-equation parameters;
+\item inflation does not reweight competition states or the reference-markup calibration.
+\end{enumerate}
+
+For BN-output-gap and unemployment-gap cells the middle markup module is absent:
+\begin{equation}
+p_{cut}(S,\beta_c)
+=
+p(S\mid C)
+p(\beta_c\mid\pi_c,X_c,S).
+\label{eq:cut_gap}
+\end{equation}
+
+This modular design gives all nine cells the same business-demography-supported competition-state benchmark.
+
+\subsection{Full Joint}
+
+For inverse-markup cells,
+\begin{align}
+&p_{joint}
+(S,\psi_\mu,\beta_c
+\mid
+C,\mu^{obs},\pi_c,X_c)
+\nonumber\\
+&\qquad\propto
+p(C\mid S)
+p(\mu^{obs}\mid S,\psi_\mu)
+p(\pi_c\mid S,\psi_\mu,X_c,\beta_c)
+p(S)p(\psi_\mu)p(\beta_c).
+\label{eq:full_joint_inverse_markup}
+\end{align}
+
+For gap cells, the markup block is omitted.
+
+Full-joint inference is a coherent semi-structural pooling estimator.
+
+It is not an endogeneity correction.
+
+Cut--joint differences are treated as information-flow and modular-conflict diagnostics.
+
+% ================================================================
+\section{Posterior Simulation}
+% ================================================================
+
+The bilinear term
+\begin{equation}
+-\gamma\bar q_t\hat q_t
+\end{equation}
+makes the joint state posterior non-Gaussian in the full state vector.
+
+Conditional on either slow or fast state blocks, however, the other block has a linear-Gaussian full conditional.
+
+Posterior inference therefore uses an
+\begin{equation}
+\boxed{\text{FFBS-within-Gibbs sampler}}
+\end{equation}
+rather than describing the complete posterior sampler as an exact FFBS algorithm.
+
+Each state-block FFBS step is an exact draw from its corresponding conditional smoothing distribution.
+
+Repeated Gibbs iterations target the joint posterior.
+
+A typical iteration is:
+\begin{enumerate}
+\item draw \(\hat q_{1:T}\) and the quarterly business-demography slow states conditional on \(\bar q_{1:T}\);
+\item draw \(\bar q_{1:T}\) conditional on \(\hat q_{1:T}\);
+\item update transition and measurement parameters;
+\item update quarterly-measurement loadings and variances;
+\item in inverse-markup cells, update the reference-markup block;
+\item update inflation-equation parameters;
+\item repeat the state blocks before storing a draw if cross-block autocorrelation is high.
+\end{enumerate}
+
+Gaussian conditional updates are used where available.
+
+The reference-markup parameter \(h_\mu\), and any other parameter entering the likelihood nonlinearly, is updated with a valid nonconjugate step such as slice sampling or Metropolis--Hastings.
+
+When \(\gamma=0\), a one-block multivariate FFBS implementation is used as a mandatory computational validation benchmark.
+
+% ================================================================
+\section{Priors}
+% ================================================================
+
+All priors are proper.
+
+Near-improper inverse-gamma variance priors are excluded.
+
+The prior design focuses on:
+\begin{itemize}
+\item the relative innovation scales of \(\bar q_t\) and \(\hat q_t\);
+\item quarterly-measurement trend smoothness;
+\item the loading parameters \(b_j\);
+\item the annual measurement variance;
+\item inflation-equation coefficient scales;
+\item the reference-markup parameter \(h_\mu\).
+\end{itemize}
+
+The prior on
+\begin{equation}
+h_\mu=\log(\mu_{\mathrm{ref}}^f-1)
+\end{equation}
+is based on economically plausible markup magnitudes or external evidence and is not tuned using realized inflation outcomes.
+
+Prior predictive checks examine the implied distributions of
+\begin{equation}
+\kappa_1\bar q_tx_t,
+\qquad
+-\theta_0\hat q_t,
+\qquad
+-\gamma\bar q_t\hat q_t,
+\end{equation}
+and, in Cell 1,
+\begin{equation}
+\delta_{HSA}.
+\end{equation}
+
+Bayes-factor prior scales are frozen before the model comparisons and are varied over pre-declared economically plausible ranges.
+
+% ================================================================
+\section{Identification Diagnostics}
+% ================================================================
+
+Identification diagnostics are co-primary with coefficient estimates.
+
+\subsection{Competition-Cycle Measurement}
+
+Compare:
+
+\paragraph{N.}
+Annual firms only.
+
+\paragraph{C.}
+Annual firms plus quarterly business-demography measurements.
+
+\paragraph{J.}
+Full-joint cell-specific model.
+
+\paragraph{J-Q.}
+Full-joint model with the quarterly business-demography signal removed.
+
+The central measurement diagnostic is
+\begin{equation}
+C\text{ versus }N
+\end{equation}
+for posterior uncertainty about
+\begin{equation}
+\hat q_t.
+\end{equation}
+
+The quarterly data are considered informative only if they materially sharpen the competition cycle and the result survives:
+\begin{itemize}
+\item alternative quarterly trend laws;
+\item alternative competition-cycle laws;
+\item idiosyncratic quarterly cycles;
+\item alternative quarterly indicators.
+\end{itemize}
+
+\subsection{Identification of \(\theta_0\) and \(\gamma\)}
+
+For every main cell report:
+\begin{itemize}
+\item posterior variation in \(\bar q_t\);
+\item posterior variation in \(\hat q_t\);
+\item correlation between \(\hat q_t\) and \(\bar q_t\hat q_t\);
+\item standardized-design condition number;
+\item smallest eigenvalue of the regressor Gram matrix;
+\item auxiliary \(R^2\) and VIF for \(\bar q_t\hat q_t\);
+\item posterior correlation between \(\theta_0\) and \(\gamma\);
+\item prior-to-posterior contraction;
+\item cut--joint movement in the coefficients.
+\end{itemize}
+
+If \(\gamma\) is not learned from the likelihood, posterior concentration around zero or a Bayes factor favoring \(\gamma=0\) is not interpreted as evidence for local constancy.
+
+\subsection{Persistent Inflation Disturbance}
+
+A mandatory robustness replaces
+\begin{equation}
+\varepsilon_t^\pi
+\sim iid
+\end{equation}
+with
+\begin{equation}
+\varepsilon_t^\pi
+=
+\rho_\pi\varepsilon_{t-1}^\pi+v_t^\pi,
+\qquad |\rho_\pi|<1.
+\end{equation}
+
+A competition-cycle loading is not considered robust if it collapses once modest residual inflation persistence is admitted.
+
+\subsection{Low-Frequency Inflation Confounding}
+
+A common low-frequency inflation nuisance component is added symmetrically across competing models within each cell.
+
+If \(\kappa_1\) changes materially, the result is described as sensitive to low-frequency inflation specification.
+
+% ================================================================
+\section{Measurement-Error and Data-Alignment Checks}
+% ================================================================
+
+\subsection{Markup Measurement Error}
+
+Inverse-markup results are conditional on the observed markup unless an identified errors-in-variables structure is available.
+
+A valid measurement-error model requires additional information, such as:
+\begin{itemize}
+\item externally estimated measurement-error variance;
+\item independently constructed markup measures;
+\item an external instrument.
+\end{itemize}
+
+A measurement equation alone is not treated as identification.
+
+\subsection{Shared Price-Index Construction}
+
+If the markup measure mechanically contains the same price index used to construct inflation, a shared-measurement-error sensitivity is mandatory.
+
+Mechanical covariance is not interpreted as marginal-cost transmission.
+
+\subsection{Market-Universe Alignment}
+
+PPI, CPI/core CPI, markup measures, firm counts, and quarterly business-demography indicators must refer to economically compatible market universes.
+
+Cell 7, core CPI \(\times\) inverse markup, receives particular scrutiny because a broad markup measure may not map cleanly into the core-CPI market universe.
+
+If the alignment is materially poor, the cell is reported as non-interpretable rather than forced into the nine-cell comparison.
+
+% ================================================================
+\section{Model Evidence and Predictive Evaluation}
+% ================================================================
+
+Model comparison uses two distinct objects.
+
+\subsection{Bayes Factors}
+
+Bayes factors measure integrated model evidence, including fit, parameter uncertainty, prior mass, and model complexity.
+
+They are therefore not described as pure fit measures.
+
+Bayes factors are compared only between models estimated on the same empirical cell.
+
+They are not compared numerically across different dependent variables or different activity measures.
+
+For Cell 1 the main comparisons are:
+\begin{equation}
+M3\text{ vs }M0,
+\end{equation}
+\begin{equation}
+M2\text{ vs }M3,
+\end{equation}
+and
+\begin{equation}
+M1\text{ vs }M2.
+\end{equation}
+
+For Cells 2--9 the main comparisons are:
+\begin{equation}
+R2\text{ vs }R0,
+\end{equation}
+and
+\begin{equation}
+R1\text{ vs }R2.
+\end{equation}
+
+Formal Bayes factors are based on the full generative model.
+
+No mechanically comparable Bayes factor is assigned to the modular cut distribution.
+
+\subsection{Posterior Predictive Score}
+
+Predictive evaluation uses time-series-respecting posterior predictive densities.
+
+The preferred criterion is recursive one-step-ahead or leave-future-out log predictive score:
+\begin{equation}
+LPS_M
+=
+\sum_{t\in\mathcal H}
+\log
+p(
+\pi_t
+\mid
+\mathcal I_{t-1},M
+).
+\label{eq:lps}
+\end{equation}
+
+Full-sample smoothed latent states are never used to claim forecast performance.
+
+Where contemporaneous activity or markup data are unavailable at the genuine forecast origin, a separate conditional-nowcast exercise is reported.
+
+Predictive-score differences are interpreted within each cell relative to its no-competition benchmark.
+
+\subsection{Posterior Predictive Checks}
+
+Posterior predictive checks are used as absolute-fit diagnostics for:
+\begin{itemize}
+\item inflation persistence;
+\item residual variance;
+\item business-demography measurement fit;
+\item markup-block fit;
+\item the magnitude of competition contributions.
+\end{itemize}
+
+Thus the evidence hierarchy is
+\begin{equation}
+\boxed{
+\text{Identification}
+\;\rightarrow\;
+\text{Bayes factor}
++
+\text{predictive score}
+\;\rightarrow\;
+\text{posterior predictive fit}.
+}
+\end{equation}
+
+A favorable Bayes factor cannot rescue a model whose key parameter is weakly identified.
+
+% ================================================================
+\section{Cross-Cell Interpretation}
+% ================================================================
+
+The nine cells are not nine independent attempts to find statistical significance.
+
+They are a fixed robustness architecture.
+
+The interpretation proceeds in the following order.
+
+\paragraph{Gate 1: Competition measurement.}
+Does the quarterly business-demography system identify a meaningful \(\hat q_t\) beyond annual firm counts and state-law regularization?
+
+\paragraph{Gate 2: Primary HSA cell.}
+In Cell 1:
+\begin{itemize}
+\item is \(\theta_0\) empirically learned?;
+\item is \(\kappa_1\) empirically learned?;
+\item is \(\delta_{HSA}\) close to zero?;
+\item does Local HSA receive competitive integrated evidence relative to Local U?;
+\item do the results survive persistent inflation errors, alternative competition state laws, and the fast-by-fast interaction sensitivity?
+\end{itemize}
+
+\paragraph{Gate 3: Marginal-cost/slack robustness.}
+Do Cells 2 and 3 produce competition-dependent Phillips-curve slopes and participation loadings with economically compatible signs?
+
+No quantitative HSA equality is required.
+
+\paragraph{Gate 4: Inflation-index transportability.}
+Do Cells 4--9 show that the mechanism survives movement from producer inflation to headline and core consumer inflation?
+
+\paragraph{Gate 5: State dependence.}
+Only if \(\gamma\) is empirically learned is variation in the participation loading interpreted substantively.
+
+% ================================================================
+\section{Required Robustness Exercises}
+% ================================================================
+
+The following are mandatory:
+\begin{enumerate}
+\item annual-firm-only versus quarterly-augmented competition measurement;
+\item alternative quarterly business-demography trends;
+\item idiosyncratic quarterly business-demography cycles;
+\item alternative AR(1)/AR(2) competition-cycle laws;
+\item alternative slow competition laws;
+\item persistent AR(1) inflation disturbance;
+\item low-frequency inflation nuisance component;
+\item fast-by-fast interaction \(\hat q_tx_t\);
+\item stronger single-coordinate restriction \(\lambda_{qx}=\kappa_1\);
+\item markup measurement-error sensitivity where identified;
+\item shared-price-index measurement-error check;
+\item alternative annual competition proxies;
+\item wider annual-measurement variance;
+\item expectation-index bridge checks;
+\item cut versus full-joint information-flow diagnostics;
+\item market-universe alignment;
+\item prior sensitivity for all Bayes-factor comparisons;
+\item local-approximation range diagnostics.
+\end{enumerate}
+
+% ================================================================
+\section{Required Simulation Validation}
+% ================================================================
+
+Before empirical model ranking, simulation exercises must verify:
+\begin{enumerate}
+\item agreement between one-block and two-block state samplers when \(\gamma=0\);
+\item recovery of \(\theta_0\), \(\gamma\), and \(\kappa_1\) under known parameter values;
+\item deterioration of \(\gamma\) identification when variation in \(\bar q_t\) is small;
+\item the ability of the C-versus-N diagnostic to reveal weak quarterly information;
+\item behavior when quarterly indicators contain idiosyncratic cycles;
+\item false loading on \(\hat q_t\) when inflation disturbances are persistent;
+\item rejection of the HSA-restricted model when data are generated with economically important \(\delta_{HSA}\neq0\);
+\item cut--joint state shifts under a correctly specified joint model;
+\item recovery of the reference markup and \(\zeta_0\);
+\item RBPF likelihood validation against exact Kalman-filter likelihoods in linear special cases.
+\end{enumerate}
+
+% ================================================================
+\section{Reporting Plan}
+% ================================================================
+
+\subsection{Main Competition-State Figure}
+
+Report
+\begin{equation}
+\bar q_t,
+\qquad
+\hat q_t,
+\qquad
+q_t
+\end{equation}
+under the business-demography cut and full joint.
+
+Show the C-versus-N uncertainty reduction for \(\hat q_t\).
+
+\subsection{Main Cell-1 Figure}
+
+Report posterior distributions of
+\begin{equation}
+\kappa_1,
+\qquad
+\theta_0,
+\qquad
+\gamma,
+\qquad
+\delta_{HSA},
+\qquad
+\mu_{\mathrm{ref}}^f,
+\qquad
+\zeta_0.
+\end{equation}
+
+\subsection{Nine-Cell Coefficient Figure}
+
+Report posterior distributions or credible intervals for
+\begin{equation}
+\kappa_1,
+\qquad
+\theta_0,
+\qquad
+\gamma
+\end{equation}
+for all nine cells.
+
+The figure visually distinguishes:
+\begin{itemize}
+\item Tier 1 quantitative HSA;
+\item Tier 2 mechanism robustness;
+\item Tier 3 transportability.
+\end{itemize}
+
+No structural HSA residual is plotted for Cells 2--9.
+
+\subsection{Evidence Table}
+
+For each cell report:
+\begin{itemize}
+\item Bayes-factor comparisons within that cell;
+\item recursive/LFO predictive-score differences relative to the no-competition model;
+\item cut and full-joint coefficient summaries;
+\item identification diagnostics;
+\item persistent-error robustness;
+\item convergence and Monte Carlo diagnostics.
+\end{itemize}
+
+% ================================================================
+\section{Pre-Estimation Freeze}
+% ================================================================
+
+Before production estimation, freeze:
+\begin{enumerate}
+\item all nine empirical cells;
+\item Tier 1, Tier 2, and Tier 3 classification;
+\item all inflation definitions and forecast horizons;
+\item all activity/slack definitions;
+\item markup construction;
+\item reference-markup model;
+\item business-demography sources;
+\item annual and quarterly timing conventions;
+\item competition-state laws;
+\item priors;
+\item model families within each cell;
+\item modular-cut ordering;
+\item full-joint specifications;
+\item identification gates;
+\item predictive information sets;
+\item Bayes-factor prior sensitivity grid;
+\item all mandatory robustness exercises.
+\end{enumerate}
+
+No cell is added, deleted, or promoted based on the realized coefficient signs or model rankings, except that a cell may be labeled non-interpretable if a pre-declared market-universe or data-quality condition fails.
+
+% ================================================================
+\section{Final Interpretation Boundary}
+% ================================================================
+
+A favorable result in the primary cell supports the following deliberately conditional statement:
+
+\begin{quote}
+Annual firm counts and quarterly business-demography measurements provide an empirically informative latent competition coordinate under the maintained mixed-frequency state-space decomposition. Conditional on the timing, measurement, reference-markup, and shock-orthogonality assumptions, competition changes the marginal-cost slope and is associated with a short-run participation-channel loading. In the PPI/inverse-markup cell, the two channels are locally quantitatively consistent with the HSA restriction after uncertainty in the reference flexible-price markup and the implied demand elasticity is propagated through the joint model.
+\end{quote}
+
+The secondary cells establish robustness or transportability only.
+
+The design does not by itself establish:
+\begin{itemize}
+\item that observed firm counts equal theoretical effective varieties;
+\item that the competition state laws are structural;
+\item that \(\theta_0\) is a nonparametrically identified causal effect;
+\item that \(\gamma\) is a structural pass-through derivative without the additional local proxy-mapping condition;
+\item that unemployment or output gaps are in the same units as theoretical marginal cost;
+\item that CPI or core CPI obey the producer-pricing HSA equation;
+\item that full-joint estimation solves endogenous entry.
+\end{itemize}
+
+Those stronger claims require additional measurement structure or independently identified sources of variation.
+
+\end{document}

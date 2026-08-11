@@ -412,6 +412,8 @@ def func_nkpc_hsa_full_pg(
     n_particles = int(_getd(opts, "n_particles", DEFAULT_N_PARTICLES))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = _getd(opts, "progress_callback", None)
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
     ar2_stats: dict[str, int] = {}
@@ -791,6 +793,9 @@ def func_nkpc_hsa_full_pg(
             pg_moved_draws[store_idx] = pg["moved_frac"]
             admissibility_violation_draws[store_idx] = float(state_invalid)
             store_idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
         if verbose and it % 2000 == 0:
             print(

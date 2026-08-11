@@ -1,7 +1,11 @@
 # data_builders.py
 from __future__ import annotations
 
+from io import BytesIO
 from pathlib import Path
+import re
+from zipfile import ZIP_DEFLATED, ZipFile
+
 import numpy as np
 import pandas as pd
 
@@ -140,13 +144,147 @@ def _set_quarter_end_index(df: pd.DataFrame, date_col: str = "DATE") -> pd.DataF
     return out
 
 
+def _load_spf_workbook(path: Path, required_cols: list[str]) -> pd.DataFrame:
+    """Read an SPF workbook and fail with the missing source fields named."""
+    if not path.exists():
+        raise FileNotFoundError(f"Missing SPF source workbook: {path}")
+    try:
+        spf = pd.read_excel(path)
+    except TypeError as exc:
+        # Some official Philadelphia Fed XLSX files store malformed W3CDTF
+        # created/modified values that openpyxl cannot parse as datetimes.
+        # Repair only those package metadata fields in memory; worksheet values
+        # and the raw file on disk remain untouched.
+        if path.suffix.lower() != ".xlsx" or "datetime" not in str(exc):
+            raise
+        repaired = BytesIO()
+        with ZipFile(path) as source, ZipFile(repaired, "w", ZIP_DEFLATED) as target:
+            for member in source.infolist():
+                payload = source.read(member.filename)
+                if member.filename == "docProps/core.xml":
+                    for tag in (b"created", b"modified"):
+                        malformed_w3cdtf = re.compile(
+                            rb"(<dcterms:"
+                            + tag
+                            + rb"\b[^>]*>).*?(</dcterms:"
+                            + tag
+                            + rb">)"
+                        )
+                        payload = malformed_w3cdtf.sub(
+                            lambda match: match.group(1)
+                            + b"2000-01-01T00:00:00Z"
+                            + match.group(2),
+                            payload,
+                        )
+                target.writestr(member, payload)
+        repaired.seek(0)
+        spf = pd.read_excel(repaired)
+    missing = [col for col in required_cols if col not in spf.columns]
+    if missing:
+        raise KeyError(f"SPF workbook {path} is missing columns: {', '.join(missing)}")
+    return spf
+
+
+def _add_spf_survey_date(spf: pd.DataFrame) -> pd.DataFrame:
+    """Date an SPF observation at the quarter in which the survey was run."""
+    out = spf.copy()
+    year = pd.to_numeric(out["YEAR"], errors="raise").astype(int)
+    quarter = pd.to_numeric(out["QUARTER"], errors="raise").astype(int)
+    if not quarter.between(1, 4).all():
+        bad = sorted(quarter.loc[~quarter.between(1, 4)].unique().tolist())
+        raise ValueError(f"SPF QUARTER must be in 1,...,4; got {bad}")
+    out["DATE"] = pd.PeriodIndex(
+        year.astype(str) + "Q" + quarter.astype(str), freq="Q"
+    ).to_timestamp(how="end")
+    return out
+
+
+def load_spf_quarter_ahead_expectations(base: Path) -> pd.DataFrame:
+    """Load the genuine one-quarter-ahead SPF GDP-price inflation forecast.
+
+    ``Median_PGDP_Growth.xlsx`` is the Philadelphia Fed's official annualized
+    percent change of median responses file.  A row is dated at survey quarter
+    ``t``. ``DPGDP2`` is the current-quarter forecast and ``DPGDP3`` is the
+    forecast for ``t+1``; using ``DPGDP2`` here would create a horizon error.
+    The median is used deliberately because the companion one-year-ahead SPF
+    series is also constructed from median forecasts.
+
+    The source uses discrete annualization.  We retain that published value and
+    also expose transformations needed by the two inflation conventions used in
+    this repository.  In particular, the nonannualized Q/Q value is compounded
+    exactly, not obtained by dividing the annual rate by four.
+    """
+    path = base / "inflation" / "Median_PGDP_Growth.xlsx"
+    spf = _load_spf_workbook(path, ["YEAR", "QUARTER", "DPGDP3"])
+    spf = _add_spf_survey_date(spf)
+
+    annualized_pct = pd.to_numeric(spf["DPGDP3"], errors="coerce")
+    invalid = annualized_pct.notna() & annualized_pct.le(-100.0)
+    if invalid.any():
+        raise ValueError("SPF DPGDP3 must be greater than -100 percent.")
+
+    # Published SPF convention: 100 * ((P[t+1] / P[t])**4 - 1).
+    spf["Epi_spf_gdp_1q_ahead_ann_pct"] = annualized_pct
+    # Match 400 * (log(P[t+1]) - log(P[t])) used by an annualized-log NKPC.
+    spf["Epi_spf_gdp_1q_ahead_ann_log"] = 100.0 * np.log1p(annualized_pct / 100.0)
+    # Match 100 * (P[t+1] / P[t] - 1) used by the legacy nonannualized Q/Q cell.
+    spf["Epi_spf_gdp_1q_ahead_qoq_pct"] = 100.0 * np.expm1(
+        np.log1p(annualized_pct / 100.0) / 4.0
+    )
+    columns = [
+        "DATE",
+        "Epi_spf_gdp_1q_ahead_ann_pct",
+        "Epi_spf_gdp_1q_ahead_ann_log",
+        "Epi_spf_gdp_1q_ahead_qoq_pct",
+    ]
+    return _set_quarter_end_index(spf[columns])
+
+
+def load_spf_yoy_expectations(base: Path) -> pd.DataFrame:
+    """Load the SPF one-year-ahead (four-quarter) inflation expectations.
+
+    These are forecasts for average inflation over the four quarters following
+    the survey quarter.  They are not interchangeable with ``DPGDP3`` and are
+    therefore stored under explicit ``yoy_1y_ahead`` names.  The historical
+    names are retained as aliases so previously configured runs still load.
+    """
+    path = base / "inflation" / "SPF_Inflation_Expectation.xlsx"
+    spf = _load_spf_workbook(
+        path, ["YEAR", "QUARTER", "INFPGDP1YR", "INFCPI1YR"]
+    )
+    spf = _add_spf_survey_date(spf)
+    spf["Epi_spf_gdp_yoy_1y_ahead"] = pd.to_numeric(
+        spf["INFPGDP1YR"], errors="coerce"
+    )
+    spf["Epi_spf_cpi_yoy_1y_ahead"] = pd.to_numeric(
+        spf["INFCPI1YR"], errors="coerce"
+    )
+    spf["Epi_spf_gdp_yoy_1y_ahead_log"] = 100.0 * np.log1p(
+        spf["Epi_spf_gdp_yoy_1y_ahead"] / 100.0
+    )
+    spf["Epi_spf_cpi_yoy_1y_ahead_log"] = 100.0 * np.log1p(
+        spf["Epi_spf_cpi_yoy_1y_ahead"] / 100.0
+    )
+
+    # Backward-compatible aliases.  New specifications should use the names
+    # above so that the one-year horizon cannot be mistaken for t+1.
+    spf["Epi_spf_gdp"] = spf["Epi_spf_gdp_yoy_1y_ahead"]
+    spf["Epi_spf_cpi"] = spf["Epi_spf_cpi_yoy_1y_ahead"]
+    columns = [
+        "DATE",
+        "Epi_spf_gdp_yoy_1y_ahead",
+        "Epi_spf_cpi_yoy_1y_ahead",
+        "Epi_spf_gdp_yoy_1y_ahead_log",
+        "Epi_spf_cpi_yoy_1y_ahead_log",
+        "Epi_spf_gdp",
+        "Epi_spf_cpi",
+    ]
+    return _set_quarter_end_index(spf[columns])
+
+
 def load_spf_expectations(base: Path) -> pd.DataFrame:
-    spf = pd.read_excel(base / "inflation" / "SPF_Inflation_Expectation.xlsx")
-    q_month = (spf["QUARTER"] * 3)
-    spf["DATE"] = pd.to_datetime(spf["YEAR"].astype(str) + "-" + q_month.astype(str) + "-01") + pd.offsets.MonthEnd(0)
-    spf["Epi_spf_gdp"] = spf["INFPGDP1YR"]
-    spf["Epi_spf_cpi"] = spf["INFCPI1YR"]
-    return _set_quarter_end_index(spf[["DATE", "Epi_spf_gdp", "Epi_spf_cpi"]])
+    """Backward-compatible name for the SPF one-year-ahead loader."""
+    return load_spf_yoy_expectations(base)
 
 
 def load_monthly_inflation_series(
@@ -290,7 +428,8 @@ def load_all_series(base: Path) -> list[pd.DataFrame]:
     inflation_series = [
         load_monthly_inflation_series(base, "CPIAUCSL.csv", "CPIAUCSL", "pi_cpi", "pct_yoy"),
         load_cleveland_fed_expectations(base),
-        load_spf_expectations(base),
+        load_spf_quarter_ahead_expectations(base),
+        load_spf_yoy_expectations(base),
         load_monthly_inflation_series(base, "CPILFESL.csv", "CPILFESL", "pi_cpi_core", "log_yoy"),
         load_monthly_inflation_series(base, "PCEPILFE.csv", "PCEPILFE", "pi_pce_core", "log_yoy"),
         load_monthly_inflation_series(base, "PCEPI.csv", "PCEPI", "pi_pce", "log_yoy"),

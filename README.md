@@ -97,6 +97,25 @@ the current revision are reused; `--force` re-estimates them.
 `--no-build` on the first step is what keeps it from building a report while
 half the run set is still missing.
 
+### Progress display
+
+The estimation drivers show live progress on a terminal and nothing extra when
+their output is redirected, so a log file does not fill up with redraws:
+
+| command | what the bar measures |
+|---|---|
+| `scripts/run_restriction_production.py` | one line per theory cell plus an overall bar, advancing **per draw** — each cell reports its own iteration count back to the driver |
+| `scripts/10_estimate_theory_models.py` | a single per-draw bar spanning every chain of the cell |
+| `scripts/13_estimate_cpi_ppi_report.py` | one bar over the cell set, advancing **per completed cell** — the cells run in separate worker processes with no channel back |
+
+All three take `--progress {auto,bar,plain,stream,off}`, and `NKPC_HSA_PROGRESS`
+sets the default. Use `plain` for a periodic summary line under `nohup` or in
+CI; `stream` emits the machine-readable events the production driver
+aggregates, and is not meant to be read by a person.
+
+The bar is display only. It never touches the draws, the seeds or the saved
+run, so a run estimated with it on and the same run with it off are identical.
+
 ### Rebuilding the report without re-estimating
 
 ```bash

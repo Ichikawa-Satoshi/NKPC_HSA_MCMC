@@ -1176,6 +1176,8 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
     ar2_max_tries = int(max(1, _getd(opts, "ar2_max_tries", 2000)))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = _getd(opts, "progress_callback", None)
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
     ar2_stats: dict[str, int] = {}
@@ -1396,6 +1398,9 @@ def func_nkpc_hsa_decomp_joint_fullSigma(
             Nhat_draws[store_idx] = Nhat
 
             store_idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
         if verbose and it % 5000 == 0:
             print(

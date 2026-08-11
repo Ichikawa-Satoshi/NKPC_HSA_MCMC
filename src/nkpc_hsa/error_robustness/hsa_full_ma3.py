@@ -143,6 +143,8 @@ def func_nkpc_hsa_full_ma3(
     n_particles = int(_getd(opts, "n_particles", DEFAULT_N_PARTICLES))
     store_every = int(max(1, _getd(opts, "store_every", 1)))
     verbose = bool(_getd(opts, "verbose", False))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = _getd(opts, "progress_callback", None)
     coefficient_constraints = _getd(opts, "coefficient_constraints", {})
     constraint_stats: dict[str, int] = {}
     ar2_stats: dict[str, int] = {}
@@ -381,6 +383,9 @@ def func_nkpc_hsa_full_ma3(
                 psi_draws[store_idx] = psi
                 e_acf_draws[store_idx] = gamma_acov[1:] / sigma_e2
             store_idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
         if verbose and it % 2000 == 0:
             acc = proposal.acceptance_rate if proposal is not None else float("nan")

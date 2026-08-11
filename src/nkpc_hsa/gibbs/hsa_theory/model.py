@@ -165,6 +165,8 @@ def func_hsa_f0(
     coefficient_constraints.setdefault("max_tries", 2000)
     enforce_stationary = bool(_getd(opts, "enforce_stationary", True))
     ar2_max_tries = int(_getd(opts, "ar2_max_tries", 2000))
+    # Display-only hook installed by the run driver; it never touches the draws.
+    progress_callback = _getd(opts, "progress_callback", None)
 
     alpha = float(pri["mu_alpha"])
     kappa0 = float(pri["mu_kappa0"])
@@ -180,6 +182,7 @@ def func_hsa_f0(
     q = np.interp(np.arange(T), np.flatnonzero(finite), N_obs[finite])
     q_lag0 = float(q[0])
     a_t = pi_tm1 - pi_expect
+    total_iter = n_burn + n_keep
     n_store = int(n_keep // store_every)
     saved = {name: np.zeros(n_store) for name in (
         "alpha", "kappa_0", "theta0", "phi_1", "lambda_ez", "rho1", "rho2",
@@ -192,7 +195,7 @@ def func_hsa_f0(
     ar2_stats: dict[str, int] = {}
     idx = 0
 
-    for it in range(1, n_burn + n_keep + 1):
+    for it in range(1, total_iter + 1):
         y = pi_t - pi_expect
         zeta = x_t - phi_1 * x_tm1
         y_adj = y - lambda_ez * zeta
@@ -267,6 +270,9 @@ def func_hsa_f0(
             kappa_t_draws[idx] = kappa0 / KAPPA_SCALE
             theta_t_draws[idx] = theta0
             idx += 1
+
+        if progress_callback is not None:
+            progress_callback(it, total_iter)
 
     return {
         "alpha": _summary(saved["alpha"]),

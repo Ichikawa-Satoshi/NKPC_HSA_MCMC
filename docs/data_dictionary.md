@@ -2,8 +2,10 @@
 
 > **Inflation-observation migration.** The processed data retains the legacy
 > four-quarter columns and now also creates non-annualized Q/Q percentage-point
-> columns (`pi_*_qoq` plus one-quarter lags). `Epi_qoq=Epi/4` is a
-> quarterly-rate equivalent of the one-year source, not a one-quarter forecast.
+> columns (`pi_*_qoq` plus one-quarter lags). `Epi_qoq=Epi/4` remains a legacy
+> quarterly-rate equivalent of the Cleveland Fed one-year source, not a one-quarter
+> forecast. The SPF loaders now separately identify genuine one-quarter-ahead and
+> forward four-quarter/YoY forecasts.
 > F0/U compare Q/Q and direct 4Q YoY in separate likelihoods; R1--R3 use Q/Q.
 > See `docs/theory_model_migration.md`.
 
@@ -76,6 +78,38 @@ Used in `unemployment_gap_ppi`, `output_gap_bn_ppi`, `output_gap_hp_ppi`.
 
 ## Expected inflation
 
+### SPF: genuine one-quarter-ahead GDP-price inflation
+
+| | |
+|---|---|
+| **Source file** | `data/raw/inflation/Median_PGDP_Growth.xlsx`, Philadelphia Fed SPF annualized percent change of median responses |
+| **Source field** | `DPGDP3`; a row dated at survey quarter `t` forecasts GDP-price inflation in `t+1` (`DPGDP2` is the current-quarter forecast) |
+| **Published units** | discrete annualized percentage points |
+| **Processed columns** | `Epi_spf_gdp_1q_ahead_ann_pct` (published units); `Epi_spf_gdp_1q_ahead_ann_log` (annualized log); `Epi_spf_gdp_1q_ahead_qoq_pct` (exact nonannualized Q/Q) |
+| **Conversion** | annualized log: `100*log(1+r/100)`; Q/Q: `100*expm1(log1p(r/100)/4)` |
+| **Loader** | `load_spf_quarter_ahead_expectations` |
+
+The exact compounding conversion is deliberate: dividing the published annualized
+forecast by four is only an approximation and does not change the forecast horizon.
+The median statistic matches the construction of the companion SPF one-year-ahead
+series.
+
+### SPF: forward four-quarter/YoY inflation
+
+| | |
+|---|---|
+| **Source file** | `data/raw/inflation/SPF_Inflation_Expectation.xlsx` |
+| **Source fields** | `INFPGDP1YR`, `INFCPI1YR` |
+| **Horizon** | average inflation over the four quarters following the survey quarter; not interchangeable with `DPGDP3` |
+| **Processed columns** | `Epi_spf_gdp_yoy_1y_ahead`, `Epi_spf_cpi_yoy_1y_ahead`, and corresponding `_log` columns |
+| **Loader** | `load_spf_yoy_expectations` |
+
+`Epi_spf_gdp` and `Epi_spf_cpi` remain backward-compatible aliases for the two
+forward-four-quarter level-rate columns. New specifications should use the explicit
+horizon names.
+
+### Cleveland Fed legacy expectation
+
 | | |
 |---|---|
 | **Symbol** | `E_t π_{t+1}` |
@@ -85,7 +119,7 @@ Used in `unemployment_gap_ppi`, `output_gap_bn_ppi`, `output_gap_hp_ppi`.
 | **Units** | annual percent |
 | **Horizon** | **UNVERIFIED** which maturity is in the ` Epi` column. The model equation calls it `E_t π_{t+1}`; with four-quarter inflation on the LHS, a one-year-ahead series is the coherent match, but the column is not labelled in code and the raw file is not self-documenting. |
 | **Used in** | every model and every data spec — the same series in all of them |
-| **Note** | The SPF loader (`load_spf_expectations`, `func_data_build.py:126-131`, producing `Epi_spf_gdp` / `Epi_spf_cpi`) exists but **no configured data spec uses it** — `pi_expect_col` is `Epi` everywhere in `configs/models.yaml`. |
+| **Note** | The current configured legacy data specs continue to use this series. The SPF columns are present in `model_ready.csv` for the reorganized estimation cells. |
 
 ⚠️ **Deliberate mismatch, disclosed in the report**: the PPI and core-CPI specs pair their price
 index with this *same* headline-oriented expectation series, because no PPI expectation is
@@ -234,7 +268,7 @@ to `run_data_specs`.
 
 | Series | Loaded at | Status |
 |---|---|---|
-| `Epi_spf_gdp`, `Epi_spf_cpi` | `func_data_build.py:126-131` | no spec references them |
+| `Epi_spf_gdp_1q_ahead_*`, `Epi_spf_*_yoy_1y_ahead*` | SPF loaders in `func_data_build.py` | available for reorganized estimation cells; legacy aliases retained |
 | `pi_pce`, `pi_pce_core` | `func_data_build.py:262-263` | no spec references them |
 | `oil` | `func_data_build.py:244` | no spec references them |
 | `markup` (`mu_bus`) | `func_data_build.py:197` | only `markup_BN_inv` is used |

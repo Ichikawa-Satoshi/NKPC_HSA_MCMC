@@ -10,6 +10,7 @@ from _bootstrap import DATA_DIR, ROOT
 from nkpc_hsa.config import configured_theory_data_specs, load_model_config
 from nkpc_hsa.dataprep.transforms import DEFAULT_N_TRANSFORM
 from nkpc_hsa.inference.wrappers import run_model
+from nkpc_hsa.progress import STYLES as PROGRESS_STYLES
 from nkpc_hsa.theory_models import THEORY_MODELS
 
 
@@ -22,6 +23,16 @@ def main() -> None:
     parser.add_argument("--model", action="append", dest="models")
     parser.add_argument("--quick", action="store_true")
     parser.add_argument("--competition-frequency", choices=["quarterly_interpolated", "annual_q4"], default=None)
+    parser.add_argument(
+        "--progress",
+        choices=list(PROGRESS_STYLES),
+        default=None,
+        help=(
+            "Sampler progress display. 'auto' (default) draws a bar when stderr is a terminal "
+            "and stays silent otherwise; 'stream' emits the machine-readable events the "
+            "production driver aggregates."
+        ),
+    )
     args = parser.parse_args()
 
     config = load_model_config(args.config)
@@ -47,7 +58,8 @@ def main() -> None:
             burn = 40 if args.quick else int(sampling.get("burn", defaults.get("burn", 4000)))
             thin = 2 if args.quick else int(sampling.get("thin", defaults.get("thin", 5)))
             chains = 2 if args.quick else int(sampling.get("chains", defaults.get("chains", 2)))
-            print(f"Estimating {model} [{spec_name}]...")
+            # Flushed because the production driver reads this through a pipe.
+            print(f"Estimating {model} [{spec_name}]...", flush=True)
             run_model(
                 model,
                 data=data,
@@ -67,6 +79,7 @@ def main() -> None:
                 zeta0=float(theory_defaults.get("zeta0", 6.0)),
                 zeta0_treatment=str(theory_defaults.get("zeta0_treatment", "fixed")),
                 require_path_positivity=bool(theory_defaults.get("require_path_positivity", True)),
+                progress=args.progress,
             )
 
 

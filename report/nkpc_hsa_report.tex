@@ -60,102 +60,6 @@
 \providecommand{\PriorDecompCoreInteractionShare}{??}
 
 \tableofcontents
-\clearpage
-
-\section{Why we estimate this equation: the HSA Phillips curve}
-\label{sec:why}
-Our estimating equation is the theory-motivated counterpart of the New Keynesian
-Phillips curve derived by Fujiwara--Matsuyama (2026, \emph{Journal of Monetary
-Economics}) under the HSA demand system. This section states their result, maps it to
-what we take to data, and makes explicit how far the empirical specification departs
-from the theory.
-
-\subsection{The HSA Phillips curve}
-A final-good producer aggregates a continuum of varieties through an HSA demand system
-with market-share function $s(z)$, where $z=p/A$ is a firm's price normalized by the
-single price aggregator $A$ (the reference price faced by firms, an inverse index of
-competitive pressure). Intermediate firms set prices under a Rotemberg adjustment cost
-$\chi$ and enter endogenously with a one-period time-to-build lag. Solving the firm's
-problem, PPI inflation follows (their Eq.~21)
-\begin{equation}
-\hat\pi_t=\beta(1-\delta)\,\mathbb E_t\hat\pi_{t+1}
-+\underbrace{\frac{\zeta(z)-1}{\chi}}_{\text{slope on marginal cost}}
-\big(\hat W_t-\hat Z_{P,t}-\hat p_t\big)
--\underbrace{\frac{1}{\chi}\,\frac{1-\rho(z)}{\rho(z)}}_{\text{entry / cost-push}}\hat N_t,
-\label{eq:fm}
-\end{equation}
-where $\hat N_t$ is the inverse HHI (number of firms), $\hat W_t-\hat Z_{P,t}-\hat p_t$ is the
-inverse markup (the model's measure of real marginal cost), $\zeta(z)=1-s'(z)z/s(z)>1$
-is the price-elasticity function (so the flexible-price markup is
-$\mu=\zeta/(\zeta-1)$), and $\rho(z)$ is the pass-through rate.
-
-\subsection{Two ways competition enters}
-\paragraph{(1) The slope is a function of the firm count (structural flattening).}
-The coefficient on marginal cost, $(\zeta(z)-1)/\chi$, depends on the price elasticity
-$\zeta(z)$, which through $z=p/A$ and the symmetric-equilibrium condition $s(z)=1/N$ is
-a function of the firm count $N$. Rising concentration---\emph{fewer firms}, higher
-markups, lower pass-through $\rho(z)$---lowers this slope, so the Phillips curve
-flattens \emph{structurally}. Linearizing the slope in the trend level N, 
-$\bar N_t$ of the firm count gives
-\begin{equation}
-\kt=\kappa_0+\delta\,\bar N_t,
-\end{equation}
-so a \emph{positive} $\delta$ is the theory's flattening prediction: the slope moves
-with the firm count and falls as concentration rises and $N$ declines.
-
-\paragraph{(2) Endogenous entry is a cost-push term (estimation bias).} The second
-term $-\tfrac{1}{\chi}\tfrac{1-\rho(z)}{\rho(z)}\hat N_t$ appears only away from CES.
-It means that the cyclical component of firm entry acts as a cost-push shock through
-strategic complementarity. Omitting it biases an empirical Phillips-curve estimate
-(omitted-variable problem). We retain the cyclical term explicitly with its own
-coefficient $\theta_t=\theta_0+\gamma\,\bar N_t$.
-
-\paragraph{CES is the irrelevant case.} Under CES, $s(z)=\gamma_{\mathrm{CES}}\,z^{1-\theta}$,
-so $\zeta(z)=\theta$ is constant and pass-through is $\rho(z)=1$. The entry term
-vanishes and the slope is the constant $(\theta-1)/\chi$: market concentration neither
-flattens the curve nor moves inflation. This is exactly our CES benchmark, and
-departing from CES (the HSA models) is what can make $\delta$ and the $\hat N_t$ term
-nonzero.
-
-\subsection{From theory to the estimating equation}
-Writing the activity/inverse-markup gap as $x_t$, adding a backward-looking inertia
-term ($\alpha$) and a reduced-form shock $e_t$, and decomposing the observed firm
-count into trend and cycle,
-\begin{equation}
-N^{\mathrm{obs}}_t=\bar N_t+\hat N_t+\nu_t,
-\end{equation}
-where $\bar N_t$ is a random-walk-with-drift trend, $\hat N_t$ is a stationary AR(2)
-gap (truncated to the stationary region), and $\nu_t\sim\mathcal N(0,\sigma_N^2)$ is
-measurement error, the HSA Phillips curve becomes the equation we estimate:
-\begin{equation}
-\boxed{\;\pi_t=\alpha\,\pi_{t-1}+(1-\alpha)\,\mathbb E_t\pi_{t+1}
-+\kt\,x_t-\theta_t\,\hat N_t+e_t,\qquad
-\kt=\kappa_0+\delta\,\bar N_t,\;\;\theta_t=\theta_0+\gamma\,\bar N_t.\;}
-\label{eq:est}
-\end{equation}
-The trend $\bar N_t$ carries the structural-flattening channel (through $\delta$); the
-cycle $\hat N_t$ carries the entry cost-push channel (through $\theta_t$).
-
-\subsection{Distance from the theory}
-\label{sec:distance}
-We call this exercise \emph{semi-structural} rather than structural because the
-specification departs from \eqref{eq:fm} in several ways. To avoid over-reading the
-coefficients, we state each:
-\begin{itemize}
-\item the theory is about \emph{PPI} inflation, but there is no PPI expectation
-series, so we pair observed PPI with a common external expectation series and the
-expectation term is not a matched structural object;
-\item the theoretical regressor is real marginal cost / the inverse markup, but the
-main results use the negative unemployment gap.
-\item apart from the hybrid-NKPC normalization that puts weights $\alpha$ and
-$1-\alpha$ on lagged and expected inflation, we impose no structural
-cross-coefficient restrictions from the HSA theory and approximate $\kt$ as a
-\emph{linear} function of $\bar N_t$;
-\item we add backward-looking inertia ($\alpha$), which is absent from \eqref{eq:fm};
-\item expected inflation is the Cleveland Fed's model-based one-year expected-inflation
-estimate (Section~\ref{sec:data}), not a direct survey forecast;
-\end{itemize}
-
 \section{Data}
 \label{sec:data}
 \paragraph{Sample.} Quarterly, \AnnualReportSampleStart{}--\AnnualReportSampleEnd{}
@@ -229,14 +133,7 @@ $(100\log N-\overline{100\log N})/10$, so one unit of $\bar N$ or $\hat N$ is a
 ten-log-point change around the sample mean. The reported
 $\delta,\theta,\theta_0,\gamma$ are all on this ten-log-point scale.
 
-\begin{figure}[H]
-\centering
-\includegraphics[height=0.85\textheight,keepaspectratio]{shared/data_series.png}
-\caption{Data. (a) Headline, core, and PPI inflation. (b) Real-activity gaps
-(negative unemployment gap, BN and HP output gaps). (c) Competition measure
-(estimation transform of the listed-firm count).}
-\label{fig:data}
-\end{figure}
+
 
 \section{Econometric model and estimation}
 \label{sec:model}
