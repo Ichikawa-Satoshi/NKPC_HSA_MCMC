@@ -1,0 +1,150 @@
+revision: nine-cell-design-v1
+
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+measurement:
+  # Policy after the production diagnostic: this mismatched listed-firm/QCEW
+  # block is retained only to document measurement failure.  It cannot define
+  # the substantive fast state and inflation never enters this modular cut.
+  role: diagnostic_only
+  uses_inflation: false
+  common_factor_status: excluded_from_primary_specification
+  annual_column: N_Gustavo
+  quarterly_column: qcew_establishments
+  annual_timing: q4
+  transform: log100_centered10
+  reference_window: [2002Q1, 2007Q4]
+  sensitivity_specs:
+    - name: quarterly_no_drift
+      q_drift: true
+      e_drift: false
+      phi_mean: 0.5
+      phi_sd: 0.3
+      idiosyncratic_cycle: false
+    - name: all_no_drift
+      q_drift: false
+      e_drift: false
+      phi_mean: 0.5
+      phi_sd: 0.3
+      idiosyncratic_cycle: false
+    - name: persistent_cycle
+      q_drift: true
+      e_drift: true
+      phi_mean: 0.8
+      phi_sd: 0.15
+      idiosyncratic_cycle: false
+    - name: idiosyncratic_qcew_cycle
+      q_drift: true
+      e_drift: true
+      phi_mean: 0.5
+      phi_sd: 0.3
+      idiosyncratic_cycle: true
+
+cells:
+  inflation:
+    ppi:
+      label: PPI
+      column: pi_ppi_qoq
+      expectation_column: Epi_spf_gdp_1q_ahead_ann_log
+      expectation_label: SPF one-quarter-ahead GDP-deflator expectation (proxy)
+      expectation_status: proxy_conditioned
+    cpi:
+      label: headline CPI
+      column: pi_cpi_qoq
+      expectation_column: Epi_spf_gdp_1q_ahead_ann_log
+      expectation_label: SPF one-quarter-ahead GDP-deflator expectation (proxy)
+      expectation_status: proxy_conditioned
+    core_cpi:
+      label: core CPI
+      column: pi_cpi_core_qoq
+      expectation_column: Epi_spf_gdp_1q_ahead_ann_log
+      expectation_label: SPF one-quarter-ahead GDP-deflator expectation (proxy)
+      expectation_status: proxy_conditioned
+    pce:
+      label: headline PCE
+      column: pi_pce_qoq
+      expectation_column: Epi_spf_gdp_1q_ahead_ann_log
+      expectation_label: SPF one-quarter-ahead GDP-deflator expectation (proxy)
+      expectation_status: proxy_conditioned
+    core_pce:
+      label: core PCE
+      column: pi_pce_core_qoq
+      expectation_column: Epi_spf_gdp_1q_ahead_ann_log
+      expectation_label: SPF one-quarter-ahead GDP-deflator expectation (proxy)
+      expectation_status: proxy_conditioned
+  activity:
+    inverse_markup:
+      label: inverse markup
+      column: markup
+      kind: inverse_markup_proxy
+    bn_output_gap:
+      label: BN output gap
+      column: output_gap_BN
+      kind: generated_gap
+    hp_output_gap:
+      label: HP output gap
+      column: output_gap_HP
+      kind: generated_gap
+    negative_unemployment_gap:
+      label: negative unemployment gap
+      column: unemp_gap
+      kind: generated_gap
+
+priors:
+  variance_shape: 3.0
+  inflation_sd: 2.0
+  phi_mean: 0.5
+  phi_sd: 0.3
+  drift_scaled_sd: 0.05
+  loading_standardized_mean: 1.0
+  loading_standardized_sd: 0.5
+
+benchmark:
+  # Existing theory runs use zeta_ref=6, equivalent to mu_ref=1.2.  This is a
+  # calibration, not an external estimate, and the report labels it accordingly.
+  mu_reference: 1.2
+  mu_reference_status: calibration
+  b_x: 1.0
+  b_x_status: unit_scale_calibration
+  local_bandwidth_iqr: 0.50
+  local_probability: 0.80
+  minimum_qoq_endpoints: 40
+  equivalence_contribution_pp: 0.10
+
+gates:
+  measurement_information_ratio: 0.80
+  learning_sd_ratio: 0.75
+  qualitative_sign_probability: 0.80
+  cut_joint_shift_sd: 0.50
+
+followup:
+  focus_cells: [2, 5, 6, 9]
+  inflation_error_models: [persistent_ar1, low_frequency]
+
+substantive_specification:
+  interim_primary_until_vendor_hhi: n_gustavo_only_mixed_frequency_state_space
+  annual_observation_timing: q4
+  quarterly_missing_rule: kalman_ffbs_no_interpolation
+  excludes: [qcew, sec_hhi, deterministic_quarterly_interpolation]
+  state_estimation: modular_cut_without_inflation
+  primary_state: n_gustavo_slow_and_stationary_states
+  theta_status: estimate_and_report_with_state_uncertainty
+  industry_panel_fallback: rejected
+
+production:
+  iterations: 20000
+  warmup: 5000
+  thin: 5
+  chains: 4
+  seed: 20260812
+
+test:
+  iterations: 180
+  warmup: 80
+  thin: 2
+  joint_iterations: 70
+  joint_warmup: 30
+  chains: 2
+  seed: 20260812

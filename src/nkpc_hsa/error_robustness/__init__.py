@@ -40,7 +40,7 @@ the lag-1 autocorrelation and then collapses -- 0.14 and 0.05 at lags 2 and 3
 against 0.24 and 0.22 in the data -- because one parameter cannot carry three
 lags. The exact equal-weight overlap restriction ``psi = (1,1,1)`` is rejected
 even harder (BIC 124.6 in the main cell, worse than i.i.d. at 32.0): it implies
-a lag-1 autocorrelation of 0.75 where the data show 0.38. ``scripts/error_robustness``
+a lag-1 autocorrelation of 0.75 where the data show 0.38. ``production/main_scripts/error_robustness``
 regenerates both comparisons.
 """
 

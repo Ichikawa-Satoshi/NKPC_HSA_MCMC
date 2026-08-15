@@ -1,0 +1,66 @@
+revision: observed-hhi-model-tests-v2
+
+data:
+  file: model_ready_sec_inverse_hhi.csv
+  expectation: Epi
+  hhi_variants:
+    log_revenue_weighted: N_SEC_inverse_HHI_logrevw
+    firm_weighted: N_SEC_inverse_HHI
+    revenue_weighted: N_SEC_inverse_HHI_revw
+    log_revenue_weighted_exfin: N_SEC_inverse_HHI_logrevw_exfin
+
+cells:
+  inflation:
+    ppi: [pi_ppi, pi_ppi_prev]
+    cpi: [pi_cpi, pi_cpi_prev]
+    core_cpi: [pi_cpi_core, pi_cpi_core_prev]
+  activity:
+    inverse_markup: markup_BN_inv
+    bn_output_gap: output_gap_BN
+    negative_unemployment_gap: unemp_gap
+
+screening:
+  primary_hhi: log_revenue_weighted
+  fast_definitions: [ewma_hl4, ewma_hl8, ewma_hl12, ar1_innovation, first_difference]
+  timings: [current, lag1, distributed4]
+  error_model: iid
+
+timing_profile:
+  fast_definition: ewma_hl8
+  timings: [current, lag1, lag2, lag3, lag4, distributed4]
+  error_models: [iid, persistent_ar1]
+  cells: [1, 2, 3]
+
+# Deterministic decomposition of the same observed quarterly HHI.  The
+# predicted level is q_t minus its one-sided innovation; no latent state or
+# second measurement series is introduced.
+environment_profile:
+  definitions: [total, predicted_level]
+  fast_definition: ewma_hl8
+  timings: [current, lag1]
+  error_models: [iid, persistent_ar1]
+  cells: [1, 2, 3]
+
+selected_robustness:
+  fast_definition: ewma_hl8
+  timing: current
+  model_variants: [constant_theta, varying_theta, hsa_restricted]
+  error_models: [iid, persistent_ar1, low_frequency]
+
+hsa:
+  zeta_reference: 6.0
+  b_x: 1.0
+  status: unit_scale_calibration
+
+sampling:
+  iterations: 20000
+  warmup: 5000
+  thin: 5
+  chains: 4
+  seed: 20260812
+
+simulation:
+  replications: 300
+  effect_sizes_sd: [0.0, 0.25, 0.5]
+  sample_sizes: [24, 52, 124]
+  sign_probability_threshold: 0.8

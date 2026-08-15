@@ -1,0 +1,1770 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,longtable,array}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{threeparttable}
+\usepackage{pdflscape}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!55!black,
+  citecolor=blue!55!black,
+  urlcolor=blue!55!black
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\onehalfspacing
+\setlist[itemize]{topsep=0.2em,itemsep=0.15em,leftmargin=1.4em}
+\setlist[enumerate]{topsep=0.2em,itemsep=0.2em,leftmargin=1.6em}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Normal}{\mathcal{N}}
+\newcommand{\HSA}{\mathrm{HSA}}
+\newcommand{\CES}{\mathrm{CES}}
+\newcommand{\LCP}{\mathrm{LCP\text{-}HSA}}
+\newcommand{\LHSA}{\mathrm{L\text{-}HSA}}
+\newcommand{\LU}{\mathrm{L\text{-}U}}
+
+\title{\textbf{Data, Model, and Estimation Design}\\
+\large Competition and Inflation under HSA Demand: A Nine-Cell State-Space Design with an Auxiliary Sharp HSA Benchmark}
+\author{}
+\date{Revised Research Design Blueprint}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document specifies a pre-declared nine-cell, identification-first semi-structural design for studying whether inflation dynamics vary with an empirical business-demography coordinate through a competition-dependent marginal-cost or slack slope and a short-run direct latent-state loading. The main empirical analysis is deliberately weaker than a structural HSA test: all nine cells use the same unrestricted empirical model hierarchy, and the estimated coefficients are interpreted as conditional varying-coefficient associations unless stronger identifying assumptions are separately justified.
+
+Quarterly annualized inflation is the primary transformation. Each of the same nine cells is re-estimated as a paired year-over-year robustness exercise using the exact four-quarter aggregation implied by the quarterly model. The induced overlap in year-over-year disturbances is modeled explicitly. QoQ and YoY posteriors are reported side by side; no artificial joint posterior for their coefficient differences is created.
+
+The PPI--inverse-markup cell is the theory-near cell. The observed aggregate estimated markup is used only as an inverse-markup proxy for real marginal cost. HSA's quantitative cross-equation equality is therefore retained only as an auxiliary sharp benchmark, not as the identifying restriction of the main model. The benchmark explicitly conditions on the mapping from the inverse-markup proxy to theoretical marginal cost, the timing of the expectation measure, activity-shock orthogonality or an identified correction for it, a single-coordinate HSA specification, and genuinely local support around the reference environment. When those conditions are not established, the benchmark is reported as conditional theory consistency rather than as a structural test.
+
+The business-demography cut is the primary state estimate because it prevents inflation from redefining the latent coordinate whose inflation association is being evaluated. Full-joint estimates are secondary information-flow sensitivities. Correlated inflation--competition innovations, correlated quarterly measurement errors, persistent inflation disturbances, generated-gap uncertainty, exact temporal aggregation, and reference-input uncertainty are pre-declared sensitivities. Identification diagnostics are co-primary with model evidence, and no Bayes factor or predictive score overrides weak identification or failure of a benchmark-admissibility condition.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ================================================================
+\section{Objective and Scope}
+% ================================================================
+
+The design has two deliberately separated goals.
+
+\paragraph{Main empirical goal (A).}
+Estimate whether inflation dynamics vary with the latent business-demography coordinate through:
+\begin{enumerate}
+\item a slope on the activity or inverse-markup proxy that varies with the slow business-demography environment; and
+\item a direct loading on the stationary business-demography state whose magnitude may itself vary with the slow environment.
+\end{enumerate}
+These are conditional empirical objects. They are not called causal competition effects without an additional source of identifying variation for the activity variable and the business-demography state.
+
+\paragraph{Auxiliary HSA benchmark (C).}
+In the PPI--inverse-markup cell only, compare the empirical objects with the sharp quantitative implication of the HSA model under explicitly stated auxiliary assumptions. The benchmark is not allowed to determine the main model, the state estimate, or the main empirical conclusion. Failure of the benchmark therefore does not invalidate the empirical result; success means only that the empirical estimates are quantitatively compatible with HSA under the maintained benchmark assumptions.
+
+The empirical business-demography coordinate is not equated with theoretical effective varieties. It receives a competition interpretation only under a maintained monotone mapping supported by market-universe checks and external validation. Likewise, the short-run direct latent-state loading receives a participation-channel interpretation only under the maintained HSA mapping.
+
+Quarterly annualized inflation is the primary transformation. Year-over-year inflation is a paired temporal-aggregation robustness exercise for every cell. The purpose is to ask whether conclusions survive a lower-frequency inflation transformation after the entire quarterly conditional mean and disturbance covariance are aggregated consistently.
+
+The analysis is organized around a pre-declared \(3\times3\) matrix of nine data cells. The PPI--inverse-markup cell is theory-near because its observed objects are closest to the producer-pricing HSA equation, but its main estimator is the same unrestricted empirical hierarchy used in the other cells. The design therefore distinguishes:
+\begin{itemize}
+\item empirical evidence for competition-related slope variation and direct latent-state loading;
+\item mechanism consistency and transportability across alternative price and activity measures; and
+\item an auxiliary, assumption-conditional sharp HSA benchmark in Cell 1.
+\end{itemize}
+
+No secondary-cell result and no auxiliary HSA benchmark result is used to redefine the main empirical specification ex post.
+
+\section{Research Questions}
+% ================================================================
+
+\subsection{RQ1: Competition-Dependent Slope}
+
+Does the conditional response of inflation to the activity or inverse-markup proxy vary with the slow business-demography environment?
+
+For a fixed reporting center \(q_0\), define \(\tilde q_t=\bar q_t-q_0\). In the first-order empirical approximation,
+\begin{equation}
+\kappa(\bar q_t)\simeq \kappa_0+\kappa_1\tilde q_t.
+\end{equation}
+The main object is \(\kappa_1\). It is interpreted as a conditional varying-coefficient association, not a causal competition derivative, unless the relevant endogeneity assumptions are separately justified.
+
+\subsection{RQ2: Short-Run Direct Latent-State Loading}
+
+Conditional on the maintained timing and measurement system, is the stationary latent business-demography state associated with inflation through a distinct direct loading?
+
+Write
+\begin{equation}
+\theta(\bar q_t)\simeq \theta_0+\gamma\tilde q_t.
+\end{equation}
+Here \(\theta_0\) is the direct loading at the fixed reporting center \(q_0\), and \(\gamma\) describes how that loading changes with the slow environment. These are empirical latent-state loadings in the main analysis. A participation-channel interpretation is added only under the maintained HSA mapping.
+
+\subsection{RQ3: Mechanism Consistency}
+
+Do the estimated signs, state dependence, and model-fit improvements in the theory-near PPI--inverse-markup cell accord with the qualitative HSA mechanism, without imposing HSA's quantitative equality on the main estimator?
+
+This question is deliberately weaker than a structural test. It can be answered even when the scale mapping from the inverse-markup proxy to theoretical real marginal cost is not identified.
+
+\subsection{RQ4: Auxiliary Sharp HSA Benchmark}
+
+Conditional on the benchmark-admissibility conditions in \cref{sec:hsa_benchmark}, how close is the Cell-1 empirical derivative to the sharp HSA quantitative implication?
+
+Let the theoretical log real-marginal-cost gap \(m_t\) and the inverse-markup proxy satisfy the local mapping
+\begin{equation}
+m_t=a_x+b_x x_t^{IM}+r_t,
+\label{eq:mc_proxy_mapping}
+\end{equation}
+where \(b_x>0\) is the local unit-scale mapping and \(r_t\) is a proxy wedge. If \(r_t=0\) locally, the sharp benchmark for the empirical coefficient is
+\begin{equation}
+\boxed{
+\kappa_1^{IM}=b_x\zeta_{\mathrm{ref}}\theta_{\mathrm{ref}}.
+}
+\label{eq:local_hsa_restriction}
+\end{equation}
+Define the benchmark deviation
+\begin{equation}
+\boxed{
+\delta_{HSA}(b_x)
+=
+\kappa_1^{IM}-b_x\zeta_{\mathrm{ref}}\theta_{\mathrm{ref}}.
+}
+\label{eq:delta_hsa}
+\end{equation}
+The unit-scale benchmark sets \(b_x=1\) and is reported explicitly as a unit-scale assumption. If an external estimate or calibration distribution for \(b_x\) is available, that information is propagated. If neither \(b_x=1\) nor an alternative mapping can be economically defended, the equality is not labeled a quantitative structural HSA test; it remains an auxiliary sharp benchmark only.
+
+\subsection{RQ5: Transportability and Temporal Aggregation}
+
+Are the signs and state dependence of the competition-related terms stable across alternative inflation indexes, alternative activity measures, and the paired QoQ/YoY transformations? Raw coefficient magnitudes are not compared across activity measures with different units. QoQ and YoY posteriors are compared side by side rather than by inventing a posterior distribution for their difference.
+
+\section{Nine Pre-Declared Empirical Cells}
+% ================================================================
+
+Quarterly inflation is considered for three price indexes:
+\begin{enumerate}
+\item PPI;
+\item headline CPI;
+\item core CPI.
+\end{enumerate}
+
+The activity or marginal-cost block is considered under three measures:
+\begin{enumerate}
+\item inverse markup;
+\item Beveridge--Nelson (BN) output gap;
+\item negative unemployment gap.
+\end{enumerate}
+
+The resulting design is shown in \cref{tab:nine_cells}.
+
+\begin{table}[htbp]
+\centering
+\caption{Nine pre-declared empirical cells}
+\label{tab:nine_cells}
+\begin{tabular}{p{0.31\textwidth}p{0.18\textwidth}p{0.18\textwidth}p{0.22\textwidth}}
+\toprule
+Inflation / expectation block & Inverse markup & BN output gap & Negative unemployment gap \\
+\midrule
+PPI / GDP-deflator expectation & Cell 1 & Cell 2 & Cell 3 \\
+CPI / CPI expectation & Cell 4 & Cell 5 & Cell 6 \\
+Core CPI / CPI expectation & Cell 7 & Cell 8 & Cell 9 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The nine cells are frozen before empirical comparison. Each cell has two paired inflation transformations:
+\begin{enumerate}
+\item primary: quarterly annualized inflation (QoQ annualized);
+\item paired robustness: year-over-year inflation (YoY), constructed and estimated through the exact four-quarter aggregation of the quarterly model.
+\end{enumerate}
+The YoY exercise does not create nine additional opportunities for specification search. It is a paired transformation check attached to each pre-declared cell.
+
+\subsection{Tier 1: Theory-Near Cell}
+
+\paragraph{Cell 1: PPI \(\times\) inverse markup.}
+This is the unique theory-near cell. Its main estimator is unrestricted and empirical; the sharp HSA equality is evaluated only in the auxiliary benchmark.
+
+PPI is the closest observed inflation measure to the producer-pricing equation underlying the HSA restriction, while inverse markup provides the closest direct empirical mapping to real marginal cost.
+
+Only this cell receives the auxiliary sharp benchmark in \cref{eq:local_hsa_restriction}; the equality is not imposed on the main empirical model.
+
+\subsection{Tier 2: Mechanism Robustness}
+
+The following cells move one major dimension away from the theory-near benchmark:
+\begin{itemize}
+\item Cell 2: PPI \(\times\) BN output gap;
+\item Cell 3: PPI \(\times\) negative unemployment gap;
+\item Cell 4: CPI \(\times\) inverse markup.
+\end{itemize}
+
+These cells ask whether the estimated competition mechanisms survive alternative measures of marginal cost/slack or an alternative inflation index.
+
+They do not receive the sharp HSA benchmark.
+
+\subsection{Tier 3: Macro Transportability}
+
+The remaining cells are:
+\begin{itemize}
+\item Cell 5: CPI \(\times\) BN output gap;
+\item Cell 6: CPI \(\times\) negative unemployment gap;
+\item Cell 7: core CPI \(\times\) inverse markup;
+\item Cell 8: core CPI \(\times\) BN output gap;
+\item Cell 9: core CPI \(\times\) negative unemployment gap.
+\end{itemize}
+
+These cells study whether the competition mechanisms transport to conventional or underlying consumer-price Phillips curves.
+
+No sharp HSA equality is evaluated in these cells.
+
+% ================================================================
+\section{Inflation Transformations and Expectation Measures}
+% ================================================================
+
+\subsection{Primary quarterly annualized transformation}
+
+For price index $j\in\{PPI,CPI,Core\}$, define quarterly annualized inflation by
+\begin{equation}
+\pi_{t}^{Q,j}
+=
+400\left(\log P_t^j-\log P_{t-1}^j\right).
+\label{eq:inflation_qoq}
+\end{equation}
+Quarterly annualized inflation is the headline transformation for the main empirical analysis.
+
+All expectation regressors are one-quarter-ahead forecasts whenever available and are converted to the same quarterly annualized units as $\pi_t^{Q,j}$. For estimation as well as forecasting, each expectation series has a frozen information-date rule. A survey or model expectation formed after economically relevant information from quarter $t$ has arrived is treated as a contemporaneous conditioning proxy, not automatically as a predetermined structural expectation.
+
+\subsection{Paired year-over-year transformation}
+
+Define year-over-year inflation by
+\begin{equation}
+\pi_t^{Y,j}
+=
+100\left(\log P_t^j-\log P_{t-4}^j\right)
+=
+\frac{1}{4}\sum_{\ell=0}^{3}\pi_{t-\ell}^{Q,j}.
+\label{eq:inflation_yoy}
+\end{equation}
+The second equality is exact. The YoY model is therefore obtained by aggregating the entire quarterly conditional mean, not by replacing the dependent variable while leaving the right-hand side contemporaneous.
+
+Let $A_4$ be the four-quarter averaging operator, $(A_4z)_t=\frac14\sum_{\ell=0}^3z_{t-\ell}$. If $\bm m_c^Q$ is the quarterly conditional-mean vector,
+\begin{align}
+\bm\pi_c^Y &= A_4\bm m_c^Q+\bm\varepsilon_c^Y,\\
+\bm\varepsilon_c^Y &= A_4\bm\varepsilon_c^Q.
+\label{eq:yoy_aggregation}
+\end{align}
+Under the baseline quarterly disturbance $\bm\varepsilon_c^Q\sim\Normal(0,\sigma_{\pi,c}^2I)$,
+\begin{equation}
+\bm\varepsilon_c^Y\sim\Normal(0,\sigma_{\pi,c}^2G_4),
+\qquad G_4=A_4A_4'.
+\label{eq:yoy_covariance}
+\end{equation}
+For interior observations,
+\begin{equation}
+(G_4)_{t,t-h}
+=
+\begin{cases}
+(4-|h|)/16,& |h|\le3,\\
+0,& |h|>3.
+\end{cases}
+\end{equation}
+Thus three-quarter overlap is part of the likelihood.
+
+The paired comparison is called \emph{endpoint-matched}, not a same-information-sample comparison. QoQ is re-estimated on the YoY endpoint dates to remove the trivial loss of three reported endpoints, but the first YoY observations still contain information from earlier quarterly prices, regressors, states, and disturbances that are not separate observations in the truncated QoQ regression. Temporal aggregation changes information content by construction.
+
+For interpretation, the aggregated interaction terms are
+\begin{equation}
+A_4(\tilde q_tx_{c,t}),
+\qquad A_4(\hat q_t),
+\qquad A_4(\tilde q_t\hat q_t),
+\end{equation}
+not products of separately averaged variables. QoQ and YoY posterior summaries are shown side by side. Because the two models are fitted separately to deterministic transformations of the same underlying price data, their marginal posteriors do not define a unique joint posterior coupling. The reporting plan therefore does not attach a credible interval or posterior probability to a QoQ-minus-YoY coefficient difference unless an explicit encompassing joint model is estimated.
+
+\subsection{PPI cells}
+
+The preferred conditioning variable is a one-quarter-ahead PPI expectation measured at a pre-declared information date. If a sufficiently long PPI expectation series is unavailable, a one-quarter-ahead GDP-deflator expectation may be used as an observed conditioning proxy and is not relabeled as a PPI expectation. That proxy is acceptable for the main semi-structural model, but the auxiliary sharp HSA benchmark is labeled \emph{proxy-conditioned} unless either a PPI-consistent expectation with an economically appropriate pre-shock information date is available or an independently identified PPI--GDP expectation bridge is used.
+
+For the YoY paired model, the conditioning expectation term is $A_4f_t^{cond}$, the exact aggregation of the quarterly conditioning regressors. It is not relabeled as a one-year-ahead inflation expectation.
+
+\subsection{CPI cells}
+
+Headline CPI inflation is paired with a one-quarter-ahead CPI expectation in the primary quarterly model, subject to the same information-date rule.
+
+\subsection{Core CPI cells}
+
+If a direct core-CPI expectation is unavailable, headline CPI expectation is used as a conditioning proxy and is explicitly labeled as such. A headline-to-core expectation bridge is a robustness exercise when sufficient independent information exists.
+
+\section{Marginal-Cost and Slack Measures}
+% ================================================================
+
+\subsection{Inverse Markup}
+
+Let $\mu_t^{obs}$ denote the observed aggregate estimated markup. Because this is an aggregate estimated series rather than a direct observation of the price-to-marginal-cost ratio for the exact producer-pricing object in HSA, its inverse is treated as an empirical proxy for real marginal cost.
+
+Define the proxy relative to the external reference markup by
+\begin{equation}
+\boxed{
+x_t^{IM}
+=
+\log\left(\frac{\mu_{\mathrm{ref}}^f}{\mu_t^{obs}}\right).
+}
+\label{eq:inverse_markup_gap}
+\end{equation}
+Thus $x_t^{IM}=0$ means only that the inverse-markup proxy equals the value implied by the chosen external reference markup. It does not establish that structural real marginal cost is at its flexible-price value.
+
+For the main empirical analysis no unit-scale structural mapping is assumed. For the auxiliary benchmark the local mapping in \cref{eq:mc_proxy_mapping} is explicit. The benchmark is unit-scale only when $b_x=1$ is separately defensible. Measurement error or a time-varying proxy wedge $r_t$ cannot be solved by adding an unidentified measurement equation; an errors-in-variables correction requires external information, an independently constructed proxy, an instrument, or another identified restriction.
+
+The activity variable is conditioned on in the main inflation module. Consequently, $\kappa_0$ and $\kappa_1$ are not called structural causal marginal-cost coefficients unless contemporaneous activity endogeneity is addressed. In the auxiliary benchmark, the maintained condition is stated explicitly as
+\begin{equation}
+E[v_{c,t}^{\pi}\mid x_{c,t},\mathcal F_{t-1},S_t]=0
+\label{eq:activity_orthogonality}
+\end{equation}
+for the relevant benchmark disturbance, or is replaced by an identified instrument, control function, or joint activity equation. CS1 and CS2 below address inflation--competition innovation correlation; they do not by themselves solve activity endogeneity.
+
+\subsection{BN Output Gap}
+
+Let $x_t^{BN}$ denote the pre-declared Beveridge--Nelson output gap. The zero of the measure denotes output at its estimated permanent component, so no additional centering is applied. The gap is a generated regressor; its vintage and uncertainty treatment are specified below.
+
+\subsection{Negative Unemployment Gap}
+
+Let
+\begin{equation}
+u_t^{gap}=u_t-u_t^\ast,
+\qquad
+x_t^U=-u_t^{gap}.
+\end{equation}
+Larger values indicate a tighter labor market. No additional normalization is applied.
+
+The BN and unemployment gaps are not in raw theoretical marginal-cost units. Their raw coefficients are therefore neither subject to the HSA quantitative benchmark nor compared in magnitude with inverse-markup coefficients.
+
+\section{HSA Theory and the Auxiliary Sharp Benchmark}
+\label{sec:hsa_benchmark}
+% ================================================================
+
+Let
+\begin{equation}
+n=\log N
+\end{equation}
+denote the theoretical effective number of active firms or varieties. Under the maintained Rotemberg--HSA producer-pricing environment,
+\begin{equation}
+\kappa^{th}(n)=\frac{\zeta(n)-1}{\chi},
+\qquad
+\Theta^{th}(n)=\frac{1}{\chi}\frac{1-\rho(n)}{\rho(n)}.
+\end{equation}
+The HSA identity is
+\begin{equation}
+\frac{d\kappa^{th}(n)}{dn}=\zeta(n)\Theta^{th}(n).
+\label{eq:hsa_identity}
+\end{equation}
+
+Locally relate the empirical business-demography coordinate to the theoretical coordinate by
+\begin{equation}
+q=b_N(n-n_c),
+\qquad b_N>0.
+\end{equation}
+The direct entry loading must use the same local coordinate scale. Define
+\begin{equation}
+\theta(q)=\frac{\Theta^{th}(n(q))}{b_N}.
+\end{equation}
+Then the chain rule gives
+\begin{equation}
+\frac{d\kappa(q)}{dq}=\zeta(q)\theta(q).
+\end{equation}
+This common-rescaling result does not solve the separate scale mapping from the observed inverse-markup proxy to theoretical marginal cost; that mapping is $b_x$ in \cref{eq:mc_proxy_mapping}. Hence the empirical sharp benchmark is \cref{eq:local_hsa_restriction}, not the unadjusted equality unless $b_x=1$.
+
+\subsection*{Single-coordinate requirement for the sharp benchmark}
+The main empirical model is allowed to use a two-time-scale decomposition because it is not itself claimed to be the literal HSA first-order expansion. The auxiliary HSA benchmark is stricter. At a generic reference environment $q^\star$, if the empirical state represents one local HSA variety coordinate,
+\begin{equation}
+q_t-q^\star
+=(\bar q_t-q^\star)+\hat q_t,
+\end{equation}
+then the first-order slope term is
+\begin{equation}
+\kappa_1\big[(\bar q_t-q^\star)+\hat q_t\big]x_t.
+\label{eq:single_coordinate_slope}
+\end{equation}
+Accordingly, the auxiliary sharp benchmark is evaluated in a Cell-1 re-estimation that imposes the single-coordinate slope loading $\lambda_{qx}=\kappa_1$. The two-scale version with $\lambda_{qx}=0$ remains a useful empirical specification but is not called the literal quantitative HSA expansion.
+
+\subsection*{Genuinely local estimation for the sharp benchmark}
+The identity is pointwise. Merely refusing to interpret observations far from the reference environment would not prevent those observations from influencing a globally estimated slope. Therefore the auxiliary benchmark uses a fixed local endpoint set determined \emph{before using inflation outcomes} from the measurement-only cut module.
+
+For each quarter define
+\begin{equation}
+p_t^{loc}
+=
+\Pr_{cut}\!\left(|\bar q_t-Q_{\mathrm{ref}}|\le q^\ast\mid C\right),
+\end{equation}
+where $Q_{\mathrm{ref}}$ is the reference slow-state draw defined below. The benchmark QoQ endpoint set is
+\begin{equation}
+\mathcal T_{loc}^Q=\{t:p_t^{loc}\ge0.80\}.
+\label{eq:local_endpoint_set}
+\end{equation}
+The bandwidth is frozen at $q^\ast=0.5\,\mathrm{IQR}(q_y^A)$ using business-demography data only; mandatory bandwidth sensitivities use $0.35$ and $0.75$ times the same IQR. The benchmark is not reported if fewer than 40 quarterly endpoints satisfy the baseline rule. For YoY, an endpoint enters the local benchmark only when all four contributing quarterly endpoints satisfy the QoQ local rule.
+
+This local subset is used only for the auxiliary sharp benchmark. The main empirical model continues to use the full pre-declared sample and is interpreted as a sample-supported varying-coefficient approximation rather than as the point derivative of a structural HSA model.
+
+\subsection*{Benchmark admissibility}
+A Cell-1 result is called a \emph{sharp quantitative HSA benchmark} only if all of the following are stated and evaluated:
+\begin{enumerate}
+\item the inverse-markup scale $b_x$ is either externally identified/calibrated or the displayed result is explicitly labeled the unit-scale $b_x=1$ benchmark;
+\item the single-coordinate slope specification in \cref{eq:single_coordinate_slope} is used;
+\item the benchmark is estimated on the genuinely local endpoint set in \cref{eq:local_endpoint_set};
+\item the activity-orthogonality condition in \cref{eq:activity_orthogonality} is either maintained explicitly or replaced by an identified endogeneity correction;
+\item the expectation term is PPI-consistent at the frozen information date or the result is labeled proxy-conditioned;
+\item the business-demography state is taken from the cut module for the primary benchmark so inflation does not redefine the state; and
+\item uncertainty in the reference slow environment and, when available, in the external reference markup is propagated as described below.
+\end{enumerate}
+Failure of any item does not invalidate the main empirical analysis; it only limits the status of the auxiliary benchmark.
+
+\section{Competition Measurement System}
+% ================================================================
+
+The latent empirical competition coordinate is
+\begin{equation}
+q_t=\bar q_t+\hat q_t,
+\label{eq:q_decomposition}
+\end{equation}
+where:
+\begin{itemize}
+\item \(\bar q_t\) is a slowly moving competitive environment;
+\item \(\hat q_t\) is a stationary competition cycle.
+\end{itemize}
+
+The state decomposition is a measurement and regularization device rather than an HSA law.
+
+\subsection{Annual Firm Counts}
+
+Let
+\begin{equation}
+q_y^A
+\end{equation}
+denote the centered annual firm-count coordinate.
+
+For a point-in-time annual observation at quarter \(t_y\),
+\begin{equation}
+q_y^A
+=
+\bar q_{t_y}
++
+\hat q_{t_y}
++
+\nu_y^N,
+\qquad
+\nu_y^N
+\sim
+\Normal(0,\sigma_N^2).
+\label{eq:annual_measurement}
+\end{equation}
+
+The loading of one defines the scale of the empirical competition coordinate.
+
+The annual firm count is treated as the defining empirical business-demography coordinate, not as an exact observation of theoretical effective varieties.
+
+\paragraph{Mandatory interim specification before vendor quarterly HHI.}
+Until a validated Capital IQ or LSEG Datastream quarterly HHI is added, the
+primary competition input is the annual \texttt{N\_Gustavo} series alone.  It
+enters only at its native annual observation date (calendar Q4) through
+\cref{eq:annual_measurement}.  The quarterly paths $\bar q_t$ and $\hat q_t$
+are inferred by the state transition laws and the annual observations using a
+mixed-frequency state-space smoother.  Q1--Q3 are missing observations, not
+interpolated data.  QCEW establishments, the short SEC HHI series, and any
+deterministic annual-to-quarterly interpolation are excluded from this interim
+primary specification.  Inflation is excluded when the state path is drawn;
+the quarterly inflation equation is estimated afterward using the resulting
+state posterior (a modular cut).  This N-Gustavo-only state-space analysis is
+mandatory and remains the interim primary analysis until the vendor quarterly
+HHI passes its data-construction audit.
+
+No additional latent time-varying proxy wedge is included in the baseline unless more than one independently informative annual competition measure is available, because a single annual series cannot separately identify the common competition state and a flexible persistent proxy wedge.
+
+Instead, the design uses:
+\begin{itemize}
+\item sensitivity to \(\sigma_N\);
+\item alternative annual competition proxies;
+\item market-universe checks;
+\item a multiple-proxy measurement model if multiple credible annual measures become available.
+\end{itemize}
+
+\subsection{Reference-Environment Alignment}
+
+Let $\mathcal R_\mu$ be the pre-declared multi-year reference window associated, when possible, with the external markup source and an economically compatible market universe. The reference environment is a slow-state object, not the average of noisy total annual observations. From the measurement-only cut posterior define, for draw $s$,
+\begin{equation}
+Q_{\mathrm{ref}}^{(s)}
+=
+\frac{1}{|\mathcal R_\mu|}
+\sum_{t\in\mathcal R_\mu}\bar q_t^{(s)},
+\qquad
+S^{(s)}\sim p(S\mid C).
+\label{eq:q_ref_draw}
+\end{equation}
+The fixed reporting center used in the regression is
+\begin{equation}
+q_0=E_{cut}[Q_{\mathrm{ref}}\mid C].
+\label{eq:q_reporting_center}
+\end{equation}
+Its role is only numerical centering. Uncertainty about the economic reference location is not discarded: benchmark calculations use $Q_{\mathrm{ref}}^{(s)}$ and transform the direct loading as
+\begin{equation}
+\theta_{\mathrm{ref}}^{(s)}
+=
+\theta_0^{(s)}+\gamma^{(s)}\big(Q_{\mathrm{ref}}^{(s)}-q_0\big).
+\label{eq:theta_ref_draw}
+\end{equation}
+Because $\kappa_1$ is a derivative with respect to the coordinate, it is invariant to a common shift of the reporting center.
+
+The reference window, market-universe mapping, and weighting rule are frozen before the inflation module is estimated. Mandatory sensitivities vary the reference-window width. If the external markup is a pure calibration with no empirical reference period, no data-based $Q_{\mathrm{ref}}$ can be claimed; a fixed reference-location grid is used and the benchmark is labeled calibration-conditional.
+
+\subsection{Quarterly Business-Demography Measurements}
+
+Let
+\begin{equation}
+e_{jt},
+\qquad j=1,\ldots,J_E,
+\end{equation}
+denote economically comparable quarterly business-demography indicators.
+
+The baseline measurement equation is
+\begin{equation}
+e_{jt}
+=
+\bar e_{jt}
++
+b_j\hat q_t
++
+\xi_{jt}^E,
+\qquad
+\xi_{jt}^E\sim\Normal(0,\sigma_{E,j}^2),
+\label{eq:quarterly_measurement}
+\end{equation}
+where each series receives its own slow component \(\bar e_{jt}\).
+
+The slow establishment or business-demography components are not tied to \(\bar q_t\).
+
+The loading \(b_j\) is estimated.
+
+Only quarterly indicators that provide genuinely distinct measurement information are included. Additional series are not added merely to increase the number of measurement rows.
+
+If only one credible quarterly establishment series is available, the system reduces to
+\begin{equation}
+e_t
+=
+\bar e_t+b_E\hat q_t+\xi_t^E.
+\end{equation}
+In that case the quarterly block does not identify a cross-series common factor. The state \(\hat q_t\) is described as a latent stationary business-demography cycle informed jointly by the annual coordinate, the single quarterly indicator, and the state law, rather than as a common quarterly competition factor.
+
+A mandatory conservative sensitivity allows each quarterly indicator to contain an additional idiosyncratic stationary cycle:
+\begin{align}
+e_{jt}
+&=
+\bar e_{jt}
++
+b_j\hat q_t
++
+r_{jt}^E
++
+\xi_{jt}^E,\\
+r_{jt}^E
+&=
+\rho_{E,j}r_{j,t-1}^E+\omega_{jt}^E,
+\qquad |\rho_{E,j}|<1.
+\end{align}
+
+With multiple quarterly indicators, the data are not considered sufficiently informative about a common stationary component if the common loadings or the posterior sharpening of \(\hat q_t\) disappear under this specification. With a single quarterly indicator, informativeness is judged by posterior uncertainty reduction relative to the annual-only system and by robustness to alternative trend and cycle laws, without a common-factor interpretation.
+
+When $J_E\ge2$, an additional mandatory sensitivity allows contemporaneous correlation across quarterly measurement errors. Let $\bm\xi_t^E=(\xi_{1t}^E,\ldots,\xi_{J_Et}^E)'$ and replace the diagonal measurement covariance by
+\begin{equation}
+\bm\xi_t^E\sim\Normal(0,R_E),
+\qquad
+R_E=D_E\Omega_ED_E,
+\end{equation}
+where $D_E$ contains the measurement standard deviations and $\Omega_E$ is a correlation matrix with a proper shrinkage prior centered on the identity. The prior is frozen before estimation. If allowing $\Omega_E\neq I$ makes the information-gain ratio fail $R_q\le0.80$ or produces a material coefficient shift under the global robustness rule, the quarterly indicators are not treated as providing independent precision gains.
+
+% ================================================================
+\section{State Laws}
+% ================================================================
+
+The baseline competition-state laws are
+\begin{align}
+\bar q_t
+&=
+d_q+\bar q_{t-1}+\eta_t^q,
+&
+\eta_t^q
+&\sim\Normal(0,\sigma_{\bar q}^2),
+\\
+\hat q_t
+&=
+\phi_q\hat q_{t-1}+u_t^q,
+&u_t^q
+&\sim\Normal(0,\sigma_{\hat q}^2),
+\qquad |\phi_q|<1.
+\end{align}
+
+Each quarterly business-demography slow component obeys a pre-declared smooth law, with a random walk with drift as the baseline:
+\begin{equation}
+\bar e_{jt}
+=
+d_{e,j}+\bar e_{j,t-1}+\eta_{jt}^{e},
+\qquad
+\eta_{jt}^{e}\sim\Normal(0,\sigma_{e,j}^2).
+\end{equation}
+
+Alternative smooth laws for \(\bar q_t\), \(\hat q_t\), and \(\bar e_{jt}\) are identification sensitivities rather than alternative economic theories.
+
+% ================================================================
+\section{External Reference-Markup Input}
+% ================================================================
+
+The external reference markup $\mu_{\mathrm{ref}}^f$ is supplied by a pre-declared external source and is not estimated from the inflation equation. It must satisfy $\mu_{\mathrm{ref}}^f>1$. The implied HSA elasticity is
+\begin{equation}
+\boxed{
+\zeta_{\mathrm{ref}}
+=
+\frac{\mu_{\mathrm{ref}}^f}{\mu_{\mathrm{ref}}^f-1}.
+}
+\label{eq:zeta_reference}
+\end{equation}
+
+If the external source supplies a sampling distribution, confidence interval, or posterior for the reference markup, that uncertainty is represented by an external module $p_{ext}(\mu_{\mathrm{ref}}^f)$ and propagated into the auxiliary benchmark by draws
+\begin{equation}
+\mu_{\mathrm{ref}}^{f,(s)}\sim p_{ext},
+\qquad
+\zeta_{\mathrm{ref}}^{(s)}
+=
+\frac{\mu_{\mathrm{ref}}^{f,(s)}}{\mu_{\mathrm{ref}}^{f,(s)}-1}.
+\label{eq:zeta_external_draw}
+\end{equation}
+If the value is a pure calibration rather than an uncertain estimate, it remains fixed and a pre-declared calibration grid is reported. In either case the conclusion is explicitly conditional on the external reference-markup concept and market universe. Particular attention is paid to sensitivity when the markup is close to one because the transformation to $\zeta_{\mathrm{ref}}$ is then highly nonlinear.
+
+For construction of $x_t^{IM}$ a fixed central reference value is used. Because the main inflation equation includes an intercept and a standalone slow-state nuisance term, changing the log reference level of $x_t^{IM}$ is an exact reparameterization of those nuisance terms and does not mechanically change $\kappa_1$. The external uncertainty that matters for the sharp HSA comparison is propagated through $\zeta_{\mathrm{ref}}$ in \cref{eq:zeta_external_draw}.
+
+\section{Inflation Equation}
+% ================================================================
+
+Define the fixed reporting-centered slow state
+\begin{equation}
+\tilde q_t=\bar q_t-q_0,
+\label{eq:q_tilde}
+\end{equation}
+where $q_0$ is defined in \cref{eq:q_reporting_center}. For every cell $c$, the main quarterly empirical equation is
+\begin{equation}
+\boxed{
+\begin{aligned}
+\pi_{c,t}
+={}&a_c+\beta_{b,c}\pi_{c,t-1}+\beta_{f,c}f_{c,t}^{cond}
++\psi_c\tilde q_t
++\kappa_{0,c}x_{c,t}
++\kappa_{1,c}\tilde q_tx_{c,t}\\
+&-\theta_{0,c}\hat q_t
+-\gamma_c\tilde q_t\hat q_t
++\varepsilon_{c,t}^{\pi}.
+\end{aligned}
+}
+\label{eq:inflation_equation}
+\end{equation}
+The baseline disturbance is $\varepsilon_{c,t}^{\pi}\sim\Normal(0,\sigma_{\pi,c}^2)$.
+
+The standalone slow-state term $\psi_c\tilde q_t$ is included symmetrically in every competing empirical model. It prevents the interaction coefficient $\kappa_1$ from depending mechanically on the arbitrary zero chosen for $x_{c,t}$ and allows slow business-demography movements to have a low-frequency direct association with inflation. It is treated as a nuisance coefficient, not as the HSA participation channel.
+
+Because this standalone level term is not delivered by the HSA equation, the
+theory-near no-lag robustness fixes $\psi_c=0$ exactly while retaining the
+persistent AR(1) inflation disturbance.  It is executed over the same price,
+activity, model-family, and fast-state timing grid by
+\texttt{scripts/24\_test\_nolag\_price\_gap\_models.py
+--theory-faithful}.  This comparison removes the empirical nuisance only; it
+does not impose the auxiliary sharp HSA cross-equation equality and therefore
+does not manufacture agreement between $\kappa_1$ and $\theta_0$.
+
+The lagged- and expected-inflation coefficients are estimated separately and no sum-to-one restriction is imposed in the main semi-structural model. The auxiliary Cell-1 benchmark includes a theory-near re-estimation with $\beta_{b,1}=0$. If removing the hybrid lag produces a material shift under the global robustness rule, the benchmark is labeled hybrid-dynamics-sensitive.
+
+The main coefficients have the following empirical meanings:
+\begin{align}
+\kappa_{0,c}&=\left.\frac{\partial\pi_c}{\partial x_c}\right|_{\bar q=q_0},\\
+\kappa_{1,c}&=\frac{\partial}{\partial\bar q}\left(\frac{\partial\pi_c}{\partial x_c}\right),\\
+\theta_{0,c}&=-\left.\frac{\partial\pi_c}{\partial\hat q}\right|_{\bar q=q_0},\\
+\gamma_c&=-\frac{\partial^2\pi_c}{\partial\bar q\,\partial\hat q}.
+\end{align}
+The benchmark loading at the uncertain economic reference environment is derived from \cref{eq:theta_ref_draw}; it is not confused with the fixed-center coefficient $\theta_0$.
+
+\subsection{How to Read the Model}
+
+The model separates five empirical objects:
+\begin{itemize}
+\item $\psi$: a nuisance slow-state level association included to make the interaction specification hierarchical and centering-robust;
+\item $\kappa_0$: the activity/proxy slope at the fixed reporting center;
+\item $\kappa_1$: how that slope changes with the slow business-demography environment;
+\item $\theta_0$: the direct loading on the stationary latent state at the reporting center; and
+\item $\gamma$: how the direct loading changes with the slow environment.
+\end{itemize}
+None of these main coefficients is called a causal competition effect by construction. In Cell 1 only, the auxiliary benchmark additionally constructs $\theta_{\mathrm{ref}}$ and $\delta_{HSA}(b_x)$ from the unrestricted empirical posterior under the benchmark-admissibility rules.
+
+\section{Baseline Shock Orthogonality and Correlated-Shock Sensitivities}
+% ================================================================
+
+The baseline treats shocks in distinct transition, measurement, and inflation equations as contemporaneously orthogonal unless they are explicitly the same named innovation. In particular, for every cell $c$,
+\begin{equation}
+\Cov(\varepsilon_{c,t}^{\pi},\eta_t^q)=0,
+\qquad
+\Cov(\varepsilon_{c,t}^{\pi},u_t^q)=0,
+\qquad
+\Cov(\eta_t^q,u_t^q)=0.
+\end{equation}
+These zero-covariance restrictions are maintained identifying assumptions, not estimated implications.
+
+Because the substantive interpretation may be sensitive to contemporaneous inflation--competition shocks, two correlated-shock specifications are mandatory.
+
+\paragraph{Sensitivity CS1: fast competition innovation.}
+Write
+\begin{equation}
+\varepsilon_{c,t}^{\pi}
+=
+\lambda_{u,c}u_t^q+v_{c,t}^{\pi},
+\qquad
+v_{c,t}^{\pi}\perp u_t^q,
+\qquad
+v_{c,t}^{\pi}\sim\Normal(0,\sigma_{v,c}^2).
+\label{eq:cs1}
+\end{equation}
+Conditional on the state path, $u_t^q=\hat q_t-\phi_q\hat q_{t-1}$ is known. The implied contemporaneous correlation is reported rather than inferred from the sign of $\lambda_{u,c}$ alone.
+
+\paragraph{Sensitivity CS2: fast and slow competition innovations.}
+Write
+\begin{equation}
+\varepsilon_{c,t}^{\pi}
+=
+\lambda_{u,c}u_t^q
++
+\lambda_{\eta,c}\eta_t^q
++
+v_{c,t}^{\pi},
+\qquad
+v_{c,t}^{\pi}\perp(u_t^q,\eta_t^q),
+\label{eq:cs2}
+\end{equation}
+where $\eta_t^q=\bar q_t-d_q-\bar q_{t-1}$. Priors on $\lambda_{u,c}$ and $\lambda_{\eta,c}$ are proper and frozen in advance. The empirical result is described as shock-orthogonality-sensitive if CS1 or CS2 triggers the global robustness-shift rule. The auxiliary HSA benchmark is recalculated under the same sensitivities when computationally identified.
+
+When the persistent-inflation-disturbance robustness is used, these decompositions apply to the innovation of the persistent disturbance. For the YoY paired model, the correlated quarterly innovations are aggregated with the same operator $A_4$ used for the quarterly inflation disturbance.
+
+\paragraph{Sampler implication of CS1 and CS2.}
+The baseline FFBS rows are not reused mechanically under CS1 or CS2. Because $u_t^q=\hat q_t-\phi_q\hat q_{t-1}$ and $\eta_t^q=\bar q_t-d_q-\bar q_{t-1}$ enter the inflation equation, the correlated-shock likelihood loads on both current and lagged competition states. Conditional on the other state block and the parameters, the state-path full conditional remains Gaussian. It is sampled either from a lag-augmented linear-Gaussian representation or directly from the equivalent normalized multivariate-Gaussian path density. The two implementations must agree numerically in validation tests.
+
+Likewise, the baseline transition-only Gaussian updates for $\phi_q$ and $d_q$ are not valid full conditionals under the correlated-shock sensitivities. Conditional on the state paths and the shock loadings, their full conditionals combine the transition density with the inflation density. These kernels remain quadratic: $\phi_q$ is drawn from the resulting Gaussian conditional truncated to $(-1,1)$, while $d_q$ is drawn from its resulting Gaussian conditional. No CS1 or CS2 result is produced by updating $\phi_q$ or $d_q$ from the transition equation alone.
+
+% ================================================================
+\section{Two-Scale Empirical Approximation}
+% ================================================================
+
+The main empirical equation is a two-scale varying-coefficient approximation. The slow state $\bar q_t$ indexes the environment, while $x_t$ and $\hat q_t$ are treated as faster variables. Hence the main equation retains
+\begin{equation}
+\kappa_1\tilde q_tx_t,
+\qquad
+-\theta_0\hat q_t,
+\qquad
+-\gamma\tilde q_t\hat q_t,
+\end{equation}
+and excludes $\hat q_tx_t$ in the baseline.
+
+This exclusion is an empirical approximation, not an HSA zero restriction. A free fast-by-fast term
+\begin{equation}
+\lambda_{qx}\hat q_tx_t
+\end{equation}
+is a mandatory robustness specification. For the auxiliary HSA benchmark, however, the theoretical single-coordinate specification is primary and imposes
+\begin{equation}
+\lambda_{qx}=\kappa_1,
+\end{equation}
+as explained in \cref{eq:single_coordinate_slope}.
+
+The main full-sample empirical coefficient $\kappa_1$ is described as a sample-supported varying-coefficient association. It is not relabeled as the point derivative of HSA merely because a local interpretation region is displayed. Genuinely local estimation is reserved for the auxiliary benchmark and uses the endpoint rule in \cref{eq:local_endpoint_set}.
+
+\section{Model Families}
+% ================================================================
+
+All nine cells, including Cell 1, use the same main empirical hierarchy. The nuisance terms $a_c$, $\beta_{b,c}$, $\beta_{f,c}$, $\psi_c$, and $\kappa_{0,c}$ are present in every model.
+
+\paragraph{E0: No varying-slope or stationary-state mechanism.}
+\begin{equation}
+\kappa_1=\theta_0=\gamma=0.
+\end{equation}
+The slow-state nuisance $\psi\tilde q_t$ remains, so E0 is a clean benchmark for the specific mechanisms of interest rather than a claim that business demography has no level association with inflation.
+
+\paragraph{E1: Varying slope and constant direct loading.}
+\begin{equation}
+\kappa_1,\theta_0\text{ free},
+\qquad
+\gamma=0.
+\end{equation}
+
+\paragraph{E2: Unrestricted empirical mechanism.}
+\begin{equation}
+\kappa_1,\theta_0,\gamma\text{ free}.
+\end{equation}
+
+Thus the main empirical questions are whether the varying-slope/direct-loading terms improve the model relative to E0 and whether state dependence of the direct loading is empirically required relative to E1.
+
+\subsection*{Auxiliary Cell-1 benchmark specification}
+The sharp HSA benchmark is not a fourth main model and is not used to choose E0--E2. It re-estimates Cell 1 on the local endpoint set, with the measurement-supported cut state as primary, the single-coordinate slope term $\kappa_1(\tilde q_t+\hat q_t)x_t$, and the theory-near inflation-dynamics sensitivity $\beta_{b,1}=0$. The unrestricted benchmark posterior still estimates $\kappa_1$, $\theta_0$, and $\gamma$ freely. HSA equality is evaluated afterward through $\delta_{HSA}(b_x)$ rather than imposed to manufacture agreement.
+
+A restricted equality model may be estimated as a secondary numerical exercise only when $b_x$ is externally identified or explicitly fixed as a calibration. Its marginal likelihood is never promoted to evidence for a structural HSA test when the unit-scale mapping or activity endogeneity remains unresolved.
+
+\section{Primary Modular Cut and Secondary Full Joint}
+% ================================================================
+
+Let $C$ collect annual and quarterly business-demography measurements, let $S$ collect the latent states and measurement parameters, and let $X_c$ collect the observed activity and conditioning variables.
+
+\subsection{Primary modular cut}
+
+The primary substantive estimator is
+\begin{equation}
+p_{cut}(S,\beta_c)
+=
+p(S\mid C)\,p(\beta_c\mid\pi_c,X_c,S).
+\label{eq:cut_all_cells}
+\end{equation}
+The ordering is deliberate: business-demography data determine the latent coordinate; inflation does not reweight that coordinate; and the inflation module estimates the conditional associations given measurement-supported states. The reference slow-state distribution in \cref{eq:q_ref_draw} is obtained from the same measurement-only module.
+
+This choice avoids a circular substantive interpretation in which the inflation equation being tested materially reshapes the latent state and then receives credit for fitting that reshaped state. The cut does not solve endogeneity of $x_t$ or make the latent coordinate structural.
+
+\subsection{Secondary full joint}
+
+For every cell,
+\begin{align}
+&p_{joint}(S,\beta_c\mid C,\pi_c,X_c)\nonumber\\
+&\qquad\propto p(C\mid S)p(\pi_c\mid S,X_c,\beta_c)p(S)p(\beta_c).
+\label{eq:full_joint_all_cells}
+\end{align}
+Full-joint inference is a coherent semi-structural pooling estimator, but it is not an endogeneity correction. It is reported as an efficiency/information-flow sensitivity rather than as an equal substantive partner to the cut.
+
+A large cut--joint discrepancy is treated as a warning that the competition-related interpretation depends on inflation feedback into the latent state. The pre-declared quantitative conflict threshold is a shift greater than $0.5$ cut-posterior standard deviations for either $\kappa_1$ or the direct-loading coefficient, or a reversal of the posterior sign probability across $0.5$. When that gate fails, the main substantive interpretation is weakened even if the full-joint fit improves.
+
+\section{Posterior Simulation and Estimation Algorithm}
+% ================================================================
+
+For the primary QoQ model, the bilinear term
+\begin{equation}
+-\gamma\tilde q_t\hat q_t
+\end{equation}
+makes the complete state vector non-Gaussian when the slow and fast states are sampled jointly. Conditional on either state block, however, the other block is linear Gaussian. The primary full-joint estimator therefore uses an exact conditional FFBS step for each state block inside a Gibbs sampler.
+
+Let
+\begin{equation}
+s_t^F=
+\begin{bmatrix}
+\hat q_t & \bar e_{1t} & \cdots & \bar e_{J_Et}
+\end{bmatrix}',
+\qquad
+s_t^S=\bar q_t.
+\end{equation}
+The fast-state transition can be written as
+\begin{equation}
+s_t^F=c_F+F_Fs_{t-1}^F+w_t^F,
+\qquad
+w_t^F\sim\Normal(0,Q_F),
+\end{equation}
+where
+\begin{equation}
+c_F=
+\begin{bmatrix}
+0 & d_{e,1} & \cdots & d_{e,J_E}
+\end{bmatrix}',
+\qquad
+F_F=\operatorname{diag}(\phi_q,1,\ldots,1),
+\end{equation}
+and, under the baseline independent state innovations,
+\begin{equation}
+Q_F=\operatorname{diag}
+\left(
+\sigma_{\hat q}^2,
+\sigma_{e,1}^2,
+\ldots,
+\sigma_{e,J_E}^2
+\right).
+\end{equation}
+The slow-state transition is
+\begin{equation}
+s_t^S=d_q+s_{t-1}^S+\eta_t^q,
+\qquad
+\eta_t^q\sim\Normal(0,\sigma_{\bar q}^2).
+\end{equation}
+
+\subsection{Conditional measurement equations used by FFBS}
+
+Conditional on the slow state \(\bar q_{1:T}\), each quarterly business-demography observation contributes the fast-state row
+\begin{equation}
+e_{jt}
+=
+\begin{bmatrix}
+b_j & 0 & \cdots & 1_j & \cdots & 0
+\end{bmatrix}
+s_t^F+\xi_{jt}^E,
+\qquad
+\xi_{jt}^E\sim\Normal(0,\sigma_{E,j}^2),
+\end{equation}
+where \(1_j\) denotes the position of \(\bar e_{jt}\). At an annual observation date \(t=t_y\), the annual measurement contributes
+\begin{equation}
+q_y^A-\bar q_{t_y}
+=
+\begin{bmatrix}
+1 & 0 & \cdots & 0
+\end{bmatrix}s_{t_y}^F+\nu_y^N.
+\end{equation}
+For the secondary full-joint estimator, conditional on the slow state define
+\begin{equation}
+y_{c,t}^F
+=
+\pi_{c,t}
+-a_c
+-\beta_{b,c}\pi_{c,t-1}
+-\beta_{f,c}f_{c,t}^{cond}
+-\psi_c\tilde q_t
+-\kappa_{0,c}x_{c,t}
+-\kappa_{1,c}\tilde q_tx_{c,t}.
+\end{equation}
+Then the inflation equation contributes the fast-state row
+\begin{equation}
+y_{c,t}^F
+=
+-\left(\theta_{0,c}+\gamma_c\tilde q_t\right)\hat q_t
++\varepsilon_{c,t}^{\pi}.
+\label{eq:fast_ffbs_inflation_row}
+\end{equation}
+The inflation row is omitted in the primary modular-cut state sampler.
+
+Conditional on the fast state \(\hat q_{1:T}\), an annual observation contributes
+\begin{equation}
+q_y^A-\hat q_{t_y}=\bar q_{t_y}+\nu_y^N.
+\end{equation}
+For the secondary full-joint slow-state update define
+\begin{equation}
+y_{c,t}^S
+=
+\pi_{c,t}
+-a_c
+-\beta_{b,c}\pi_{c,t-1}
+-\beta_{f,c}f_{c,t}^{cond}
+-\kappa_{0,c}x_{c,t}
++\theta_{0,c}\hat q_t
++q_0\left(\psi_c+\kappa_{1,c}x_{c,t}-\gamma_c\hat q_t\right).
+\end{equation}
+Then
+\begin{equation}
+y_{c,t}^S
+=
+\left(\psi_c+\kappa_{1,c}x_{c,t}-\gamma_c\hat q_t\right)\bar q_t
++\varepsilon_{c,t}^{\pi}.
+\label{eq:slow_ffbs_inflation_row}
+\end{equation}
+Again, the inflation row is omitted in the primary modular-cut state sampler. Missing annual or quarterly observations are handled by omitting the corresponding measurement row at that date.
+
+\subsection{Paired YoY conditional state update}
+
+The YoY likelihood in \cref{eq:yoy_aggregation} is Gaussian but couples adjacent quarterly state dates and has the non-diagonal covariance in \cref{eq:yoy_covariance}. Conditional on either the slow or fast state block, its mean remains linear in the entire path of the other block. Therefore the full conditional of that entire state path is multivariate Gaussian. The production YoY sampler forms the normalized Gaussian full conditional from the state-transition density, business-demography measurement density, and YoY inflation likelihood, and draws the path using a numerically stable Cholesky factorization of the resulting precision or covariance matrix.
+
+Although $G_4$ is banded, its inverse is not assumed to be banded. An algebraically equivalent lag-augmented linear-Gaussian representation may be used as an implementation optimization only after numerical validation against the direct multivariate-normal calculation. The modular-cut YoY sampler omits the YoY inflation likelihood from the state-path full conditional exactly as the QoQ cut sampler omits the quarterly inflation rows.
+
+\subsection{Generic forward filter}
+
+For either conditional state block in the primary QoQ model, write the resulting system as
+\begin{align}
+s_t&=c_t+F_ts_{t-1}+w_t,
+& w_t&\sim\Normal(0,Q_t),\\
+y_t&=d_t+H_ts_t+v_t,
+& v_t&\sim\Normal(0,R_t).
+\end{align}
+Given the filtered moments
+\begin{equation}
+s_{t-1}\mid y_{1:t-1}\sim\Normal(m_{t-1},C_{t-1}),
+\end{equation}
+the prediction step is
+\begin{align}
+a_t&=c_t+F_tm_{t-1},\\
+P_t&=F_tC_{t-1}F_t'+Q_t.
+\end{align}
+Define the innovation and innovation variance
+\begin{align}
+v_t^{y}&=y_t-d_t-H_ta_t,\\
+S_t^{y}&=H_tP_tH_t'+R_t,
+\end{align}
+and the Kalman gain
+\begin{equation}
+K_t=P_tH_t'(S_t^{y})^{-1}.
+\end{equation}
+The filtering update is
+\begin{align}
+m_t&=a_t+K_tv_t^{y},\\
+C_t&=P_t-K_tS_t^{y}K_t'.
+\end{align}
+All inversions are implemented through numerically stable linear solves or Cholesky factorizations rather than explicit matrix inversion.
+
+\subsection{Backward simulation draw}
+
+After the forward pass, draw
+\begin{equation}
+s_T\sim\Normal(m_T,C_T).
+\end{equation}
+For \(t=T-1,\ldots,1\), define
+\begin{equation}
+J_t=C_tF_{t+1}'P_{t+1}^{-1},
+\end{equation}
+and draw
+\begin{equation}
+s_t\mid s_{t+1},y_{1:t}
+\sim
+\Normal
+\left(
+m_t+J_t(s_{t+1}-a_{t+1}),
+C_t-J_tP_{t+1}J_t'
+\right).
+\label{eq:ffbs_backward_density}
+\end{equation}
+This yields an exact draw from the QoQ conditional smoothing distribution of the state block. One QoQ Gibbs sweep contains one FFBS draw of \(s_{1:T}^F\) conditional on \(s_{1:T}^S\) and one FFBS draw of \(s_{1:T}^S\) conditional on \(s_{1:T}^F\).
+
+\subsection{Inflation-coefficient Gibbs update}
+
+For each main model $E\in\{E0,E1,E2\}$, write the primary QoQ equation as
+\begin{equation}
+\bm\pi_c=Z_{c,E}\alpha_{c,E}+\bm\varepsilon_c,
+\qquad
+\bm\varepsilon_c\sim\Normal(0,\sigma_{\pi,c}^2I).
+\label{eq:inflation_regression_matrix}
+\end{equation}
+The common columns are
+\begin{equation}
+1,\quad \pi_{c,t-1},\quad f_{c,t}^{cond},\quad \tilde q_t,\quad x_{c,t},
+\end{equation}
+with coefficients $(a_c,\beta_{b,c},\beta_{f,c},\psi_c,\kappa_{0,c})$. The mechanism columns are
+\begin{align}
+E0:&\quad \text{none},\\
+E1:&\quad \tilde q_tx_{c,t},\quad -\hat q_t,\\
+E2:&\quad \tilde q_tx_{c,t},\quad -\hat q_t,\quad -\tilde q_t\hat q_t.
+\end{align}
+Their coefficients are $(\kappa_1,\theta_0,\gamma)$ as applicable.
+
+For the single-coordinate auxiliary benchmark, the $\kappa_1$ column is replaced by
+\begin{equation}
+(\tilde q_t+\hat q_t)x_t,
+\end{equation}
+so $\lambda_{qx}=\kappa_1$ is imposed by construction while $\kappa_1$ itself remains unrestricted relative to the HSA equality.
+
+For the baseline YoY model, premultiply the full QoQ design by $A_4$. Let $L_4L_4'=G_4$ and define
+\begin{equation}
+\bm\pi_c^{Y,w}=L_4^{-1}\bm\pi_c^Y,
+\qquad
+Z_{c,E}^{Y,w}=L_4^{-1}A_4Z_{c,E}.
+\end{equation}
+Then
+\begin{equation}
+\bm\pi_c^{Y,w}=Z_{c,E}^{Y,w}\alpha_{c,E}+\bm e_c^w,
+\qquad
+\bm e_c^w\sim\Normal(0,\sigma_{\pi,c}^2I).
+\end{equation}
+Under persistent or correlated-shock specifications, the appropriate declared covariance replaces $\sigma_{\pi,c}^2G_4$ and the whitening matrix is recomputed from that covariance.
+
+Use the proper normal prior $\alpha_{c,E}\sim\Normal(m_{\alpha,0},V_{\alpha,0})$. Conditional on $\sigma_{\pi,c}^2$ and the states, the Gaussian update is
+\begin{align}
+V_{\alpha,n}^{-1}
+&=V_{\alpha,0}^{-1}+\frac{1}{\sigma_{\pi,c}^2}Z_{c,E}'Z_{c,E},\\
+m_{\alpha,n}
+&=V_{\alpha,n}\left(V_{\alpha,0}^{-1}m_{\alpha,0}+\frac{1}{\sigma_{\pi,c}^2}Z_{c,E}'\bm\pi_c\right),\\
+\alpha_{c,E}\mid\cdot&\sim\Normal(m_{\alpha,n},V_{\alpha,n}).
+\end{align}
+Conditional on $\alpha_{c,E}$, with $\sigma_{\pi,c}^2\sim\mathrm{IG}(a_{\pi,0},b_{\pi,0})$,
+\begin{equation}
+\sigma_{\pi,c}^2\mid\cdot
+\sim
+\mathrm{IG}\!\left(a_{\pi,0}+\frac{T_c}{2},
+b_{\pi,0}+\frac12(\bm\pi_c-Z_{c,E}\alpha_{c,E})'(\bm\pi_c-Z_{c,E}\alpha_{c,E})\right).
+\end{equation}
+For YoY, the same formulas apply to the whitened data and design, with the effective observation dimension replacing $T_c$.
+
+\subsection{Transition and measurement-parameter Gibbs updates}
+
+All baseline Gaussian transition and measurement updates use the same regression template. For
+\begin{equation}
+r=A\delta+\epsilon,
+\qquad
+\epsilon\sim\Normal(0,\sigma^2I),
+\end{equation}
+with proper priors
+\begin{equation}
+\delta\sim\Normal(m_{\delta,0},V_{\delta,0}),
+\qquad
+\sigma^2\sim\mathrm{IG}(a_{\sigma,0},b_{\sigma,0}),
+\end{equation}
+the coefficient update is
+\begin{align}
+V_{\delta,n}^{-1}
+&=V_{\delta,0}^{-1}+\frac{1}{\sigma^2}A'A,\\
+m_{\delta,n}
+&=V_{\delta,n}
+\left(
+V_{\delta,0}^{-1}m_{\delta,0}
++\frac{1}{\sigma^2}A'r
+\right),\\
+\delta\mid\cdot
+&\sim\Normal(m_{\delta,n},V_{\delta,n}),
+\end{align}
+and the variance update is
+\begin{equation}
+\sigma^2\mid\cdot
+\sim
+\mathrm{IG}
+\left(
+a_{\sigma,0}+\frac{n}{2},
+b_{\sigma,0}+\frac{1}{2}(r-A\delta)'(r-A\delta)
+\right).
+\label{eq:generic_variance_update}
+\end{equation}
+The mapping from the model to this template is
+\begin{align}
+d_q:&\quad r_t=\bar q_t-\bar q_{t-1},\quad A_t=1,\quad \sigma^2=\sigma_{\bar q}^2,\\
+\phi_q:&\quad r_t=\hat q_t,\quad A_t=\hat q_{t-1},\quad \sigma^2=\sigma_{\hat q}^2,\\
+d_{e,j}:&\quad r_t=\bar e_{jt}-\bar e_{j,t-1},\quad A_t=1,\quad \sigma^2=\sigma_{e,j}^2,\\
+b_j:&\quad r_t=e_{jt}-\bar e_{jt},\quad A_t=\hat q_t,\quad \sigma^2=\sigma_{E,j}^2.
+\end{align}
+In the baseline orthogonal-shock model, the posterior for \(\phi_q\) is the corresponding Gaussian update truncated to \((-1,1)\). Under CS1 or CS2, the update instead uses the combined transition--inflation full conditional described above; under CS2 the same qualification applies to $d_q$. The annual measurement variance is updated from
+\begin{equation}
+r_y^N=q_y^A-\bar q_{t_y}-\hat q_{t_y}
+\end{equation}
+using \cref{eq:generic_variance_update} with no estimated regression coefficient. The same template is used for the optional idiosyncratic quarterly cycles, with the corresponding AR coefficient truncated to the stationary region.
+
+\subsection{Proper initial-state distributions}
+
+Marginal likelihood calculation requires proper initial-state densities. The baseline uses parameter-independent proper initial-state priors
+\begin{align}
+\hat q_1&\sim\Normal(m_{\hat q,1},V_{\hat q,1}),\\
+\bar q_1&\sim\Normal(m_{\bar q,1},V_{\bar q,1}),\\
+\bar e_{j1}&\sim\Normal(m_{e,j,1},V_{e,j,1}),
+\end{align}
+with fixed finite \(V_{\hat q,1}\), \(V_{\bar q,1}\), and \(V_{e,j,1}\). This choice keeps the Gaussian/truncated-Gaussian transition-parameter full conditionals used above exact. These initial-state hyperparameters are frozen before model comparison and are included in the marginal-likelihood prior sensitivity analysis.
+
+\subsection{Complete Gibbs sweep}
+
+For the primary QoQ full-joint model, iteration \(g=1,\ldots,G\) is:
+\begin{enumerate}
+\item draw \(s_{1:T}^{F,(g)}\) by FFBS conditional on \(s_{1:T}^{S,(g-1)}\), all parameters, business-demography data, and quarterly inflation;
+\item draw \(s_{1:T}^{S,(g)}\) by FFBS conditional on \(s_{1:T}^{F,(g)}\), all parameters, annual data, and quarterly inflation;
+\item draw \(d_q,\phi_q,d_{e,j}\) and the associated state-innovation variances from their Gaussian or truncated-Gaussian and inverse-gamma full conditionals;
+\item draw \(b_j\), the quarterly measurement covariance parameters, and \(\sigma_N^2\) from their declared measurement full conditionals or robustness-specific normalized updates;
+\item draw the applicable main-model inflation coefficients and \(\sigma_{\pi,c}^2\) from the inflation full conditionals;
+\item update correlated-shock loadings or any other robustness-specific block using its declared conditional sampler;
+\item if cross-block autocorrelation is high, repeat the two conditional state-path draws before storing the iteration.
+\end{enumerate}
+For the baseline-i.i.d. YoY full-joint model, steps 1 and 2 use the exact multivariate-Gaussian path draws described above rather than the QoQ FFBS rows; the remaining normalized parameter updates use the YoY likelihood after the $G_4$ whitening. Robustness specifications do not reuse this whitening unless their quarterly disturbance covariance is proportional to the identity. In particular, the persistent-error YoY model uses its own aggregated covariance defined below, and CS1/CS2 use their correlated-shock conditional mean before applying the covariance appropriate to the remaining innovation. The modular-cut samplers omit inflation information from the state update under both transformations. Inflation parameters are then drawn conditional on retained business-demography state draws, and inflation is not allowed to feed back into the cut state posterior.
+
+Convergence is assessed using multiple dispersed chains, rank-normalized split \(\widehat R\), effective sample size, trace plots for low-dimensional parameters, and autocorrelation summaries for representative state functionals. Posterior summaries use only retained post-warmup draws. For QoQ, when \(\gamma=0\), a one-block multivariate FFBS implementation is used as a mandatory computational validation benchmark because the complete state system is then linear Gaussian. The analogous YoY validation compares the direct one-block multivariate-Gaussian draw with any lag-augmented linear-Gaussian implementation used for computational efficiency.
+
+% ================================================================
+\section{Operational Priors}
+% ================================================================
+
+Every prior used for model ranking is proper and numerically specified before the inflation outcomes are inspected for model comparison. To make coefficient priors comparable across activity measures with different units, define frozen robust scales from conditioning data only:
+\begin{equation}
+s_{x,c}=\frac{\mathrm{IQR}(x_c)}{1.349},
+\qquad
+s_q=\frac{\mathrm{IQR}(q_y^A)}{1.349},
+\qquad
+s_{e,j}=\frac{\mathrm{IQR}(e_j)}{1.349}.
+\end{equation}
+If an IQR is zero, the corresponding cell or indicator fails the pre-estimation variation gate rather than receiving an arbitrary scale.
+
+The baseline inflation-coefficient priors are stated on economically interpretable contribution scales:
+\begin{align}
+a_c&\sim\Normal(0,5^2),\\
+\beta_{b,c},\beta_{f,c}&\sim\Normal(0,1^2),\\
+\psi_cs_q&\sim\Normal(0,1.5^2),\\
+\kappa_{0,c}s_{x,c}&\sim\Normal(0,2^2),\\
+\kappa_{1,c}s_qs_{x,c}&\sim\Normal(0,1^2),\\
+\theta_{0,c}s_q&\sim\Normal(0,1^2),\\
+\gamma_cs_q^2&\sim\Normal(0,1^2),\\
+\lambda_{qx,c}s_qs_{x,c}&\sim\Normal(0,1^2),\\
+\lambda_{u,c}s_q,\lambda_{\eta,c}s_q&\sim\Normal(0,1^2).
+\end{align}
+Inflation is measured in annualized percentage points, so these are priors on plausible inflation contributions rather than raw coefficients whose scale changes across regressors.
+
+For the baseline variance prior, use the parameterization
+\begin{equation}
+\sigma^2\sim\mathrm{IG}(3,2s_0^2),
+\end{equation}
+which has prior mean $s_0^2$. Set
+\begin{equation}
+s_{0,\pi}=2,
+\quad s_{0,\hat q}=0.25s_q,
+\quad s_{0,\bar q}=0.05s_q,
+\quad s_{0,N}=0.25s_q,
+\quad s_{0,E,j}=0.50s_{e,j},
+\quad s_{0,e,j}=0.05s_{e,j}.
+\end{equation}
+These values determine the priors for $\sigma_{\pi}^2$, $\sigma_{\hat q}^2$, $\sigma_{\bar q}^2$, $\sigma_N^2$, $\sigma_{E,j}^2$, and $\sigma_{e,j}^2$, respectively. The prior-sensitivity grid multiplies every $s_0$ and every normal contribution-scale standard deviation by $0.5$ and $2$.
+
+The stationary-cycle prior is
+\begin{equation}
+\phi_q\sim\Normal(0.5,0.3^2)\ \text{truncated to }(-1,1),
+\qquad
+\frac{d_q}{s_q}\sim\Normal(0,0.05^2).
+\end{equation}
+For the persistent-inflation robustness and optional idiosyncratic quarterly cycles,
+\begin{equation}
+\rho_\pi,\rho_{E,j}\sim\Normal(0.5,0.3^2)\ \text{truncated to }(-1,1),
+\qquad
+\frac{d_{e,j}}{s_{e,j}}\sim\Normal(0,0.05^2),
+\end{equation}
+and the idiosyncratic-cycle innovation variance uses $\mathrm{IG}(3,2(0.25s_{e,j})^2)$. Under CS1/CS2, the orthogonal inflation-remainder variance uses the same $\mathrm{IG}(3,8)$ baseline as $\sigma_{\pi,c}^2$.
+
+Quarterly indicators are pre-oriented so that larger values mean more business activity; their standardized loadings satisfy
+\begin{equation}
+\frac{b_js_q}{s_{e,j}}\sim\Normal(1,0.5^2).
+\end{equation}
+When correlated quarterly measurement errors are estimated, $\Omega_E\sim\mathrm{LKJ}(4)$.
+
+Initial-state priors are proper, parameter-independent, and diffuse relative to the measurement scale:
+\begin{equation}
+\hat q_1\sim\Normal(0,(2s_q)^2),
+\qquad
+\bar q_1\sim\Normal(0,(2s_q)^2),
+\qquad
+\bar e_{j1}\sim\Normal(0,(2s_{e,j})^2).
+\end{equation}
+
+Prior predictive checks are required before model ranking. If these numerical priors produce implausible annualized inflation contributions, the design is revised and re-frozen before examining model rankings; priors are never tuned in response to a preferred coefficient sign or Bayes factor.
+
+For the auxiliary HSA benchmark, $b_x=1$ is not given a probabilistic prior by default; it is a labeled unit-scale calibration. If independent external information on $b_x$ exists, its frozen external distribution is propagated. The HSA equivalence tolerance is defined in coefficient units by an economically interpretable 0.10 percentage-point contribution over a one-IQR joint movement:
+\begin{equation}
+\Delta_{HSA}=\frac{0.10}{s_qs_{x,1}}.
+\label{eq:hsa_equivalence_band}
+\end{equation}
+The primary benchmark summary is $\Pr(|\delta_{HSA}(b_x)|<\Delta_{HSA}\mid D)$ together with the full posterior of $\delta_{HSA}(b_x)$. A point-null Bayes factor for exact equality is secondary and is not reported unless the proxy-scale mapping is independently defensible.
+
+\section{Identification and Pre-Declared Decision Gates}
+% ================================================================
+
+Identification diagnostics are co-primary with coefficient estimates. VIFs or design condition numbers, when shown, are descriptive collinearity diagnostics rather than proof of structural identification.
+
+\subsection{Competition-cycle measurement}
+Compare annual-firm-only measurement (N) with annual plus quarterly business-demography measurement (C). Let
+\begin{equation}
+R_q=\frac{\operatorname{median}_t\operatorname{sd}_C(\hat q_t\mid C)}
+{\operatorname{median}_t\operatorname{sd}_N(\hat q_t\mid C)}.
+\end{equation}
+Quarterly data are called materially informative only if $R_q\le0.80$ and the reduction survives the pre-declared alternative trend/cycle and measurement-error specifications. With one quarterly indicator, no common-factor claim is made.
+
+\subsection{Coefficient learning}
+For $\kappa_1$, $\theta_0$, and $\gamma$, report prior-to-posterior standard-deviation ratios, posterior sign probabilities, and posterior correlations. A coefficient is called \emph{likelihood-informed} only if its posterior standard deviation is at most $0.75$ of its prior standard deviation and its result is stable under the baseline prior-sensitivity grid. Failure of this gate does not force the coefficient to zero; it means the data do not sharply learn it.
+
+For $\gamma$, posterior concentration near zero is not interpreted as evidence of constancy when this learning gate fails.
+
+\subsection{Cut--joint conflict}
+The cut is primary. A full-joint result is called materially different if either (i) the posterior mean of $\kappa_1$ or the direct-loading coefficient moves by more than $0.5$ cut-posterior standard deviations, or (ii) a posterior sign probability crosses $0.5$. Such a conflict is a warning against substantive structural interpretation rather than merely an efficiency gain.
+
+\subsection{Global robustness-shift rule}
+For any coefficient $\beta$ compared with a robustness specification $R$, define
+\begin{equation}
+D_\beta^R
+=
+\frac{|E_R[\beta]-E_B[\beta]|}{\operatorname{sd}_B(\beta)},
+\end{equation}
+where $B$ denotes the baseline cut posterior. A robustness change is called material if $D_\beta^R>0.5$, if the posterior sign probability crosses the pre-declared $0.80$ qualitative-evidence threshold, or if a previously satisfied coefficient-learning gate fails. This rule replaces unquantified phrases such as ``changes materially'' in substantive decisions.
+
+\subsection{Auxiliary HSA benchmark gates}
+The sharp benchmark is reported only after the admissibility conditions in \cref{sec:hsa_benchmark} are checked. The numerical benchmark summary is
+\begin{equation}
+\Pr\!\left(|\delta_{HSA}(b_x)|<\Delta_{HSA}\mid D\right),
+\end{equation}
+with $\Delta_{HSA}$ in \cref{eq:hsa_equivalence_band}. Values above $0.80$ are described as substantial posterior compatibility with the pre-declared equivalence band; values below $0.50$ are described as weak compatibility; intermediate values are reported without a binary label. These are benchmark labels, not probabilities that HSA is true.
+
+\subsection{Persistent Inflation Disturbance}
+
+A mandatory robustness replaces the i.i.d. quarterly disturbance with
+\begin{equation}
+\varepsilon_t^\pi=\rho_\pi\varepsilon_{t-1}^\pi+\omega_t^\pi,
+\qquad |\rho_\pi|<1,
+\qquad \omega_t^\pi\sim\Normal(0,\sigma_{\omega,c}^2).
+\end{equation}
+When combined with CS1 or CS2, the innovation $\omega_t^\pi$, not the persistent level, is decomposed into contemporaneous competition innovations plus an orthogonal remainder.
+
+Let $\Omega_{\pi,c}(\rho_\pi,\sigma_{\omega,c}^2)$ be the quarterly covariance implied by the AR(1) disturbance and its proper initial distribution. For YoY,
+\begin{equation}
+\Var(\bm\varepsilon_c^Y\mid\rho_\pi,\sigma_{\omega,c}^2)
+=
+A_4\Omega_{\pi,c}(\rho_\pi,\sigma_{\omega,c}^2)A_4'.
+\label{eq:yoy_ar1_covariance}
+\end{equation}
+The i.i.d. overlap covariance $\sigma_{\pi,c}^2G_4$ is used only when $\rho_\pi=0$ under the corresponding variance parameterization.
+
+\subsection{Low-Frequency Inflation Confounding}
+
+The required low-frequency nuisance robustness is fully specified as
+\begin{align}
+\pi_{c,t}&=m_{c,t}+\ell_{c,t}+\varepsilon_{c,t}^\pi,\\
+\ell_{c,t}&=\rho_{\ell,c}\ell_{c,t-1}+\omega_{\ell,c,t},
+\qquad |\rho_{\ell,c}|<1,
+\end{align}
+where $m_{c,t}$ is the conditional mean in \cref{eq:inflation_equation}. Use
+\begin{equation}
+\rho_{\ell,c}\sim\Normal(0.95,0.04^2)\text{ truncated to }(0,1),
+\qquad
+\sigma_{\ell,c}^2\sim\mathrm{IG}(3,2(0.25)^2).
+\end{equation}
+This component is included symmetrically across E0--E2. A change in the posterior mean of $\kappa_1$ exceeding $0.5$ baseline posterior standard deviations is labeled low-frequency-specification sensitivity.
+
+\section{Measurement-Error and Data-Alignment Checks}
+% ================================================================
+
+\subsection{Markup Measurement Error}
+
+Inverse-markup results are conditional on the observed markup unless an identified errors-in-variables structure is available.
+
+A valid measurement-error model requires additional information, such as:
+\begin{itemize}
+\item externally estimated measurement-error variance;
+\item independently constructed markup measures;
+\item an external instrument.
+\end{itemize}
+
+A measurement equation alone is not treated as identification.
+
+\subsection{Activity Endogeneity and Proxy Error}
+
+CS1 and CS2 concern innovations in the latent business-demography process and do not address contemporaneous endogeneity of $x_t$. The main empirical coefficients are therefore conditional associations. For Cell 1, an external instrument/control-function or joint activity equation is used only when its exclusion or measurement restrictions are independently defensible. If no such correction is available, the sharp HSA benchmark is explicitly labeled conditional on \cref{eq:activity_orthogonality}. No disclaimer elsewhere in the paper is allowed to convert this maintained condition into causal identification.
+
+\subsection{Generated Slack Measures and Data Vintages}
+
+BN output gaps and unemployment gaps that depend on estimated latent trends or natural rates are generated regressors. Their construction method and vintage are frozen. Where feasible, uncertainty in the estimated gap is propagated through draws or an external measurement model. At minimum, sensitivity to alternative pre-declared gap constructions is reported.
+
+Predictive evaluation never uses a two-sided or full-sample gap estimate at a forecast origin where that estimate would not have been available. If a real-time or recursively constructed gap is unavailable, the corresponding exercise is labeled conditional-nowcast or pseudo-real-time rather than genuine forecast evaluation.
+
+\subsection{Shared Price-Index Construction}
+
+If the markup measure mechanically contains the same price index used to construct inflation, a shared-measurement-error sensitivity is mandatory.
+
+Mechanical covariance is not interpreted as marginal-cost transmission.
+
+\subsection{Market-Universe Alignment}
+
+PPI, CPI/core CPI, markup measures, firm counts, and quarterly business-demography indicators must refer to economically compatible market universes.
+
+Cell 7, core CPI \(\times\) inverse markup, receives particular scrutiny because a broad markup measure may not map cleanly into the core-CPI market universe.
+
+If a frozen market-universe compatibility check fails, the cell is reported as non-interpretable rather than forced into the nine-cell comparison.
+
+% ================================================================
+\section{Model Evidence and Predictive Evaluation}
+% ================================================================
+
+Model comparison uses two distinct objects.
+
+\subsection{Bayes Factors and Chib Marginal Likelihood}
+
+Bayes factors measure integrated model evidence, including fit, parameter uncertainty, prior mass, and model complexity. They are compared only between models estimated on the same empirical cell and the same inflation transformation. They are never compared numerically across different dependent variables, activity measures, or QoQ-versus-YoY likelihoods.
+
+For every cell and transformation, the main empirical comparisons are
+\begin{equation}
+E2\text{ vs }E0,
+\qquad
+E1\text{ vs }E0,
+\qquad
+E2\text{ vs }E1.
+\end{equation}
+These comparisons ask about the empirical varying-slope/direct-loading mechanisms; they do not impose the HSA equality.
+
+Formal Bayes factors use the full generative model and Chib's marginal-likelihood identity and are therefore secondary to the cut-based substantive coefficient analysis. No mechanically comparable Bayes factor is assigned to the modular-cut distribution. A restricted HSA-equality Bayes factor is not a main evidence measure and is omitted unless the proxy-scale mapping $b_x$ is independently defensible.
+
+Let \(Y_c=(C,\bm\pi_c)\) denote the stochastic observations in cell \(c\), conditional on the fixed activity variables, conditioning variables, and external reference markup, and let
+\begin{equation}
+\Omega_M
+=
+\left(
+\alpha_{c,M},
+\sigma_{\pi,c}^2,
+\vartheta_M,
+s_{1:T}^F,
+s_{1:T}^S
+\right)
+\end{equation}
+collect all unknown parameters and latent states under model \(M\). Here \(\vartheta_M\) contains the competition-state transition parameters, quarterly-measurement parameters, annual-measurement variance, and any model-specific robustness parameters included in the generative model.
+
+Choose a fixed high-posterior point \(\Omega_M^{\ast}\), preferably an actual retained posterior draw close to the posterior center. Chib's identity is applied to the augmented posterior:
+\begin{equation}
+\boxed{
+\log p(Y_c\mid M)
+=
+\log p(Y_c,\Omega_M^{\ast}\mid M)
+-
+\log p(\Omega_M^{\ast}\mid Y_c,M).
+}
+\label{eq:chib_augmented_identity}
+\end{equation}
+The numerator in \cref{eq:chib_augmented_identity} is evaluated directly as the sum of the log densities of the annual and quarterly measurement equations, the inflation equation, the state transitions and proper initial-state densities, and all proper parameter priors.
+
+For the posterior ordinate, partition
+\begin{equation}
+\Omega_M=(B_1,\ldots,B_K)
+\end{equation}
+into normalized Gibbs blocks. A baseline ordering is
+\begin{equation}
+B_1=\alpha_{c,M},
+\quad
+B_2=\sigma_{\pi,c}^2,
+\quad
+B_3=\vartheta_M,
+\quad
+B_4=s_{1:T}^F,
+\quad
+B_5=s_{1:T}^S,
+\end{equation}
+with \(B_3\) split further into scalar or conjugate subblocks whenever needed. Then
+\begin{equation}
+p(\Omega_M^{\ast}\mid Y_c,M)
+=
+\prod_{k=1}^{K}
+p(B_k^{\ast}\mid B_1^{\ast},\ldots,B_{k-1}^{\ast},Y_c,M).
+\label{eq:chib_ordinate_factorization}
+\end{equation}
+
+The first ordinate is Rao--Blackwellized from the unrestricted posterior run. Subsequent ordinates are obtained from reduced Gibbs runs that fix the preceding blocks at their starred values. Specifically,
+\begin{equation}
+\widehat p
+\left(
+B_k^{\ast}\mid B_{1:k-1}^{\ast},Y_c,M
+\right)
+=
+\frac{1}{G_k}
+\sum_{g=1}^{G_k}
+p
+\left(
+B_k^{\ast}
+\mid
+B_{1:k-1}^{\ast},
+B_{k+1:K}^{(g)},
+Y_c,M
+\right),
+\label{eq:chib_rb_ordinate}
+\end{equation}
+where \(B_{k+1:K}^{(g)}\) are draws from the corresponding reduced chain. Normal, truncated-normal, and inverse-gamma full conditional densities are evaluated with their complete normalizing constants.
+
+For a QoQ FFBS state block, the full conditional ordinate in \cref{eq:chib_rb_ordinate} is evaluated exactly from the backward factorization. If \(s_{1:T}\) denotes either the fast or the slow conditional state block, then
+\begin{equation}
+p(s_{1:T}^{\ast}\mid\cdot)
+=
+p(s_T^{\ast}\mid y_{1:T},\cdot)
+\prod_{t=1}^{T-1}
+p(s_t^{\ast}\mid s_{t+1}^{\ast},y_{1:t},\cdot),
+\label{eq:ffbs_path_ordinate}
+\end{equation}
+where
+\begin{equation}
+p(s_T^{\ast}\mid y_{1:T},\cdot)
+=
+\varphi(s_T^{\ast};m_T,C_T)
+\end{equation}
+and each backward factor is the Gaussian density in \cref{eq:ffbs_backward_density}. Hence
+\begin{align}
+\log p(s_{1:T}^{\ast}\mid\cdot)
+={}&
+\log\varphi(s_T^{\ast};m_T,C_T)\\
+&+
+\sum_{t=1}^{T-1}
+\log\varphi
+\left(
+s_t^{\ast};
+ m_t+J_t(s_{t+1}^{\ast}-a_{t+1}),
+ C_t-J_tP_{t+1}J_t'
+\right),
+\end{align}
+where \(\varphi(\cdot;m,V)\) denotes the normalized multivariate Gaussian density. The averaging in \cref{eq:chib_rb_ordinate} is performed on the density scale using a log-sum-exp calculation for numerical stability. For a YoY state-path block, the corresponding normalized multivariate-Gaussian ordinate is evaluated from the Cholesky factor of its full conditional rather than from the QoQ FFBS backward factorization.
+
+The estimated log marginal likelihood is therefore
+\begin{equation}
+\widehat{\log p(Y_c\mid M)}
+=
+\log p(Y_c,\Omega_M^{\ast}\mid M)
+-
+\sum_{k=1}^{K}
+\log
+\widehat p(B_k^{\ast}\mid B_{1:k-1}^{\ast},Y_c,M).
+\label{eq:chib_log_ml}
+\end{equation}
+For any two models \(M_a\) and \(M_b\) estimated on the same cell,
+\begin{equation}
+\log BF_{a,b}
+=
+\widehat{\log p(Y_c\mid M_a)}
+-
+\widehat{\log p(Y_c\mid M_b)}.
+\label{eq:log_bayes_factor}
+\end{equation}
+
+For every reported Bayes factor, the full posterior run and all reduced Chib runs use the same frozen prior specification as the corresponding model. The Chib calculation is repeated from multiple independent chains or starred points, and the dispersion of the resulting log marginal likelihoods is reported as a numerical-stability diagnostic. A Bayes factor is not reported if the posterior ordinate is numerically unstable or if a robustness specification introduces an unnormalized conditional density for which the required ordinate cannot be evaluated reliably.
+
+\subsection{Posterior Predictive Score}
+
+Predictive evaluation uses time-series-respecting posterior predictive densities and an explicit release-date information set. Let $\mathcal I_{t-1}^{avail}$ contain only observations, vintages, and releases that would have been available at the declared forecast origin for $\pi_t$. A genuine one-step-ahead score is
+\begin{equation}
+LPS_M
+=
+\sum_{t\in\mathcal H}
+\log p\!\left(\pi_t\mid\mathcal I_{t-1}^{avail},M\right).
+\label{eq:lps}
+\end{equation}
+
+The predictive density integrates over $S_t$ using its predictive distribution based only on information available through the forecast origin. Full-sample smoothed latent states are never used to claim forecast performance.
+
+The availability rule applies to every predictor, not only activity or markup. It therefore covers the expectation regressor, activity/slack measure, markup input, annual firm count, and quarterly business-demography releases. If a contemporaneous regressor or its real-time vintage is unavailable at the genuine forecast origin, the observation is either forecast within a pre-declared auxiliary model or the exercise is reported separately as a conditional nowcast. No ex-post revised BN gap, natural unemployment rate, expectation series, or business-demography release is silently inserted into $\mathcal I_{t-1}^{avail}$.
+
+For the YoY paired model, the predictive density respects both the release-date information set and the overlap structure in \cref{eq:yoy_covariance}. In particular, sequential scoring uses the Gaussian conditional distribution implied by the joint overlapping-error covariance given previously observed YoY outcomes; it does not score each YoY observation with its unconditional marginal density as if the overlap were independent. Under the persistent-error robustness, the corresponding conditional density is computed from \cref{eq:yoy_ar1_covariance}. Predictive-score differences are interpreted only within a cell and transformation relative to that transformation's no-competition benchmark.
+
+\subsection{Posterior Predictive Checks}
+
+Posterior predictive checks are used as absolute-fit diagnostics for:
+\begin{itemize}
+\item inflation persistence;
+\item residual variance;
+\item business-demography measurement fit;
+\item the magnitude of competition contributions.
+\end{itemize}
+
+Thus the evidence hierarchy is
+\begin{equation}
+\boxed{
+\text{Identification}
+\\;\rightarrow\\;
+\text{Bayes factor}
++
+\text{predictive score}
+\\;\rightarrow\\;
+\text{posterior predictive fit}.
+}
+\end{equation}
+
+A favorable Bayes factor cannot rescue a model whose key parameter is weakly identified.
+
+% ================================================================
+\section{Cross-Cell Interpretation}
+% ================================================================
+
+The nine cells and two inflation transformations form a fixed robustness architecture, not independent opportunities to find significance.
+
+\paragraph{Gate 1: Measurement.}
+The quarterly business-demography block must satisfy the information-gain rule $R_q\le0.80$ and the measurement sensitivities before the stationary state receives substantive interpretation.
+
+\paragraph{Gate 2: Main empirical Cell 1.}
+For the PPI--inverse-markup cell, ask whether $\kappa_1$ and the direct latent-state loading are likelihood-informed, whether their signs are stable under E0--E2 comparisons and required sensitivities, and whether the cut--joint conflict gate passes. This is the main Cell-1 conclusion.
+
+\paragraph{Gate 3: Auxiliary HSA benchmark.}
+Only after Gate 2 is evaluated is the sharp benchmark reported. The benchmark is summarized by $\delta_{HSA}(b_x)$ and the equivalence probability in the pre-declared band. It is explicitly conditional on proxy scale, activity-shock treatment, local support, single-coordinate specification, expectation timing, reference inputs, and the cut state. It cannot rescue a weak main empirical result.
+
+\paragraph{Gate 4: Slack and inflation-index transportability.}
+Cells 2--9 ask whether posterior sign probabilities and state-dependence conclusions are compatible with Cell 1. Raw coefficient magnitudes are not compared across different activity units. A cross-cell sign is called compatible only when the posterior probability of the same sign as the theory-near Cell-1 empirical estimate is at least $0.80$; otherwise the cell is reported as mixed or inconclusive rather than forced into a binary robustness claim.
+
+\paragraph{Gate 5: QoQ/YoY temporal aggregation.}
+Within each cell, QoQ and YoY posteriors are displayed side by side on the endpoint-matched design. A transformation is called qualitatively stable when the two posterior means have the same sign and both posterior sign probabilities exceed $0.80$. No posterior probability for their difference is reported without an explicit joint comparison model.
+
+\section{Required Robustness Exercises}
+% ================================================================
+
+The following are mandatory:
+\begin{enumerate}
+\item annual-firm-only versus quarterly-augmented competition measurement;
+\item alternative quarterly business-demography trends and competition-cycle laws;
+\item idiosyncratic quarterly cycles and correlated quarterly measurement errors;
+\item alternative slow-state laws;
+\item persistent AR(1) quarterly inflation disturbance;
+\item fully specified low-frequency inflation nuisance state;
+\item free fast-by-fast interaction $\lambda_{qx}\hat q_tx_t$ in the main empirical model;
+\item single-coordinate $\lambda_{qx}=\kappa_1$ specification for the auxiliary HSA benchmark;
+\item correlated-shock sensitivities CS1 and CS2;
+\item activity-endogeneity correction when an independently defensible instrument/control function/joint equation exists; otherwise explicit conditional labeling;
+\item paired QoQ versus exactly aggregated YoY estimation for every cell, described as endpoint-matched;
+\item reference-window uncertainty from the cut module and reference-window-width sensitivity;
+\item external reference-markup uncertainty or a frozen calibration grid;
+\item unit-scale $b_x=1$ benchmark and any independently supported alternative $b_x$ mapping;
+\item local-benchmark bandwidths $0.35$, $0.50$, and $0.75$ times the annual-coordinate IQR;
+\item Cell-1 theory-near inflation dynamics with $\beta_{b,1}=0$;
+\item PPI-expectation timing/bridge checks;
+\item markup measurement-error sensitivity where identified;
+\item shared-price-index measurement-error checks;
+\item alternative annual competition proxies and market-universe alignment;
+\item wider annual-measurement variance;
+\item cut versus full-joint information-flow diagnostics;
+\item real-time/vintage-consistent predictive-information checks;
+\item generated-gap construction uncertainty/sensitivity; and
+\item the $0.5\times$ and $2\times$ prior-scale sensitivity grid for all formal Bayes-factor comparisons.
+\end{enumerate}
+
+\section{Required Simulation Validation}
+% ================================================================
+
+Before empirical model ranking, simulation exercises must verify:
+\begin{enumerate}
+\item agreement between one-block and two-block QoQ state samplers in linear special cases;
+\item recovery of $\kappa_1$, $\theta_0$, and $\gamma$ under the main empirical hierarchy;
+\item correct behavior of the E0/E1/E2 model comparisons when the corresponding mechanism terms are absent or present;
+\item deterioration of $\gamma$ learning when slow-state variation is small;
+\item ability of the N-versus-C diagnostic and the $R_q$ threshold to reveal weak quarterly information;
+\item behavior under idiosyncratic and correlated quarterly measurement errors;
+\item false stationary-state loading under persistent inflation disturbances;
+\item correct cut--joint movement under both compatible and conflicting inflation/state information;
+\item exact numerical agreement between direct four-quarter aggregation and $A_4\bm\pi^Q$;
+\item recovery of known coefficients from aggregated YoY data with the induced $G_4$ covariance;
+\item equality of the YoY state-path density and direct multivariate-normal evaluation in small test cases;
+\item correct persistent-error YoY likelihood $A_4\Omega_{\pi}A_4'$;
+\item correct CS1/CS2 state-path and transition-parameter full conditionals;
+\item recovery of the single-coordinate benchmark when data are generated with the $\hat q_tx_t$ term implied by HSA;
+\item rejection or displacement of the unit-scale benchmark when data are generated with $b_x\neq1$;
+\item correct recovery of $\theta_{\mathrm{ref}}$ when the reference slow environment is uncertain and drawn from the measurement-only module;
+\item behavior of the local endpoint rule when the global coefficient function is nonlinear, including demonstration that the local benchmark is less biased for the derivative at the reference point than the full-sample linear fit; and
+\item recovery of known analytic marginal likelihoods in low-dimensional conjugate state-space cases and stability of Chib estimates across independent runs/starred points.
+\end{enumerate}
+
+\section{Reporting Plan and Required Results Outputs}
+% ================================================================
+
+The reporting plan is fixed before production estimation. The purpose is to separate four distinct questions: what the data say about the empirical varying-coefficient mechanism, whether the latent business-demography state is actually learned, whether the result survives alternative timing/measurement choices, and how closely the theory-near Cell-1 estimates line up with the auxiliary sharp HSA benchmark. No figure or table is selected for the main text because its realized sign, significance, or model ranking is favorable.
+
+\subsection{Main-text output 1: nine-cell coefficient table}
+The primary coefficient table uses the QoQ, business-demography-cut, encompassing E2 specification for all nine cells. For each cell report
+\begin{itemize}
+\item posterior mean and posterior median;
+\item the central 95\% credible interval;
+\item the posterior sign probability for $\kappa_1$, $\theta_0$, and $\gamma$;
+\item the prior-to-posterior standard-deviation ratio and the pre-declared coefficient-learning gate; and
+\item $\widehat R$ and bulk effective sample size for the reported scalar parameters.
+\end{itemize}
+The table reports $\kappa_0$, $\kappa_1$, $\theta_0$, $\gamma$, and the nuisance slow-state loading $\psi$ together with the inflation-dynamics coefficients. Raw coefficient magnitudes are never interpreted across activity measures that have different units. E0/E1/E2 model evidence is reported separately rather than using a data-dependent model choice to determine which coefficient posterior appears in the main table.
+
+\subsection{Main-text output 2: prior-versus-posterior figure}
+For the main theory-near Cell 1, plot normalized prior and posterior densities under the primary cut for $\kappa_1$, $\theta_0$, and $\gamma$. The figure uses the same axis units for each parameter's prior and posterior and states the posterior/prior standard-deviation ratio. The auxiliary HSA-benchmark residual $\delta_{HSA}$ is shown in a separate benchmark panel because it is not a parameter of the main empirical hierarchy. Prior-versus-posterior plots for all other cells are reported in the appendix.
+
+\subsection{Main-text output 3: time path of the Phillips-curve slope}
+Under the primary cut E2 model, report
+\begin{equation}
+\kappa_{c,t}=\kappa_{0,c}+\kappa_{1,c}\tilde q_t
+\label{eq:reported_kappa_path}
+\end{equation}
+for the main cell as a posterior mean or median path with a 95\% pointwise credible band. The figure also marks the reporting center $q_0$ and, when useful, economically relevant historical episodes without using those episodes to redefine the model. Corresponding $\kappa_{c,t}$ paths for the remaining cells are reported in the appendix. Because the activity measures have different units, levels of $\kappa_{c,t}$ are compared across time within a cell and across inflation transformations using the same activity measure, not across different activity measures.
+
+\subsection{Main-text output 4: competition-state decomposition}
+Report $\bar q_t$, $\hat q_t$, and $q_t=\bar q_t+\hat q_t$ under the primary business-demography cut, with posterior credible bands and the annual measurement dates visibly marked. A secondary panel or overlay shows the corresponding full-joint state only as an information-flow sensitivity. The figure reports the N-versus-C uncertainty reduction and $R_q$ so that apparent state precision can be evaluated against the actual measurement information.
+
+\subsection{Main-text output 5: cut-versus-full-joint comparison}
+For every cell, show the cut and full-joint posterior summaries for $\kappa_1$, $\theta_0$, and $\gamma$ side by side. Report the pre-declared cut--joint movement statistic and flag any cell crossing the cut--joint conflict threshold. The cut estimate remains the substantive primary result even when the full joint is more precise. A large cut--joint discrepancy is interpreted as evidence that inflation materially reweights the latent state and therefore weakens, rather than strengthens, the structural mechanism interpretation.
+
+\subsection{Main-text output 6: auxiliary Cell-1 HSA benchmark table}
+The HSA benchmark is reported separately from the main coefficient table. For the local single-coordinate Cell-1 exercise report
+\begin{itemize}
+\item the locally estimated $\kappa_1$ and $\theta_{\mathrm{ref}}$;
+\item the reference distributions or calibration values for $Q_{\mathrm{ref}}$, $\mu_{\mathrm{ref}}^f$, $\zeta_{\mathrm{ref}}$, and $b_x$;
+\item $\delta_{HSA}(b_x)$ with its 95\% credible interval;
+\item the pre-declared equivalence band $[-\Delta_{HSA},\Delta_{HSA}]$; and
+\item $\Pr\!\left(|\delta_{HSA}(b_x)|<\Delta_{HSA}\mid D\right)$.
+\end{itemize}
+The $b_x=1$ result is labeled the \emph{unit-scale sharp benchmark}. If $b_x$ is not externally identified, the benchmark is explicitly conditional on that scale assumption and is not described as a structural test of HSA.
+
+\subsection{Main-text output 7: endpoint-matched QoQ--YoY comparison}
+For each cell, report the endpoint-matched QoQ and exactly aggregated YoY posterior summaries side by side using the same activity measure and empirical hierarchy. At minimum report posterior means or medians and 95\% credible intervals for $\kappa_1$, $\theta_0$, and $\gamma$, together with the corresponding $\kappa_t$ summary for the main cell. Descriptive differences in posterior locations may be reported. No credible interval, posterior probability, or Bayes factor is constructed for a QoQ-minus-YoY coefficient difference unless an explicit encompassing joint model supplies a justified joint posterior coupling.
+
+\subsection{Main-text output 8: economic-effect table}
+Raw coefficients across differently scaled activity measures are not compared. Instead, report pre-declared economically normalized effect summaries in inflation percentage points. For each cell let $\Delta x_c^{econ}$ be a fixed, pre-declared within-variable change (the baseline is the full-sample interquartile range computed without reference to the inflation result) and let $\Delta q^{econ}$ be the corresponding pre-declared change in the slow business-demography coordinate. Report the posterior distribution of the slope-change contribution
+\begin{equation}
+\Delta\pi_{c}^{slope}
+=
+\kappa_{1,c}\,\Delta q^{econ}\,\Delta x_c^{econ},
+\label{eq:economic_slope_effect}
+\end{equation}
+and, separately, the direct stationary-state contribution for a pre-declared $\Delta\hat q^{econ}$ at the reporting center and at the reference slow environment. These quantities are used to discuss economic magnitude because they are expressed in common inflation units; they do not turn the secondary cells into structural HSA tests.
+
+\subsection{Main-text output 9: locality/support figure for the HSA benchmark}
+For the auxiliary Cell-1 benchmark, show the measurement-only posterior distribution of the slow reference environment and the empirical support of $\bar q_t-q_{\mathrm{ref}}$ together with the pre-declared local weighting/bandwidth rule. Report the effective local sample size and the posterior share receiving material local weight. The figure makes clear which observations identify the derivative at the reference environment. If the local-support gate fails, the quantitative benchmark is labeled unsupported by local data even if a global varying-coefficient estimate remains available.
+
+\subsection{Evidence table}
+For each cell and inflation transformation report
+\begin{itemize}
+\item E2--E0, E1--E0, and E2--E1 Bayes-factor comparisons when the full generative marginal likelihood is numerically valid;
+\item recursive/LFO predictive-score differences relative to E0;
+\item the measurement-information, coefficient-learning, locality, and cut--joint gates;
+\item persistent-error, low-frequency, correlated-shock, correlated-measurement-error, and fast-by-fast robustness status;
+\item real-time predictive-information-set status; and
+\item convergence and Monte Carlo diagnostics.
+\end{itemize}
+Bayes factors are compared only within the same cell and inflation transformation. Predictive scores and posterior predictive checks do not override a failed identification gate.
+
+\subsection{Required appendix outputs}
+The appendix reports the complete diagnostic record rather than only favorable specifications:
+\begin{enumerate}
+\item prior-versus-posterior plots for $\kappa_1$, $\theta_0$, and $\gamma$ in all nine cells;
+\item $\kappa_{c,t}$ paths for all cells under QoQ and the endpoint-matched YoY specification;
+\item full N/C/J/J-Q competition-state and uncertainty comparisons;
+\item the complete identification-diagnostics table, including state variation, regressor/posterior correlations, prior-to-posterior contraction, $R_q$, and cut--joint movement;
+\item full recursive/LFO predictive-score tables, distinguishing genuine forecasts from conditional nowcasts and pseudo-real-time exercises;
+\item posterior predictive checks for inflation persistence, residual scale, business-demography measurement fit, and competition-related contributions;
+\item a robustness matrix or heatmap showing, for every main result, whether sign, learning, locality, and cut--joint gates survive each mandatory robustness exercise;
+\item external-input sensitivity for $Q_{\mathrm{ref}}$, $\mu_{\mathrm{ref}}^f$, $\zeta_{\mathrm{ref}}$, and $b_x$;
+\item expectation-timing and expectation-bridge sensitivities;
+\item market-universe and shared-price-index measurement checks; and
+\item complete MCMC, marginal-likelihood, and simulation-validation diagnostics.
+\end{enumerate}
+
+\subsection{Reporting conventions}
+All main posterior figures use the same declared posterior location summary and central 95\% credible interval convention. Sign probabilities, equivalence probabilities, and gate thresholds are reported numerically rather than translated into significance stars. A result that fails a pre-declared learning, locality, measurement, convergence, or cut--joint gate remains visible in the tables and figures but is explicitly labeled non-interpretable for the corresponding stronger claim.
+
+\section{Pre-Estimation Freeze}
+% ================================================================
+
+Before production estimation or model ranking, freeze:
+\begin{enumerate}
+\item all nine cells and their theory-near/robustness/transportability labels;
+\item QoQ and YoY definitions, the $A_4$ operator, endpoint-matched date rule, and forecast horizons;
+\item all activity/slack definitions and generated-gap construction/vintage rules;
+\item markup construction and its explicit status as an aggregate inverse-markup proxy;
+\item the external reference-markup source, concept, reference period, uncertainty representation or calibration grid;
+\item the reference-window rule, $Q_{\mathrm{ref}}$ cut construction, local-bandwidth rule, and minimum local sample size;
+\item the unit-scale $b_x=1$ benchmark and any external $b_x$ information allowed into the analysis;
+\item business-demography sources, annual/quarterly timing, state laws, and correlated-measurement-error prior;
+\item E0/E1/E2 model families and the auxiliary single-coordinate Cell-1 benchmark specification;
+\item the primary modular-cut ordering and secondary full-joint specification;
+\item all numerical priors and the $0.5\times/2\times$ sensitivity grid;
+\item the numerical decision gates $R_q$, coefficient-learning thresholds, cut--joint conflict threshold, sign-probability threshold, and HSA equivalence band;
+\item expectation information dates and bridge rules for structural-benchmark eligibility;
+\item correlated-shock specifications and any admissible activity-endogeneity correction;
+\item predictive information sets, release-date conventions, and vintage rules for every predictor;
+\item Chib block ordering, reduced-run protocol, starred-point rule, and numerical-stability thresholds; and
+\item every mandatory robustness and simulation-validation exercise.
+\end{enumerate}
+
+No model, cell, benchmark scale, equivalence band, or decision threshold is changed after inspecting realized inflation coefficient signs or model rankings. A cell or benchmark may be labeled non-interpretable when a pre-declared data-quality, identification, or admissibility gate fails.
+
+\section{Final Interpretation Boundary}
+% ================================================================
+
+The main paper is built on A, not on the sharp HSA equality. A favorable main empirical result supports the following statement:
+
+\begin{quote}
+Annual firm counts and quarterly business-demography measurements provide an empirically informative latent business-demography coordinate under the maintained mixed-frequency state-space decomposition. Using the measurement-supported cut as the primary state estimate, the conditional slope on the activity or inverse-markup proxy varies with the slow business-demography environment and inflation may also be associated with a stationary latent-state loading. These are semi-structural conditional associations. Their stability is assessed across alternative activity measures, inflation indexes, exact QoQ/YoY temporal aggregation, persistent disturbances, correlated competition shocks, measurement specifications, and full-joint feedback.
+\end{quote}
+
+The auxiliary Cell-1 statement is intentionally narrower:
+
+\begin{quote}
+As a separate sharp theory benchmark, the theory-near PPI--inverse-markup estimates are compared with the HSA cross-equation equality only under the declared proxy-scale mapping, activity-shock condition or identified correction, single-coordinate specification, genuinely local support, expectation-timing rule, measurement-supported reference environment, and external reference-markup input. Compatibility within the pre-declared equivalence band is evidence of quantitative consistency with that benchmark under those assumptions; it is not an unconditional test that HSA is true.
+\end{quote}
+
+The design does not by itself establish:
+\begin{itemize}
+\item that observed firm counts are theoretical effective varieties or even a pure competition measure;
+\item that the competition state laws are structural;
+\item that $\kappa_1$, $\theta_0$, or $\gamma$ are causal effects;
+\item that aggregate inverse markup equals theoretical real marginal cost or that $b_x=1$;
+\item that CS1/CS2 solve contemporaneous endogeneity of the activity variable;
+\item that CPI/core CPI satisfy the producer-pricing HSA equation;
+\item that a full-joint estimator solves endogenous entry; or
+\item that separate QoQ and YoY marginal posteriors define a unique posterior distribution of their coefficient difference.
+\end{itemize}
+
+Those stronger claims require additional measurement structure or independently identified sources of variation.
+
+\end{document}

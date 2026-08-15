@@ -1,0 +1,40 @@
+revision: n-gustavo-nolag-price-gap-v1
+
+# The competition state is the mandatory N_Gustavo-only quarterly state-space
+# posterior. No QCEW, SEC HHI, or deterministic interpolation is introduced.
+competition_state:
+  source: N_Gustavo
+  observation_frequency: annual_q4
+  structural_frequency: quarterly
+  method: mixed_frequency_kalman_ffbs
+  modular_cut_without_inflation: true
+
+inflation_equation:
+  lagged_inflation: false
+  slow_level_nuisance: true
+  error_model: persistent_ar1
+  expectation: Epi_spf_gdp_1q_ahead_ann_log
+  expectation_status: common_gdp_deflator_proxy
+
+prices: [ppi, cpi, core_cpi, pce, core_pce]
+activities: [inverse_markup, bn_output_gap, hp_output_gap, negative_unemployment_gap]
+
+models:
+  - E0
+  - SLOW
+  - E1
+  - E2
+
+fast_state_timings:
+  - current
+  - lag1
+  - lag2
+  - lag3
+  - lag4
+  - distributed4
+
+# All timing comparisons use the same endpoints (drop the first four quarters),
+# so apparent improvements cannot come from changing the sample.
+timing_common_start_offset: 4
+
+state_posterior: results/n_gustavo_state_space_tests/posterior/n_gustavo_only_state.npz

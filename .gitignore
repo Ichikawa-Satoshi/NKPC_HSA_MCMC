@@ -20,6 +20,9 @@ __pycache__/
 # generated outputs (kept on disk, not in git)
 /results
 
+# stray non-canonical PDF dump (belongs under results/, see README)
+/output
+
 # The paper's own generated inputs. They sit next to report/nkpc_hsa_report.tex so that
 # everything the PDF needs is in one directory, but they are build products like anything
 # under results/ and must not be committed.

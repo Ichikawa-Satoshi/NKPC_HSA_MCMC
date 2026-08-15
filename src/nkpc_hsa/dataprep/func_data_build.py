@@ -240,6 +240,37 @@ def load_spf_quarter_ahead_expectations(base: Path) -> pd.DataFrame:
     return _set_quarter_end_index(spf[columns])
 
 
+def load_spf_cpi_quarter_ahead_expectations(base: Path) -> pd.DataFrame:
+    """Load the one-quarter-ahead SPF headline-CPI inflation forecast.
+
+    The Philadelphia Fed's ``Mean_CPI_Level.xlsx`` uses ``CPI1,...,CPI6``
+    for horizons ``t-1,t,...,t+4`` at survey quarter ``t``.  Consequently
+    ``CPI3`` is the genuine ``t+1`` forecast.  The published observations are
+    discrete annualized Q/Q percentage changes; the log transformation below
+    matches the ``400 * Delta log(P)`` convention used by the quarterly
+    inflation equations.
+    """
+    path = base / "inflation" / "Mean_CPI_Level.xlsx"
+    spf = _load_spf_workbook(path, ["YEAR", "QUARTER", "CPI3"])
+    spf = _add_spf_survey_date(spf)
+
+    annualized_pct = pd.to_numeric(spf["CPI3"], errors="coerce")
+    invalid = annualized_pct.notna() & annualized_pct.le(-100.0)
+    if invalid.any():
+        raise ValueError("SPF CPI3 must be greater than -100 percent.")
+
+    spf["Epi_spf_cpi_1q_ahead_ann_pct"] = annualized_pct
+    spf["Epi_spf_cpi_1q_ahead_ann_log"] = 100.0 * np.log1p(
+        annualized_pct / 100.0
+    )
+    columns = [
+        "DATE",
+        "Epi_spf_cpi_1q_ahead_ann_pct",
+        "Epi_spf_cpi_1q_ahead_ann_log",
+    ]
+    return _set_quarter_end_index(spf[columns])
+
+
 def load_spf_yoy_expectations(base: Path) -> pd.DataFrame:
     """Load the SPF one-year-ahead (four-quarter) inflation expectations.
 

@@ -1,0 +1,32 @@
+revision: markup-change-bridge-q4-anchor-v1
+
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+measurement:
+  annual_column: N_Gustavo
+  annual_timing: q4
+  quarterly_proxy: inverse_markup
+  equation: "delta(qbar_t + qhat_t) = alpha_markup * delta(log_inverse_markup_t) + error_t"
+  annual_anchor: hard
+  loading_sign: positive
+  loading_prior: "half-normal with sd = 2 * q_scale / inverse_markup_level_scale"
+  reference_window: [2002Q1, 2007Q4]
+  error_models: [iid, ar1]
+
+inflation:
+  prices: [ppi, core_cpi]
+  activities: [inverse_markup, negative_unemployment_gap]
+  model: E2
+  transformation: qoq
+  modular_cut: true
+
+# Longer than a software smoke test, but materially below the 20,000 x 4
+# production design.  This retains 1,000 draws per chain.
+medium:
+  iterations: 4000
+  warmup: 1000
+  thin: 3
+  chains: 4
+  seed: 20260814

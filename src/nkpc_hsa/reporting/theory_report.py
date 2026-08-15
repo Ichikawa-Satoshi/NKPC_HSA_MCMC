@@ -398,7 +398,7 @@ def build_theory_report_inputs(
         raise RuntimeError(
             "Missing current theory runs " + ", ".join(missing)
             + "; missing Q/Q-vs-YoY comparison runs " + ", ".join(missing_yoy)
-            + ". Historical results are not a substitute; estimate with scripts/10_estimate_theory_models.py."
+            + ". Historical results are not a substitute; estimate with production/main_scripts/10_estimate_theory_models.py."
         )
     assert_comparable(runs)
     assert_comparable(yoy_runs)

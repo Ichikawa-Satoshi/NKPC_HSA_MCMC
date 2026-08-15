@@ -1,0 +1,28 @@
+revision: markup-zero-sum-interpolation-lambda-grid-v1
+
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+interpolation:
+  annual_column: N_Gustavo
+  annual_timing: q4
+  quarterly_timing_signal: inverse_markup
+  equation: "delta_q_yj = delta_N_y / 4 + lambda * quarterly_N_scale * standardized_zero_sum_delta_inverse_markup_yj"
+  lambda_grid: [0.0, 0.25, 0.5, 1.0]
+  lambda_status: predeclared_sensitivity_not_estimated
+  q4_anchor: exact
+
+inflation:
+  prices: [ppi, core_cpi]
+  activities: [inverse_markup, negative_unemployment_gap]
+  model: E2
+  transformation: qoq
+  modular_cut: true
+
+medium:
+  iterations: 3000
+  warmup: 750
+  thin: 3
+  chains: 4
+  seed: 20260814

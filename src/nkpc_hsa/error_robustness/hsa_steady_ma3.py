@@ -29,7 +29,7 @@ disturbance instead removes the contamination, which is the treatment the
 overlap actually calls for: on a recursive NKPC design with ``psi =
 (0.45, 0.30, 0.55)`` the i.i.d. sampler overstates ``alpha`` by +0.22 and
 attenuates ``kappa`` by 71%, while the MA(3) sampler is close to unbiased in
-both. ``scripts/error_robustness`` reproduces that experiment.
+both. ``production/main_scripts/error_robustness`` reproduces that experiment.
 
 Block order
 -----------

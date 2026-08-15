@@ -4,7 +4,7 @@ One format, three consumers:
 
 * a sampler loop calls the callback it finds in ``opts["progress_callback"]``;
 * an interactive single-cell run renders a one-line bar on stderr;
-* ``scripts/run_restriction_production.py`` runs its cells as subprocesses,
+* ``production/main_scripts/run_restriction_production.py`` runs its cells as subprocesses,
   puts the children in ``stream`` style and aggregates their machine-readable
   events into one board with an overall bar.
 

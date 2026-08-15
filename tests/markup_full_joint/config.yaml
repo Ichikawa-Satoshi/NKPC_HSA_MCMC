@@ -1,0 +1,34 @@
+revision: markup-full-joint-core-unemployment-cpi-expectation-v1
+
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+measurement:
+  annual_column: N_Gustavo
+  annual_timing: q4
+  annual_anchor: hard
+  quarterly_proxy: negative_log_mu_bus
+  equation: "delta(qbar_t + qhat_t) = alpha_markup * delta(-log(mu_bus_t)) + r_markup_t + omega_t"
+  loading_sign: positive
+  markup_error: ar1
+  initialization_posterior: results/markup_measurement_experiment/semi_structural_joint_20260814/posterior/measurement_ar1.npz
+
+inflation:
+  price: core_cpi
+  activity: negative_unemployment_gap
+  expectation: SPF_headline_CPI_CPI3_one_quarter_ahead_mean
+  expectation_column: Epi_spf_cpi_1q_ahead_ann_log
+  model: E2
+  transformation: qoq_annualized_log
+  inflation_error: iid
+  state_feedback: full_joint
+  endogeneity_correction: none
+
+# Same retained-draw count as the preceding exploratory measurement run.
+medium:
+  iterations: 4000
+  warmup: 1000
+  thin: 3
+  chains: 4
+  seed: 20260814

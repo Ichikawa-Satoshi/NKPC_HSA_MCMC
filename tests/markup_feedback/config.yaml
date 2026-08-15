@@ -1,0 +1,24 @@
+revision: markup-feedback-path-core-unemployment-cpi-expectation-v1
+
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+measurement:
+  posterior: results/markup_measurement_experiment/semi_structural_joint_20260814/posterior/measurement_ar1.npz
+  error: ar1
+  annual: N_Gustavo_Q4_hard
+  markup: delta_negative_log_mu_bus
+
+inflation:
+  price: core_cpi
+  activity: negative_unemployment_gap
+  expectation_column: Epi_spf_cpi_1q_ahead_ann_log
+  model: E2
+  transformation: qoq
+  variance_shape: 3.0
+  variance_scale: 8.0
+  quadrature_nodes: 64
+
+feedback_grid: [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.75, 1.0]
+seed: 20260814
