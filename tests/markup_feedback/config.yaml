@@ -5,7 +5,7 @@ sample:
   end: 2012Q4
 
 measurement:
-  posterior: results/markup_measurement_experiment/semi_structural_joint_20260814/posterior/measurement_ar1.npz
+  posterior: tests/markup_measurement/results/posterior/measurement_ar1.npz
   error: ar1
   annual: N_Gustavo_Q4_hard
   markup: delta_negative_log_mu_bus

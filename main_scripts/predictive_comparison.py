@@ -19,7 +19,7 @@ The legacy WAIC/PSIS-LOO transforms are retained for historical comparison only.
 are not standard WAIC/LOO because their input is a forward-filtered conditional density,
 not the pointwise likelihood used to fit the full posterior.
 
-    python production/main_scripts/predictive_comparison.py [--draws 300]
+    python main_scripts/predictive_comparison.py [--draws 300]
 """
 from __future__ import annotations
 
@@ -286,7 +286,7 @@ def main():
           for model in MODELS:
               # CES has no latent firm-count state, so its likelihood and posterior are
               # invariant to the observation design; the same 16 cells are shared,
-              # exactly as in production/main_scripts/12_build_cpi_ppi_report.py.
+              # exactly as in main_scripts/12_build_cpi_ppi_report.py.
               run = find_run(model, spec, "quarterly_interpolated" if model == "ces" else freq)
               if run is None:
                   continue

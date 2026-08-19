@@ -154,7 +154,7 @@ def main() -> None:
     parser.add_argument("--runs-dir", type=Path, default=RESULTS_DIR / "runs")
     parser.add_argument("--jobs", type=int, default=4)
     parser.add_argument("--force", action="store_true", help="Re-estimate cells even when a complete current-revision run exists.")
-    # The old --no-compile passed a --compile flag that production/main_scripts/12 does not accept,
+    # The old --no-compile passed a --compile flag that main_scripts/12 does not accept,
     # so every run without it died at the last line. Replaced by two honest flags:
     # --no-build skips the report build entirely, --compile additionally runs xelatex.
     parser.add_argument("--no-build", action="store_true", help="Estimate only; skip the report build.")
@@ -266,11 +266,11 @@ def main() -> None:
     # 12 directly here is what left the headline table, the fit comparison and
     # the data figure at their previous vintage after a re-estimation.
     if args.no_build:
-        print("Skipping the report build (--no-build); run production/main_scripts/build_report.py when ready.")
+        print("Skipping the report build (--no-build); run main_scripts/build_report.py when ready.")
         return
     command = [
         sys.executable,
-        str(ROOT / "production" / "main_scripts" / "build_report.py"),
+        str(ROOT / "main_scripts" / "build_report.py"),
         "--runs-dir",
         str(args.runs_dir),
         "--min-iter",

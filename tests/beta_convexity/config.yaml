@@ -1,0 +1,20 @@
+# Hybrid-NKPC (beta_b, beta_f) restriction experiment (review item §4.2).
+sample:
+  start: 1982Q1
+  end: 2012Q4
+
+inflation:
+  model: E2            # hybrid equation with a lag; E1 also supported
+
+# cells estimated under baseline / convexity / adding_up
+cells:
+  - [1, ppi, inverse_markup]
+  - [2, cpi, bn_output_gap]
+  - [3, core_cpi, negative_unemployment_gap]
+
+sampling:
+  iterations: 4000
+  warmup: 1000
+  thin: 2
+  chains: 4
+  seed: 20260816

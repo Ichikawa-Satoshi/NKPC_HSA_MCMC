@@ -171,6 +171,46 @@ today.
 `400·Δlog P` convention used elsewhere (`400·log(1+q) = 100·log((1+q)^4)`).
 Verified consistent; noted here so it is not re-flagged.
 
+### 4.5 Resumed deep pass (Aug 16) — core is econometrically sound
+
+Modules were renamed `nine_cell/ → src/nkpc_hsa/phillips/` (paths above are
+historical). A line-by-line pass over the estimation core found **no correctness
+bugs**; the following were checked and are correct:
+
+- **`phillips/state.py` FFBS** (`sample_linear_state_path` and the mixed-frequency
+  `_ffbs`): Kalman prediction/update use the Joseph form; the Carter–Kohn backward
+  sampler's gain `J = P_filt Fᵀ P_pred⁻¹`, mean, and covariance are textbook-exact.
+- **Mixed-frequency measurement model**: `qbar` RW+drift, `qhat` AR(1) (stationarity
+  enforced by a truncated `phi_q` draw), `ebar` RW; annual-Q4 row `[1,1,0]` and the
+  quarterly-proxy row `[0,b_e,1]`. All conjugate updates (drift, AR, loading,
+  inverse-gamma variances) match their residuals, and every prior scale is in the
+  ten-log-point units CLAUDE.md mandates.
+- **`phillips/feedback.py`**: the generalized Gauss–Laguerre marginal likelihood,
+  the matrix-determinant-lemma `logdet`, the `Σ⁻¹` quadratic form, and the
+  power-`λ` importance weights + Pareto-k diagnostic are all correct.
+- **`phillips/temporal.py`**: exact 4-quarter aggregation `A`, overlap covariance
+  `AAᵀ`, and the Cholesky whitening of the YoY MA(3) structure are correct, incl.
+  the frozen-endpoint YoY rebuild in `inflation._transformed_regression`.
+- **`observed_hhi` design/sampler**: the E0–E2 / `hsa_restricted` design columns and
+  the AR(1)-whitening / low-frequency-RTS error models reuse the same verified
+  primitives.
+
+**Net:** the remaining econometric items are **modeling choices / declared
+limitations, not errors**:
+1. §4.1 forward-expectation proxy (GDP-deflator for CPI/PPI) — **decision: do NOT
+   apply** (user, Aug 2026). Keep as a stated limitation; the CPI3 loader stays
+   available but unwired.
+2. §4.2 no adding-up/convexity on (β_b, β_f) — **implemented as an experiment**
+   (Aug 16): `tests/beta_convexity/` adds `convexity` (β_b,β_f∈[0,1], rejection)
+   and `adding_up` (β_b+β_f=1, exact reparameterisation) alongside `baseline`,
+   leaving the shared default estimator unconstrained. A first `--quick` run shows
+   δ **does move** under the restriction (e.g. ppi/inverse-markup 0.76→1.29→2.02),
+   so it belongs in the report as a robustness caveat. Run the full config to
+   confirm before citing numbers.
+3. §4.3 near-degenerate Q4 anchor variance — numerical, acknowledged.
+
+Any of these changes the posterior, so none is applied unilaterally.
+
 ---
 
 ## 5. Proposed `tests/` split (test_src / test_run / test_output)

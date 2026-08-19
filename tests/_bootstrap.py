@@ -1,8 +1,8 @@
-"""Path bootstrap shared by every ``experiments/<name>/run.py`` bundle.
+"""Path bootstrap shared by every ``tests/<bundle>/run.py`` experiment bundle.
 
-Mirrors ``production/main_scripts/_bootstrap.py`` but resolves the project root two levels up
-(``experiments/<name>/run.py``) so an experiment can be launched directly from
-its own directory.  Import it as ``from experiments._bootstrap import ...``.
+Resolves the project root by walking up to ``pyproject.toml`` (so it works at any
+depth) and puts the root and ``src/`` on ``sys.path``.  Import it as
+``from tests._bootstrap import DATA_DIR, RESULTS_DIR, ROOT``.
 """
 
 from __future__ import annotations

@@ -1,0 +1,5 @@
+# Each experiment bundle keeps its estimation results and figures next to its
+# code (tests/<name>/results/, including results/figures, results/tables and the
+# raw MCMC results/draws). Those are reproducible from run.py and follow the
+# repository policy that generated outputs are not committed.
+*/results/

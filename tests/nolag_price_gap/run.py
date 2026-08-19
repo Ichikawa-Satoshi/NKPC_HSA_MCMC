@@ -25,8 +25,8 @@ from scipy.special import logsumexp
 import sys as _sys, pathlib as _pathlib  # noqa: E402  (bootstrap: importable at any depth)
 _ROOT = next(_p for _p in _pathlib.Path(__file__).resolve().parents if (_p / "pyproject.toml").exists())
 _sys.path[:0] = [str(_ROOT), str(_ROOT / "src"), str(_ROOT / "tests")]
-from experiments import _bootstrap  # noqa: F401,E402
-from experiments._bootstrap import RESULTS_DIR, ROOT
+from tests import _bootstrap  # noqa: F401,E402
+from tests._bootstrap import RESULTS_DIR, ROOT
 
 
 BUNDLE_DIR = Path(__file__).resolve().parent
@@ -687,7 +687,7 @@ def main() -> None:
         include_slow_level=include_slow_level,
     )
     psi_comparison = None
-    baseline_path = RESULTS_DIR / "nolag_price_gap_models" / "production" / "tables" / "coefficient_summaries.csv"
+    baseline_path = OUTPUT_DIR / "production" / "tables" / "coefficient_summaries.csv"
     if args.theory_faithful and not args.quick and baseline_path.exists():
         baseline = pd.read_csv(baseline_path)
         shared = ["inflation", "activity", "model", "grid", "fast_timing", "parameter"]

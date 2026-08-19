@@ -24,8 +24,8 @@ by tests: theta* invariance, seed-to-seed stability, and an effective-draw guard
 that raises rather than returning an ordinate factor carried by a handful of
 draws.
 
-    python production/main_scripts/chib_marginal_likelihood.py            # main cell, 3 seeds
-    python production/main_scripts/chib_marginal_likelihood.py --all-cells
+    python main_scripts/chib_marginal_likelihood.py            # main cell, 3 seeds
+    python main_scripts/chib_marginal_likelihood.py --all-cells
 """
 from __future__ import annotations
 

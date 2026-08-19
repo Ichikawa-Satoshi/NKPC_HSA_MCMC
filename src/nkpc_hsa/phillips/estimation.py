@@ -93,6 +93,17 @@ def _save_fit(path: Path, fit: CellFit, *, extra_arrays: dict[str, np.ndarray] |
         "coefficients": fit.coefficients,
         "sigma": fit.sigma,
         "coefficient_names": np.asarray(fit.coefficient_names),
+        # Persist enough to rebuild priors and the q0 anchor so a downstream report
+        # can draw prior-vs-posterior panels and reconstruct the kappa_t path.
+        "prior_sd_names": np.asarray(list(fit.prior_sds.keys())),
+        "prior_sd_values": np.asarray(list(fit.prior_sds.values()), dtype=float),
+        "q0": float(fit.q0),
+        "x_scale": float(fit.x_scale),
+        "cell": int(fit.cell),
+        "inflation": str(fit.inflation),
+        "activity": str(fit.activity),
+        "model": str(fit.model),
+        "estimator": str(fit.estimator),
     }
     arrays.update(fit.auxiliary_draws)
     arrays.update(extra_arrays or {})

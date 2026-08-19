@@ -73,7 +73,7 @@ def _run_one(job: dict) -> tuple[tuple[str, str, str], float]:
     if spec["n_col"] not in data.columns:
         raise ValueError(
             f"{job['data']} has no column {spec['n_col']}. "
-            "Rebuild it with production/main_scripts/15_build_extension_data.py."
+            "Rebuild it with main_scripts/15_build_extension_data.py."
         )
     frequency = "quarterly_observed" if job["extension"] == "sec_inverse_hhi" else "annual_q4"
     run_dir = Path(job["runs_dir"]) / f"{model}_{spec['name']}_{prior}_{frequency}"

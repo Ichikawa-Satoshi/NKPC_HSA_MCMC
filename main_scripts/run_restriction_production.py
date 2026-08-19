@@ -22,7 +22,7 @@ ESTIMATION_SCRIPT = "10_estimate_theory_models.py"
 
 
 def _run(script: str, args: list[str]) -> None:
-    command = [sys.executable, str(ROOT / "production" / "main_scripts" / script), *args]
+    command = [sys.executable, str(ROOT / "main_scripts" / script), *args]
     print("\n=== " + " ".join(command), flush=True)
     subprocess.run(command, cwd=ROOT, check=True)
 
@@ -39,7 +39,7 @@ def _run_estimation(
     and everything else is printed above it, so ordinary output and the live
     display do not overwrite each other.
     """
-    command = [sys.executable, str(ROOT / "production" / "main_scripts" / ESTIMATION_SCRIPT), *args]
+    command = [sys.executable, str(ROOT / "main_scripts" / ESTIMATION_SCRIPT), *args]
     header = "=== " + " ".join(command)
     if board is None:
         print("\n" + header, flush=True)

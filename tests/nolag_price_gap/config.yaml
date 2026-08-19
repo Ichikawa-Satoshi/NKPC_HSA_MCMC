@@ -37,4 +37,4 @@ fast_state_timings:
 # so apparent improvements cannot come from changing the sample.
 timing_common_start_offset: 4
 
-state_posterior: results/n_gustavo_state_space_tests/posterior/n_gustavo_only_state.npz
+state_posterior: tests/n_gustavo_state_space/results/posterior/n_gustavo_only_state.npz

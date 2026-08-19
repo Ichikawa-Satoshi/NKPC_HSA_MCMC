@@ -18,8 +18,8 @@ import pandas as pd
 import sys as _sys, pathlib as _pathlib  # noqa: E402  (bootstrap: importable at any depth)
 _ROOT = next(_p for _p in _pathlib.Path(__file__).resolve().parents if (_p / "pyproject.toml").exists())
 _sys.path[:0] = [str(_ROOT), str(_ROOT / "src"), str(_ROOT / "tests")]
-from experiments import _bootstrap  # noqa: F401,E402
-from experiments._bootstrap import RESULTS_DIR, ROOT
+from tests import _bootstrap  # noqa: F401,E402
+from tests._bootstrap import RESULTS_DIR, ROOT
 
 
 BUNDLE_DIR = Path(__file__).resolve().parent

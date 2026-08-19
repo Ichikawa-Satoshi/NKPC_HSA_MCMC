@@ -13,9 +13,9 @@ Do not add a report artifact without adding it to STEPS.
 Order matters in one place: ``make_fit_comparison_table`` reads the CSV that
 ``predictive_comparison`` writes, so it must come after it.
 
-    python production/main_scripts/build_report.py               # tables and figures only
-    python production/main_scripts/build_report.py --compile     # ... then run xelatex twice
-    python production/main_scripts/build_report.py --skip-predictive   # reuse the existing scores
+    python main_scripts/build_report.py               # tables and figures only
+    python main_scripts/build_report.py --compile     # ... then run xelatex twice
+    python main_scripts/build_report.py --skip-predictive   # reuse the existing scores
 """
 from __future__ import annotations
 
@@ -105,7 +105,7 @@ def ensure_report_results_link() -> None:
 def _run(script: str, args: list[str]) -> float:
     started = time.perf_counter()
     print(f"\n=== {script} {' '.join(args)}", flush=True)
-    subprocess.run([sys.executable, str(ROOT / "production" / "main_scripts" / script), *args], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "main_scripts" / script), *args], cwd=ROOT, check=True)
     return time.perf_counter() - started
 
 

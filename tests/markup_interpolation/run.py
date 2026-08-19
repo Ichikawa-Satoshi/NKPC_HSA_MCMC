@@ -15,8 +15,8 @@ import pandas as pd
 import sys as _sys, pathlib as _pathlib  # noqa: E402  (bootstrap: importable at any depth)
 _ROOT = next(_p for _p in _pathlib.Path(__file__).resolve().parents if (_p / "pyproject.toml").exists())
 _sys.path[:0] = [str(_ROOT), str(_ROOT / "src"), str(_ROOT / "tests")]
-from experiments import _bootstrap  # noqa: F401,E402
-from experiments._bootstrap import RESULTS_DIR, ROOT
+from tests import _bootstrap  # noqa: F401,E402
+from tests._bootstrap import RESULTS_DIR, ROOT
 
 
 BUNDLE_DIR = Path(__file__).resolve().parent
@@ -25,7 +25,7 @@ from nkpc_hsa.config import load_yaml
 from nkpc_hsa.phillips.data import load_design_data, robust_scale
 from nkpc_hsa.phillips.estimation import _save_fit, summarize_fit
 from nkpc_hsa.phillips.inflation import fit_cut_model, reference_draws
-from experiments.markup_interpolation.functions import (
+from tests.markup_interpolation.functions import (
     as_measurement_posterior,
     build_q4_anchored_path,
     sample_hard_anchor_draws,
@@ -154,11 +154,14 @@ def main() -> None:
         default=BUNDLE_DIR / "config.yaml",
     )
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--quick", action="store_true", help="Light smoke run (tiny chains).")
     parser.add_argument("--progress", choices=PROGRESS_STYLES, default="auto")
     args = parser.parse_args()
 
     cfg = load_yaml(args.config)
     mode = cfg["medium"]
+    if args.quick:
+        mode = {**mode, "iterations": 300, "warmup": 100, "thin": 1, "chains": 2}
     out = Path(args.output_dir or OUTPUT_DIR)
     posterior_dir, tables, figures = out / "posterior", out / "tables", out / "figures"
     for directory in (posterior_dir, tables, figures):

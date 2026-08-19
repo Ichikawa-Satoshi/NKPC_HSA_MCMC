@@ -1,0 +1,1306 @@
+\documentclass[11pt]{article}
+
+\usepackage[landscape,margin=0.8in]{geometry}
+
+\usepackage{amsmath,amssymb}
+
+\usepackage{graphicx}
+
+\usepackage{booktabs}
+
+\usepackage{caption}
+
+\usepackage{float}
+
+\usepackage{xcolor}
+
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{etoolbox}
+
+\usepackage{longtable}
+
+% Start every top-level section on a new page
+
+\pretocmd{\section}{\clearpage}{}{}
+
+% Allows variable names with underscores without escaping
+
+\newcommand{\code}[1]{\texttt{\detokenize{#1}}}
+
+\newcommand{\kt}{\kappa_t}
+
+\newcommand{\Nbar}{\bar N}
+
+\newcommand{\Nhat}{\hat N}
+
+\graphicspath{{../results/figures/}}
+
+\title{\textbf{Market Concentration and the Flattening of the Phillips Curve}\\[2pt]
+
+\large A Theory-Motivated, Semi-Structural State-Space Assessment of the HSA Mechanism}
+
+\author{Satoshi Ichikawa}
+
+\date{Draft --- August 2026}
+
+\begin{document}
+
+\section{Data}
+
+The estimation dataset is constructed in STATA directly from the raw source
+
+files. Each source is first converted into a quarterly dataset indexed by the
+
+STATA quarterly date, after which the component datasets are merged onto a
+
+contiguous quarterly time spine.
+
+Python is not used for the general data build. The only exception is the PCHIP
+
+interpolation of the annual competition series, since STATA does not provide a
+
+native monotone-cubic PCHIP routine. All other transformations, filters, merges,
+
+lags, and final data exports are carried out in STATA.
+
+
+
+\subsection{Inflation}
+
+\paragraph{Source.}
+
+Headline CPI, PPI, core CPI, core PCE, and headline PCE are obtained from
+
+\textbf{FRED}.
+
+\paragraph{Series.}
+
+All inflation measures are constructed from monthly price indexes. Monthly
+
+observations are first averaged within calendar quarter.
+
+\paragraph{Construction.}
+
+For each quarterly price index $P_t$, year-on-year inflation is defined as the
+
+four-quarter log difference,
+
+\begin{equation}
+\pi_t^{\mathrm{yoy}}
+=
+100
+\left(
+\log P_t-\log P_{t-4}
+\right).
+\end{equation}
+
+The corresponding quarter-on-quarter inflation rate is
+
+\begin{equation}
+\pi_t^{\mathrm{qoq}}
+=
+100
+\left(
+\log P_t-\log P_{t-1}
+\right).
+\end{equation}
+
+The same construction is applied to headline CPI, PPI, core CPI, core PCE, and
+
+headline PCE. For quarterly NKPC specifications, the quarter-on-quarter measure
+
+is the natural counterpart to the one-period inflation rate in the model.
+
+Annualized quarter-on-quarter inflation can equivalently be expressed as
+
+\begin{equation}
+\pi_t^{\mathrm{qoq,ann}}
+=
+400
+\left(
+\log P_t-\log P_{t-1}
+\right).
+\end{equation}
+
+
+
+\subsection{Inflation Expectations}
+
+We retain inflation expectations at their documented forecast horizons. The
+one-year-ahead series are used as broader short-run expectation measures, while
+the SPF one-quarter-ahead GDP price-index forecast provides the expectation
+measure that maps most directly into a quarterly NKPC.
+
+\subsubsection{Cleveland Fed Inflation Expectations}
+
+\paragraph{Source.}
+Inflation expectations are obtained from the Cleveland Fed inflation-expectation
+series.
+
+\paragraph{Series.}
+The monthly one-year-ahead expectation series is converted to percentage units
+and averaged within calendar quarter.
+
+\paragraph{Construction.}
+The Cleveland Fed expectation is retained at its original one-year horizon. We
+do not divide the one-year-ahead rate by four to construct a one-quarter-ahead
+forecast, because such a transformation would not in general recover
+$E_t\pi_{t+1}$.
+
+\subsubsection{Survey of Professional Forecasters}
+
+\paragraph{Source.}
+Inflation expectations are also obtained from the
+\textbf{Survey of Professional Forecasters (SPF)} of the Federal Reserve Bank
+of Philadelphia.
+
+\paragraph{One-year-ahead forecasts.}
+The SPF one-year-ahead file reports GDP-price-index and CPI inflation
+expectations. These are median-based expectations for average inflation over
+the four quarters following the quarter in which the survey is conducted. The
+GDP-price-index series is constructed from the median level forecasts for the
+survey quarter and four quarters ahead, while the CPI series is constructed
+from the quarterly CPI inflation forecasts over the following four quarters.
+The published one-year-ahead series are retained directly, with no frequency
+conversion or interpolation.
+
+\paragraph{One-quarter-ahead GDP price-index forecast.}
+For the quarterly NKPC, we additionally construct the SPF one-quarter-ahead GDP
+price-index inflation forecast from the \emph{mean} level forecasts. In the SPF
+level-file nomenclature, PGDP2 denotes the mean forecast of the GDP price-index
+level for the quarter in which the survey is conducted, while PGDP3 denotes the
+mean forecast for the following quarter. The SPF official mean growth rate is
+the growth rate of these mean level forecasts; it is not the cross-sectional
+mean of individual growth-rate forecasts.
+
+Following the SPF quarterly-growth convention, the one-quarter-ahead forecast
+is therefore
+
+\begin{equation}
+\widehat{\pi}_{t+1|t}^{\mathrm{SPF},1q}
+=
+100\left[
+\left(
+\frac{\widehat{P}_{t+1|t}^{\mathrm{mean}}}
+     {\widehat{P}_{t|t}^{\mathrm{mean}}}
+\right)^4-1
+\right],
+\end{equation}
+
+where the SPF expresses quarterly growth in annualized percentage points using
+discrete compounding.
+
+Because the NKPC inflation measures in this dataset are also retained in
+annualized log-difference form, we additionally construct the log-equivalent
+expectation
+
+\begin{equation}
+\widehat{\pi}_{t+1|t}^{\mathrm{SPF},1q,\log}
+=
+400\left(
+\log \widehat{P}_{t+1|t}^{\mathrm{mean}}
+-
+\log \widehat{P}_{t|t}^{\mathrm{mean}}
+\right).
+\end{equation}
+
+The first measure follows the SPF official quarterly-growth convention; the
+second is a transformation into the continuous-compounding units used by the
+annualized log-inflation specifications and is not itself an official SPF
+reported growth series.
+
+\subsection{Output Gap}
+
+We consider several alternative measures of real marginal cost and economic
+
+slack that can enter the Phillips curve forcing term.
+
+
+
+\subsubsection{Beveridge--Nelson Output Gap}
+
+\paragraph{Source.}
+
+The Beveridge--Nelson output measure is constructed from quarterly real GDP.
+
+\paragraph{Series.}
+
+The decomposition provides a transformed output series together with its
+
+cyclical component.
+
+\paragraph{Construction.}
+
+The corresponding trend is reconstructed as
+
+\begin{equation}
+y_t^{\mathrm{BN,trend}}
+=
+y_t^{\mathrm{BN}}
+-
+y_t^{\mathrm{BN,gap}}.
+\end{equation}
+
+
+
+\subsubsection{Hodrick--Prescott Output Gap}
+
+\paragraph{Source.}
+
+The HP output gap is constructed from quarterly real GDP.
+
+\paragraph{Series.}
+
+Real output is transformed into 100 log points before filtering.
+
+\paragraph{Construction.}
+
+Let $Y_t$ denote real output. The transformed series is
+
+\begin{equation}
+y_t
+=
+100\log Y_t.
+\end{equation}
+
+The quarterly HP filter uses the conventional smoothing parameter
+
+\begin{equation}
+\lambda=1600.
+\end{equation}
+
+The decomposition is
+
+\begin{equation}
+y_t
+=
+\tau_t^{\mathrm{HP}}
++
+c_t^{\mathrm{HP}},
+\end{equation}
+
+where $\tau_t^{\mathrm{HP}}$ denotes the trend and
+
+$c_t^{\mathrm{HP}}$ denotes the cyclical output gap.
+
+
+
+\subsubsection{Inverse Markup}
+
+\paragraph{Source.}
+
+The business markup series is taken from Nekarda and Ramey.
+
+\paragraph{Series.}
+
+Quarterly observations are available directly from the source. Because the
+
+markup exhibits substantial low-frequency variation, we also use a
+
+Beveridge--Nelson decomposition to isolate its cyclical component.
+
+\paragraph{Construction.}
+
+The inverse markup is defined as
+
+\begin{equation}
+x_t
+=
+\frac{1}{\mu_t},
+\end{equation}
+
+where $\mu_t$ denotes the markup.
+
+The cyclical inverse-markup measure is obtained from the Beveridge--Nelson
+
+decomposition and provides an alternative empirical proxy for real marginal
+
+cost.
+
+
+
+\subsubsection{Labor-Share Gap}
+
+\paragraph{Source.}
+
+The labor-share measure is obtained from the seasonally adjusted labor-share
+
+index available from \textbf{FRED}.
+
+\paragraph{Series.}
+
+The quarterly labor-share index is restricted to positive observations.
+
+\paragraph{Construction.}
+
+Let $L_t$ denote the labor-share index. The transformed series is
+
+\begin{equation}
+\ell_t
+=
+100\log L_t.
+\end{equation}
+
+The quarterly HP filter uses
+
+\begin{equation}
+\lambda=1600,
+\end{equation}
+
+and decomposes the series as
+
+\begin{equation}
+\ell_t
+=
+\tau_{L,t}^{\mathrm{HP}}
++
+c_{L,t}^{\mathrm{HP}},
+\end{equation}
+
+where $\tau_{L,t}^{\mathrm{HP}}$ denotes the labor-share trend and
+
+$c_{L,t}^{\mathrm{HP}}$ denotes the cyclical labor-share gap.
+
+
+
+\subsubsection{Negative Unemployment Gap}
+
+\paragraph{Source.}
+
+The natural rate of unemployment and the seasonally adjusted unemployment rate
+
+are obtained from \textbf{FRED}.
+
+\paragraph{Series.}
+
+Both monthly series are averaged within calendar quarter.
+
+\paragraph{Construction.}
+
+The negative unemployment gap is defined as
+
+\begin{equation}
+u_t^{\mathrm{gap}}
+=
+u_t^{*}-u_t,
+\end{equation}
+
+where $u_t^{*}$ denotes the natural rate of unemployment and $u_t$ denotes the
+
+observed unemployment rate.
+
+A positive value therefore corresponds to unemployment being below its estimated
+
+natural rate.
+
+
+
+\subsection{Competition Measures}
+
+We use three measures of product-market competition constructed from distinct
+
+data sources. The first is based on the industry-concentration data of Grullon,
+
+Larkin, and Michaely (2019). The second is based on the Hoberg--Phillips
+
+Text-based Network Industry Classifications (TNIC). The third is constructed
+
+directly from quarterly firm-level revenue data from S\&P Capital IQ.
+
+
+
+\subsubsection{Grullon--Larkin--Michaely Measure}
+
+\paragraph{Source.}
+
+The first competition measure is based on the industry-concentration data
+
+associated with Grullon, Larkin, and Michaely (2019),
+
+\textit{Are US Industries Becoming More Concentrated?}
+
+\paragraph{Series.}
+
+The original measure is observed at annual frequency. We retain the level series
+
+together with its Beveridge--Nelson cycle and trend components.
+
+\paragraph{Construction.}
+
+For quarterly-frequency specifications, the annual series and its
+
+Beveridge--Nelson components are interpolated to quarterly frequency using
+
+monotone-cubic PCHIP interpolation.
+
+For mixed-frequency specifications, the annual observations are instead used
+
+without interpolation. The observed annual value is assigned to Q4 of the
+
+corresponding year, while Q1--Q3 are left missing.
+
+The two representations therefore serve different purposes. The interpolated
+
+series provide a quarterly path for quarterly-frequency estimation, while the
+
+Q4-only series preserve the original annual information at its native frequency
+
+for mixed-frequency estimation.
+
+Because the PCHIP knots are located at year-end, the interpolated and
+
+observed-only representations coincide at Q4.
+
+
+
+\subsubsection{Hoberg--Phillips TNIC Measure}
+
+\paragraph{Source.}
+
+The second competition measure is based on the Hoberg--Phillips Text-based
+
+Network Industry Classifications (TNIC). TNIC identifies product-market
+
+competitors using pairwise similarity in firms' 10-K product descriptions,
+
+allowing competitor sets to vary across firms.
+
+\paragraph{Series.}
+
+The resulting competition measure is observed at annual frequency. We retain
+
+the level series together with its Beveridge--Nelson cycle and trend components.
+
+\paragraph{Construction.}
+
+For quarterly-frequency specifications, the annual series and its
+
+Beveridge--Nelson components are interpolated to quarterly frequency using
+
+monotone-cubic PCHIP interpolation.
+
+For mixed-frequency specifications, no interpolation is applied. The original
+
+annual observations are retained at Q4, while Q1--Q3 are left missing.
+
+As with the Grullon--Larkin--Michaely measure, the interpolated series is used
+
+for quarterly-frequency estimation and the observed-only series preserves the
+
+native annual observations for mixed-frequency estimation. The two
+
+representations coincide at Q4.
+
+
+
+\subsubsection{Capital IQ Competition Measure}
+
+\paragraph{Source.}
+
+The third competition measure is constructed directly from S\&P Capital IQ.
+
+The sample consists of U.S. public firms listed on major exchanges, with
+
+firm-level total revenue observed at quarterly frequency.
+
+\paragraph{Series.}
+
+Unlike the two annual competition measures, the Capital IQ measure is
+
+constructed natively at quarterly frequency and therefore requires no temporal
+
+interpolation.
+
+Firm-quarter observations with missing reported revenue are excluded. Negative
+
+reported revenues are floored at zero when constructing market shares, while
+
+the original reported values are retained separately.
+
+Industry classification is based on SIC. A firm's current SIC classification is
+
+applied to its full revenue history.
+
+\paragraph{Market definition.}
+
+The baseline broad-market definition is based on SIC divisions, with
+
+manufacturing separated into durable and nondurable goods so that the entire
+
+manufacturing sector is not treated as a single market.
+
+Alternative market definitions based on SIC, NAICS, and S\&P sector
+
+classifications are also retained in the underlying competition panel.
+
+\paragraph{Firm revenue shares.}
+
+Within market $j$ and quarter $t$, firm $i$'s revenue share is
+
+\begin{equation}
+s_{ijt}
+=
+\frac{R_{ijt}}
+{\sum_{i\in j}R_{ijt}},
+\end{equation}
+
+where $R_{ijt}$ denotes cleaned quarterly revenue.
+
+\paragraph{Market concentration.}
+
+Market-level concentration is measured by the Herfindahl--Hirschman index,
+
+\begin{equation}
+HHI_{jt}
+=
+\sum_{i\in j}s_{ijt}^{2}.
+\end{equation}
+
+The baseline construction retains only market-quarter observations containing
+
+at least 10 firms.
+
+\paragraph{Seasonal adjustment.}
+
+Each market-level HHI is seasonally adjusted before economy-wide aggregation.
+
+The adjustment removes systematic within-year movements in concentration within
+
+each market while retaining idiosyncratic quarter-specific variation.
+
+Let $HHI_{jt}^{\mathrm{SA}}$ denote the resulting seasonally adjusted market
+
+concentration measure.
+
+\paragraph{Economy-wide effective number of firms.}
+
+The economy-wide effective number of firms is defined as the inverse of the
+
+weighted mean market HHI,
+
+\begin{equation}
+N_t
+=
+\frac{1}
+{\sum_j w_{jt}HHI_{jt}^{\mathrm{SA}}},
+\qquad
+\sum_j w_{jt}=1.
+\end{equation}
+
+We construct both firm-count-weighted and revenue-weighted versions,
+
+\begin{equation}
+N_t^{\mathrm{firm}}
+=
+\frac{1}
+{\sum_j w_{jt}^{\mathrm{firm}}HHI_{jt}^{\mathrm{SA}}},
+\end{equation}
+
+and
+
+\begin{equation}
+N_t^{\mathrm{rev}}
+=
+\frac{1}
+{\sum_j w_{jt}^{\mathrm{rev}}HHI_{jt}^{\mathrm{SA}}}.
+\end{equation}
+
+Because these measures are constructed directly from quarterly firm-level
+
+revenues, no temporal interpolation is required.
+
+
+
+\subsection{Establishment Stock}
+
+\paragraph{Source.}
+
+The establishment-stock measure combines the annual Business Dynamics Statistics
+
+(BDS) establishment count with quarterly Business Employment Dynamics (BED)
+
+establishment births and deaths.
+
+\paragraph{Series.}
+
+The BDS data provide a level benchmark for the number of establishments, while
+
+the BED data provide quarterly establishment birth and death flows. The BED
+
+series are reported in thousands and are converted to establishment counts
+
+before constructing the stock.
+
+\paragraph{Construction.}
+
+The 1993 BDS establishment count is used as the level anchor. Quarterly
+
+establishment net entry is defined as
+
+\begin{equation}
+\Delta E_t
+=
+B_t-D_t,
+\end{equation}
+
+where $B_t$ denotes establishment births and $D_t$ denotes establishment deaths.
+
+The establishment stock is then constructed as
+
+\begin{equation}
+E_t
+=
+E_{1993}^{\mathrm{BDS}}
++
+\sum_{s\leq t}\Delta E_s.
+\end{equation}
+
+
+
+\subsection{Lags and Timing}
+
+For regressors entering the empirical specifications with a one-quarter lag, we
+
+also retain the corresponding lagged observation. For a generic quarterly
+
+series $z_t$,
+
+\begin{equation}
+z_t^{\mathrm{prev}}
+=
+z_{t-1}.
+\end{equation}
+
+Quarterly observations are dated at the end of the corresponding calendar
+
+quarter.
+
+
+
+\subsection{Variable Definitions}
+
+Table~\ref{tab:data_variables} summarizes the variable names used in the
+
+model-ready dataset. Variable names are reported here, rather than in the
+
+preceding discussion, to separate the economic definitions from their
+
+implementation in the data files.
+
+\small
+
+\begin{longtable}{p{0.16\textwidth}p{0.27\textwidth}p{0.51\textwidth}}
+
+\caption{Variables in the Model-Ready Dataset}
+
+\label{tab:data_variables}\\
+
+\toprule
+
+Category & Variable & Description \\
+
+\midrule
+
+\endfirsthead
+
+\multicolumn{3}{c}{\tablename\ \thetable\ -- continued from previous page} \\
+
+\toprule
+
+Category & Variable & Description \\
+
+\midrule
+
+\endhead
+
+\midrule
+
+\multicolumn{3}{r}{Continued on next page} \\
+
+\endfoot
+
+\bottomrule
+
+\endlastfoot
+
+Inflation
+
+& \code{pi_cpi}
+
+& Headline CPI inflation, year-on-year log difference. \\
+
+Inflation
+
+& \code{pi_cpi_qoq}
+
+& Headline CPI inflation, quarter-on-quarter log difference. \\
+
+Inflation
+
+& \code{pi_cpi_qoq_ann}
+
+& Annualized quarter-on-quarter headline CPI log inflation. \\
+
+Inflation
+
+& \code{pi_cpi_core}
+
+& Core CPI inflation, year-on-year log difference. \\
+
+Inflation
+
+& \code{pi_cpi_core_qoq}
+
+& Core CPI inflation, quarter-on-quarter log difference. \\
+
+Inflation
+
+& \code{pi_cpi_core_qoq_ann}
+
+& Annualized quarter-on-quarter core CPI log inflation. \\
+
+Inflation
+
+& \code{pi_pce}
+
+& Headline PCE inflation, year-on-year log difference. \\
+
+Inflation
+
+& \code{pi_pce_qoq}
+
+& Headline PCE inflation, quarter-on-quarter log difference. \\
+
+Inflation
+
+& \code{pi_pce_qoq_ann}
+
+& Annualized quarter-on-quarter headline PCE log inflation. \\
+
+Inflation
+
+& \code{pi_pce_core}
+
+& Core PCE inflation, year-on-year log difference. \\
+
+Inflation
+
+& \code{pi_pce_core_qoq}
+
+& Core PCE inflation, quarter-on-quarter log difference. \\
+
+Inflation
+
+& \code{pi_pce_core_qoq_ann}
+
+& Annualized quarter-on-quarter core PCE log inflation. \\
+
+Inflation
+
+& \code{pi_ppi}
+
+& PPI inflation, year-on-year log difference. \\
+
+Inflation
+
+& \code{pi_ppi_qoq}
+
+& PPI inflation, quarter-on-quarter log difference. \\
+
+Inflation
+
+& \code{pi_ppi_qoq_ann}
+
+& Annualized quarter-on-quarter PPI log inflation. \\
+
+\midrule
+
+Expectations
+
+& \code{Epi}
+
+& Cleveland Fed one-year-ahead inflation expectation, retained at its original horizon. \\
+
+Expectations
+
+& \code{Epi_spf_gdp}
+
+& SPF one-year-ahead GDP-price inflation expectation; median-based average over the four quarters following the survey quarter. \\
+
+Expectations
+
+& \code{Epi_spf_cpi}
+
+& SPF one-year-ahead CPI inflation expectation; median-based average over the four quarters following the survey quarter. \\
+
+Expectations
+
+& \code{Epi_spf_gdp_1q}
+
+& SPF one-quarter-ahead GDP price-index growth constructed from mean level forecasts using the official annualized discrete Q/Q convention. \\
+
+Expectations
+
+& \code{Epi_spf_gdp_1q_log}
+
+& Annualized log-change equivalent of the SPF one-quarter-ahead mean-level forecast; not an official SPF reported growth series. \\
+
+\midrule
+
+Competition
+
+& \code{N_Gustavo}
+
+& PCHIP-interpolated quarterly Grullon--Larkin--Michaely competition series. \\
+
+Competition
+
+& \code{N_Gustavo_BN_cycle}
+
+& Beveridge--Nelson cycle of the Grullon--Larkin--Michaely series, interpolated quarterly. \\
+
+Competition
+
+& \code{N_Gustavo_BN_trend}
+
+& Beveridge--Nelson trend of the Grullon--Larkin--Michaely series, interpolated quarterly. \\
+
+Competition
+
+& \code{N_Gustavo_annual_q4}
+
+& Original annual Grullon--Larkin--Michaely observation retained at Q4 only. \\
+
+Competition
+
+& \code{N_Gustavo_BN_cycle_annual_q4}
+
+& Original annual Beveridge--Nelson cycle retained at Q4 only. \\
+
+Competition
+
+& \code{N_Gustavo_BN_trend_annual_q4}
+
+& Original annual Beveridge--Nelson trend retained at Q4 only. \\
+
+Competition
+
+& \code{N_TNIC}
+
+& PCHIP-interpolated quarterly Hoberg--Phillips TNIC competition series. \\
+
+Competition
+
+& \code{N_TNIC_BN_cycle}
+
+& Beveridge--Nelson cycle of the TNIC series, interpolated quarterly. \\
+
+Competition
+
+& \code{N_TNIC_BN_trend}
+
+& Beveridge--Nelson trend of the TNIC series, interpolated quarterly. \\
+
+Competition
+
+& \code{N_TNIC_annual_q4}
+
+& Original annual TNIC observation retained at Q4 only. \\
+
+Competition
+
+& \code{N_TNIC_BN_cycle_annual_q4}
+
+& Original annual TNIC Beveridge--Nelson cycle retained at Q4 only. \\
+
+Competition
+
+& \code{N_TNIC_BN_trend_annual_q4}
+
+& Original annual TNIC Beveridge--Nelson trend retained at Q4 only. \\
+
+Competition
+
+& \code{N_capitaliq_firmw}
+
+& Capital IQ effective number of firms using firm-count-weighted market HHIs. \\
+
+Competition
+
+& \code{N_capitaliq_revw}
+
+& Capital IQ effective number of firms using revenue-weighted market HHIs. \\
+
+\midrule
+
+Output gap
+
+& \code{output_BN}
+
+& Beveridge--Nelson transformed output series. \\
+
+Output gap
+
+& \code{output_gap_BN}
+
+& Beveridge--Nelson cyclical output gap. \\
+
+Output gap
+
+& \code{output_trend_BN}
+
+& Beveridge--Nelson output trend. \\
+
+Output gap
+
+& \code{output}
+
+& Log real output. \\
+
+Output gap
+
+& \code{output_trend_HP}
+
+& Hodrick--Prescott output trend. \\
+
+Output gap
+
+& \code{output_gap_HP}
+
+& Hodrick--Prescott cyclical output gap. \\
+
+Output gap
+
+& \code{labor_share}
+
+& Quarterly labor-share index. \\
+
+Output gap
+
+& \code{labor_share_100log}
+
+& Labor-share index expressed in 100 log points. \\
+
+Output gap
+
+& \code{labor_share_trend_HP}
+
+& Hodrick--Prescott labor-share trend. \\
+
+Output gap
+
+& \code{labor_share_gap_HP}
+
+& Hodrick--Prescott labor-share gap. \\
+
+Output gap
+
+& \code{unemp_gap}
+
+& Negative unemployment gap, natural rate minus observed unemployment. \\
+
+Output gap
+
+& \code{markup}
+
+& Nekarda--Ramey business markup. \\
+
+Output gap
+
+& \code{markup_inv}
+
+& Inverse markup. \\
+
+Output gap
+
+& \code{markup_BN_inv}
+
+& Beveridge--Nelson cyclical inverse-markup measure. \\
+
+\midrule
+
+Establishments
+
+& \code{establishment_births}
+
+& Quarterly establishment births. \\
+
+Establishments
+
+& \code{establishment_deaths}
+
+& Quarterly establishment deaths. \\
+
+Establishments
+
+& \code{establishment_net_entry}
+
+& Quarterly establishment births minus deaths. \\
+
+Establishments
+
+& \code{establishment_stock}
+
+& Establishment stock constructed from the 1993 BDS anchor and cumulative BED net entry. \\
+
+\midrule
+
+Lag
+
+& \code{pi_cpi_prev}
+
+& One-quarter lag of headline CPI inflation. \\
+
+Lag
+
+& \code{pi_ppi_prev}
+
+& One-quarter lag of PPI inflation. \\
+
+Lag
+
+& \code{pi_cpi_core_prev}
+
+& One-quarter lag of core CPI inflation. \\
+
+Lag
+
+& \code{pi_pce_prev}
+
+& One-quarter lag of headline PCE inflation. \\
+
+Lag
+
+& \code{pi_pce_core_prev}
+
+& One-quarter lag of core PCE inflation. \\
+
+Lag
+
+& \code{pi_cpi_qoq_prev}
+
+& One-quarter lag of quarter-on-quarter headline CPI inflation. \\
+
+Lag
+
+& \code{pi_ppi_qoq_prev}
+
+& One-quarter lag of quarter-on-quarter PPI inflation. \\
+
+Lag
+
+& \code{pi_cpi_core_qoq_prev}
+
+& One-quarter lag of quarter-on-quarter core CPI inflation. \\
+
+Lag
+
+& \code{pi_pce_qoq_prev}
+
+& One-quarter lag of quarter-on-quarter headline PCE inflation. \\
+
+Lag
+
+& \code{pi_pce_core_qoq_prev}
+
+& One-quarter lag of quarter-on-quarter core PCE inflation. \\
+
+Lag
+
+& \code{pi_cpi_qoq_ann_prev}
+
+& One-quarter lag of annualized quarter-on-quarter headline CPI log inflation. \\
+
+Lag
+
+& \code{pi_ppi_qoq_ann_prev}
+
+& One-quarter lag of annualized quarter-on-quarter PPI log inflation. \\
+
+Lag
+
+& \code{pi_cpi_core_qoq_ann_prev}
+
+& One-quarter lag of annualized quarter-on-quarter core CPI log inflation. \\
+
+Lag
+
+& \code{pi_pce_qoq_ann_prev}
+
+& One-quarter lag of annualized quarter-on-quarter headline PCE log inflation. \\
+
+Lag
+
+& \code{pi_pce_core_qoq_ann_prev}
+
+& One-quarter lag of annualized quarter-on-quarter core PCE log inflation. \\
+
+Lag
+
+& \code{unemp_gap_prev}
+
+& One-quarter lag of the negative unemployment gap. \\
+
+Lag
+
+& \code{markup_inv_prev}
+
+& One-quarter lag of the inverse markup. \\
+
+Lag
+
+& \code{markup_BN_inv_prev}
+
+& One-quarter lag of the Beveridge--Nelson cyclical inverse markup. \\
+
+Lag
+
+& \code{output_gap_BN_prev}
+
+& One-quarter lag of the Beveridge--Nelson output gap. \\
+
+Lag
+
+& \code{output_gap_HP_prev}
+
+& One-quarter lag of the Hodrick--Prescott output gap. \\
+
+Lag
+
+& \code{labor_share_gap_HP_prev}
+
+& One-quarter lag of the Hodrick--Prescott labor-share gap. \\
+
+\end{longtable}
+
+\normalsize
+
+\section{Summary of Data Construction}
+
+The main data choices can be summarized as follows:
+
+\begin{itemize}
+
+    \item \textbf{Data construction.}
+
+    The model-ready dataset is built in STATA directly from the raw source
+
+    files. The only exception is the PCHIP interpolation of the annual
+
+    competition measures, which is performed outside STATA.
+
+    \item \textbf{Inflation.}
+
+    Inflation is constructed from quarterly averages of monthly price indexes.
+
+    Year-on-year, quarter-on-quarter, and annualized quarter-on-quarter log
+
+    inflation measures are retained. The quarterly measures correspond most
+
+    directly to the one-period inflation rate in the quarterly NKPC, while the
+
+    year-on-year measure is retained as an alternative specification.
+
+    \item \textbf{Inflation expectations.}
+
+    Expectations are retained at their documented horizons rather than being
+    mechanically converted across horizons.
+
+    \begin{itemize}
+
+        \item Cleveland Fed expectations are retained at the one-year-ahead
+        horizon; no division by four is used to approximate a next-quarter
+        expectation.
+
+        \item SPF one-year-ahead GDP-price and CPI expectations are the
+        published median-based measures of average inflation over the four
+        quarters following the survey quarter.
+
+        \item The SPF one-quarter-ahead GDP price-index measure is constructed
+        from PGDP2 and PGDP3 in the mean level forecasts. Consistent with the
+        SPF documentation, the official-style measure is the annualized
+        discrete Q/Q growth rate of the mean forecast levels, not the mean of
+        individual growth-rate forecasts.
+
+        \item A separate annualized log-change equivalent of the one-quarter-
+        ahead SPF forecast is retained for specifications using annualized log
+        inflation.
+
+    \end{itemize}
+
+    \item \textbf{Phillips-curve forcing variable.}
+
+    Several alternative measures of economic slack or real marginal cost are
+
+    retained:
+
+    \begin{itemize}
+
+        \item Beveridge--Nelson output gap;
+
+        \item Hodrick--Prescott output gap;
+
+        \item inverse markup and its Beveridge--Nelson cyclical component;
+
+        \item Hodrick--Prescott labor-share gap; and
+
+        \item negative unemployment gap.
+
+    \end{itemize}
+
+    This allows the Phillips-curve results to be evaluated without relying on a
+
+    single empirical proxy for the theoretical forcing variable.
+
+    \item \textbf{Grullon--Larkin--Michaely competition measure.}
+
+    The original measure is annual. For quarterly-frequency specifications, the
+
+    annual level and its Beveridge--Nelson components are interpolated using
+
+    monotone-cubic PCHIP. For mixed-frequency specifications, the original annual
+
+    observations are retained at Q4 without interpolation.
+
+    \item \textbf{Hoberg--Phillips TNIC competition measure.}
+
+    The TNIC-based measure is also annual and is treated in the same way:
+
+    PCHIP interpolation is used for quarterly-frequency specifications, while
+
+    the original Q4 observations are used for mixed-frequency specifications.
+
+    \item \textbf{Capital IQ competition measure.}
+
+    The Capital IQ measure is constructed directly at quarterly frequency from
+
+    revenues of U.S. public firms listed on major exchanges. Firm-level revenue
+
+    shares are aggregated into market-level HHIs, which are seasonally adjusted
+
+    before aggregation. Economy-wide effective-firm measures are then constructed
+
+    using both firm-count and revenue weights.
+
+    \item \textbf{Establishment dynamics.}
+
+    Quarterly establishment births and deaths from BED are combined with the
+
+    1993 BDS establishment count as a level anchor. The resulting establishment
+
+    stock provides a measure of changes in the population of active
+
+    establishments that is distinct from the revenue-based concentration
+
+    measures.
+
+    \item \textbf{Timing and lags.}
+
+    Quarterly observations are dated at calendar-quarter end. One-quarter lags
+
+    are retained for variables entering lagged specifications.
+
+\end{itemize}
+
+\end{document}

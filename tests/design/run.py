@@ -19,14 +19,14 @@ from pathlib import Path
 import sys as _sys, pathlib as _pathlib  # noqa: E402  (bootstrap: importable at any depth)
 _ROOT = next(_p for _p in _pathlib.Path(__file__).resolve().parents if (_p / "pyproject.toml").exists())
 _sys.path[:0] = [str(_ROOT), str(_ROOT / "src"), str(_ROOT / "tests")]
-from experiments import _bootstrap  # noqa: F401,E402
-from experiments._bootstrap import ROOT
+from tests import _bootstrap  # noqa: F401,E402
+from tests._bootstrap import ROOT
 
 
 BUNDLE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = BUNDLE_DIR / "results"
 from nkpc_hsa.phillips.estimation import run_nine_cell_design
-from experiments.design.reporting import build_design_report_artifacts, compile_design_report
+from tests.design.reporting import build_design_report_artifacts, compile_design_report
 from nkpc_hsa.progress import STYLES as PROGRESS_STYLES
 
 

@@ -1,0 +1,40 @@
+# Optional report spec. bundle_report reads this and renders the equation, a data
+# table and a priors table at the top of the PDF. All fields are optional; omit
+# `equation` to let the report derive it from the saved coefficient names.
+# TEXT FIELDS ARE LaTeX: write maths as $...$ and escape _ & # % (or use $\_$).
+
+description: >
+  Hybrid-NKPC $(\beta_b,\beta_f)$ restriction experiment (review \S4.2): does
+  forcing the standard backward/forward discipline move the HSA slope? Three
+  specifications per cell --- baseline, convexity ($\beta_b,\beta_f\in[0,1]$)
+  and adding-up ($\beta_b+\beta_f=1$).
+
+equation: |
+  \pi_t = a + \beta_b\,\pi_{t-1} + \beta_f\,\mathbb{E}_t\pi_{t+1}
+  + \psi\,(\bar N_t - N_0) + \kappa_0\,x_t + \kappa_1\,(\bar N_t - N_0)\,x_t
+  - \theta_0\,\hat N_t - \gamma\,(\bar N_t - N_0)\,\hat N_t + \varepsilon_t
+
+data:
+  - series: "$\\pi_t$ (inflation)"
+    source: "CPIAUCSL / PPIACO / CPILFESL"
+    transform: "$400\\,\\Delta\\log P_t$ (annualized log, QoQ)"
+  - series: "$\\mathbb{E}_t\\pi_{t+1}$ (expected inflation)"
+    source: "SPF one-quarter-ahead (GDP-deflator proxy)"
+    transform: "annualized log"
+  - series: "$x_t$ (activity)"
+    source: "inverse markup / BN output gap / negative unemployment gap"
+    transform: "$\\log(\\mu_{\\mathrm{ref}}/\\mu_t)$ or gap in 100-log-points"
+  - series: "$\\bar N_t,\\ \\hat N_t$ (competition state)"
+    source: "annual Q4 firm-count anchor + quarterly inverse-markup bridge"
+    transform: "$(100\\log N - \\text{mean})/10$; slow trend $\\bar N$ + fast $\\hat N$"
+
+priors:
+  a: "$\\mathcal{N}(0,\\,5^2)$"
+  beta_b: "$\\mathcal{N}(0,\\,1)$  (+ restriction on convexity/adding-up specs)"
+  beta_f: "$\\mathcal{N}(0,\\,1)$  (+ restriction on convexity/adding-up specs)"
+  psi: "$\\mathcal{N}(0,\\,(1.5/q)^2)$"
+  kappa_0: "$\\mathcal{N}(0,\\,(2/x)^2)$"
+  kappa_1: "$\\mathcal{N}(0,\\,(1/(q\\,x))^2)$"
+  theta_0: "$\\mathcal{N}(0,\\,(1/q)^2)$"
+  gamma: "$\\mathcal{N}(0,\\,(1/q^2)^2)$"
+  sigma: "$\\sigma^2 \\sim \\mathrm{IG}(3,\\,8)$"

@@ -3,9 +3,9 @@
 Stages (run via argv): validate | pilot | produce | all
 Outputs go to results/evidence/ and NEVER overwrite existing runs.
 
-  python production/main_scripts/appendix_particle_gibbs_hsa_full.py validate
-  python production/main_scripts/appendix_particle_gibbs_hsa_full.py pilot
-  python production/main_scripts/appendix_particle_gibbs_hsa_full.py produce --particles 512
+  python main_scripts/appendix_particle_gibbs_hsa_full.py validate
+  python main_scripts/appendix_particle_gibbs_hsa_full.py pilot
+  python main_scripts/appendix_particle_gibbs_hsa_full.py produce --particles 512
 """
 from __future__ import annotations
 

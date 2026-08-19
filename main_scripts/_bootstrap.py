@@ -9,7 +9,7 @@ configured_project = os.environ.get(PROJECT_DIR_ENV, "").strip()
 ROOT = (
     Path(configured_project).expanduser().resolve()
     if configured_project
-    else Path(__file__).resolve().parents[2]
+    else next(a for a in Path(__file__).resolve().parents if (a / "pyproject.toml").exists())
 )
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:

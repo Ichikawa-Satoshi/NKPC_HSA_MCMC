@@ -5,7 +5,7 @@ Every (activity x price index) x competition cell gets its own directory under
 ``.tex`` that ``\\input``s them. The report grid collapses across data
 specifications; this is the complementary per-cell view.
 
-    PYTHONPATH=src python production/main_scripts/18_build_each_result.py \\
+    PYTHONPATH=src python main_scripts/18_build_each_result.py \\
         --runs-root results/runs --runs-root results/extensions/sec_inverse_hhi/runs \\
         --data data/processed/model_ready.csv \\
         --data data/processed/model_ready_sec_inverse_hhi.csv
@@ -16,6 +16,7 @@ every column its data spec needs.
 from __future__ import annotations
 
 import argparse
+import subprocess
 from pathlib import Path
 
 import arviz as az
@@ -233,6 +234,7 @@ CELL_TEMPLATE = r"""\documentclass[11pt,landscape]{article}
 \usepackage{tabularx}
 \usepackage{array}
 \usepackage{makecell}
+\usepackage{adjustbox}
 \renewcommand{\arraystretch}{1.25}
 \usepackage[hidelinks]{hyperref}
 \setlength{\parindent}{0pt}
@@ -241,7 +243,7 @@ CELL_TEMPLATE = r"""\documentclass[11pt,landscape]{article}
 %% nothing has to be read next to something else.
 \newcommand{\onepagetable}[2]{%%
   \subsection*{#1}%%
-  {\centering\resizebox{\linewidth}{!}{\input{#2}}\par}%%
+  {\centering\adjustbox{max width=\linewidth,max totalheight=0.85\textheight}{\input{#2}}\par}%%
   \clearpage}
 \newcommand{\onepagefigure}[2]{%%
   \subsection*{#1}%%
@@ -450,6 +452,28 @@ def build_cell(
     return target
 
 
+def compile_pdf(tex_path: Path) -> Path | None:
+    """Two xelatex passes so the \\ref numbering and layout settle. Non-fatal.
+
+    Returns the compiled ``.pdf`` on success, or ``None`` (with a short log tail)
+    so one cell that fails to compile does not abort the whole batch.
+    """
+    result = None
+    for _ in (1, 2):
+        result = subprocess.run(
+            ["xelatex", "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
+            cwd=tex_path.parent,
+            capture_output=True,
+            text=True,
+        )
+    pdf = tex_path.with_suffix(".pdf")
+    if result is None or result.returncode != 0 or not pdf.exists():
+        tail = "\n".join((result.stdout if result else "").splitlines()[-40:])
+        print(f"  xelatex failed for {tex_path.name}:\n{tail}", flush=True)
+        return None
+    return pdf
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build one LaTeX document per data combination.")
     parser.add_argument("--runs-root", type=Path, action="append", default=None, help="Repeatable.")
@@ -466,6 +490,11 @@ def main() -> None:
         help="Score runs whose inputs have since been rebuilt, annotating the difference. "
              "Within a cell every model still sees identical data, so the ranking holds; "
              "the level is not the vintage the posterior was drawn under.",
+    )
+    parser.add_argument(
+        "--compile",
+        action="store_true",
+        help="Run xelatex on each cell's .tex to produce the per-cell PDF (needs xelatex).",
     )
     args = parser.parse_args()
 
@@ -492,7 +521,11 @@ def main() -> None:
         out_dir = args.out_dir / cell.relative_dir
         target = build_cell(cell, loaded, out_dir, frames, allow_drift=args.allow_data_drift)
         written.append(target)
-        print(f"  {cell.relative_dir}  models={len(loaded)}  -> {target.name}")
+        suffix = ""
+        if args.compile:
+            pdf = compile_pdf(target)
+            suffix = f" -> {pdf.name}" if pdf is not None else " (compile failed)"
+        print(f"  {cell.relative_dir}  models={len(loaded)}  -> {target.name}{suffix}")
 
     index = args.out_dir / "index.md"
     index.parent.mkdir(parents=True, exist_ok=True)

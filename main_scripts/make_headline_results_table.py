@@ -31,7 +31,7 @@ EN_ROOT = RESULTS_DIR / "tables"
 
 
 def _load12():
-    p = ROOT / "production" / "main_scripts" / "12_build_cpi_ppi_report.py"
+    p = ROOT / "main_scripts" / "12_build_cpi_ppi_report.py"
     spec = importlib.util.spec_from_file_location("build12", p)
     m = importlib.util.module_from_spec(spec)
     sys.modules["build12"] = m

@@ -24,7 +24,7 @@ The package lives under `src/`, so the editable install is what makes
 `import nkpc_hsa` work — `pytest` and every script rely on it.
 
 ```bash
-python production/main_scripts/01_build_data.py
+python main_scripts/01_build_data.py
 python -m pytest -q
 ```
 
@@ -32,90 +32,117 @@ python -m pytest -q
 
 ## Repository structure
 
+The repository has three layers: a **shared library** (`src/nkpc_hsa/`), the
+**production** pipeline (`main_scripts/`), and the **tests** — one self-contained
+experiment bundle per subdirectory of `tests/`.
+
 ```
-data/
-  raw/              source series; never written by scripts
-  processed/        model_ready.csv — built by production/main_scripts/01
-
-configs/          SHARED estimation settings — the knobs live here, not in code
-  models.yaml           defaults, data specs, and the five headline models
-  priors_*.yaml         baseline / tight / weak prior sets
-  periods.yaml          sub-sample windows for period robustness
-  nine_cell_design.yaml  the shared design/measurement definition that
-                         nkpc_hsa.phillips.load_design_data reads by default
-  error_robustness.yaml  MA(3) disturbance settings
-  (per-experiment configs now live in each tests/experiments/<name>/config.yaml)
-
-src/nkpc_hsa/     the SHARED library — imported by production and every experiment
-  config.py, paths.py       YAML loading and project-root path helpers
-  progress.py, provenance.py  live progress bars and run provenance stamping
-  theory_models.py          F0/U/R1/R2/R3 theory-run (production) definitions
-  dataprep/         raw series -> data/processed/model_ready.csv
-  gibbs/            the sampler engine (one subpackage per model)
-  models/           thin public facade over gibbs/
-  inference/        run_model, diagnostics, robustness, identification
-  reporting/        tables, figures and LaTeX fragments
-  error_robustness/ MA(3)-disturbance variants of every sampler + runner
-  phillips/         shared Phillips-curve toolkit (was `nine_cell/`): data, state,
-                    inflation, estimation, joint, temporal, markup_measurement
-
-tests/            everything test-related (テスト) lives under one roof
-  conftest.py         puts repo root, src/, and tests/ on sys.path
-  unit/               pytest: pure-library unit tests (fast, no disk)
-  run/                pytest: pipeline / script / experiment-wiring tests
-  output/             pytest: report / generated-artifact tests
-  experiments/        one self-contained "test bundle" per experiment
-    _bootstrap.py       shared path setup for every bundle's run.py
-    <name>/
-      functions.py      this experiment's estimation functions
-                        (absent when it reuses only nkpc_hsa.phillips)
-      run.py            run code:  python tests/experiments/<name>/run.py
-      config.yaml       this experiment's settings (design/ uses the shared one)
-      results/          report, tables/, figures/, draws/ — INSIDE the bundle,
-                        git-ignored & reproducible (see tests/experiments/.gitignore)
-      README.md         what the experiment asks and how to run it
-    bundles: observed_hhi, markup_measurement, markup_full_joint, markup_feedback,
-             markup_interpolation, nolag_price_gap, n_gustavo_state_space, design
-
-production/       本推定 — the canonical estimation pipeline, internalized here
-  main_scripts/     the reproducible pipeline, runnable from the project root:
-    01–09             build data, estimate, diagnose, robustness, comparison
-    10–19             theory-run (production) estimate/diagnose/report + CPI/PPI
-    build_report.py, build_restriction_report.py   the two report builders
-    run_restriction_production.py   drives the theory F0/U/R1/R2/R3 sequence
-    make_*.py         table/figure generators for the reports
-    _bootstrap.py     path setup (project root resolved two levels up)
-  README.md         what production is and how to run it
-  (the former experiment runners 20–28 now live under tests/experiments/<name>/run.py)
-
-results/          SHARED production outputs; git-ignored, reproducible
-                  (a symlink here to Dropbox is fine — the target is still ignored)
-                  Experiment outputs do NOT go here — they live in each bundle's
-                  own results/. This tree is for the production/theory pipeline.
-  runs/             posterior draws, one directory per estimation cell
-  theory_runs/      the separate F0/U/R1/R2/R3 namespace
-  tables/, figures/, diagnostics/   report inputs for the production reports
-
-report/           two deliberately separate deliverables — source + compiled PDF only
-  nkpc_hsa_report.tex           preserved historical reduced-form/ablation report
-                                (built ONLY by production/main_scripts/build_report.py)
-  nkpc_hsa_restriction_report.tex   the F0/U/R1/R2/R3 restriction report
-                                (built ONLY by production/main_scripts/build_restriction_report.py)
-  design.tex, nine_cell_design_report.tex   the nine-cell design write-ups
-
-docs/             estimation specification, code/equation crosswalk,
-                  estimation flow, data dictionary, technical audits
-references/       literature PDFs and research notes
+NKPC_HSA_MCMC/
+├── src/nkpc_hsa/     SHARED library — imported by production and every test, never copied
+│     config.py  paths.py  progress.py  provenance.py  theory_models.py
+│     dataprep/   raw series -> data/processed/model_ready.csv
+│     gibbs/      the Gibbs/FFBS sampler engine (one subpackage per model)
+│     models/     thin public facade over gibbs/
+│     inference/  run_model, diagnostics, robustness, identification
+│     reporting/  tables, figures and LaTeX fragments
+│     error_robustness/   MA(3)-disturbance variants of every sampler + runner
+│     phillips/   shared Phillips-curve toolkit (was nine_cell/): data, state,
+│                 inflation, estimation, joint, temporal, markup_measurement
+│
+├── main_scripts/    本推定 — the canonical estimation pipeline, run from the repo root
+│     01–19_*.py      build data → estimate → diagnose → robustness → comparison → report
+│     build_report.py, build_restriction_report.py    the two report builders
+│     run_restriction_production.py    drives the theory F0/U/R1/R2/R3 sequence
+│     make_*.py        table/figure generators;   _bootstrap.py   shared path setup
+│
+├── tests/           テスト — one self-contained experiment bundle per subdirectory
+│     __init__.py  _bootstrap.py       (bundles import as `tests.<name>`)
+│     <name>/         observed_hhi · markup_measurement · markup_full_joint ·
+│       functions.py    markup_feedback · markup_interpolation · nolag_price_gap ·
+│       run.py           n_gustavo_state_space · design
+│       config.yaml    (design/ has none — it uses configs/nine_cell_design.yaml)
+│       results/       report, tables/, figures/, draws/ — INSIDE the bundle, git-ignored
+│       README.md      what the experiment asks and how to run it
+│
+├── configs/         SHARED settings: models.yaml, priors_*.yaml, periods.yaml,
+│                    nine_cell_design.yaml (nkpc_hsa.phillips.load_design_data reads it),
+│                    error_robustness.yaml
+├── data/            raw/ (never written by code) · processed/ (built by main_scripts/01)
+├── results/         SHARED production outputs (symlink to Dropbox); git-ignored.
+│                    Experiment outputs do NOT go here — they live in each bundle's results/.
+├── report/          two deliverables: nkpc_hsa_report + the restriction report (source + PDF)
+├── docs/            spec, code/equation crosswalk, estimation flow, data dictionary, audits
+└── references/      literature PDFs and research notes
 ```
 
-Everything the PDF needs is generated under `results/`, so `report/` holds only
-the source and the output. Compile from inside `report/` — the `.tex` refers to
-`../results/{tables,figures}/` relatively.
+Everything a report PDF needs is generated under `results/`, so `report/` holds
+only the source and the output.
 
-> **Note.** `output/` at the repository root is a stray, non-canonical dump of
-> compiled experiment PDFs (including `*_TEST.pdf` smoke builds). It predates the
-> `results/` discipline above and should not be committed; new outputs belong
-> under `results/`.
+---
+
+## Operating method (運用方法)
+
+The repository separates three concerns; keep new work in the right layer.
+
+**Shared library — `src/nkpc_hsa/`.** All reusable code: the sampler engine
+(`gibbs/`), data building (`dataprep/`), and the Phillips-curve toolkit
+(`phillips/`). Both production and every test import from here — never copy code
+into a bundle. `pip install -e .` makes `import nkpc_hsa` work everywhere.
+
+**Production — `main_scripts/`.** The canonical, reproducible pipeline: the
+numbered scripts `01–19`, the two report builders, and
+`run_restriction_production.py`. Run from the repo root, e.g.:
+
+```bash
+python main_scripts/01_build_data.py
+python main_scripts/run_restriction_production.py     # theory F0/U/R1/R2/R3
+python main_scripts/build_report.py --compile         # historical report
+```
+
+Production writes to the shared `results/` (a Dropbox symlink) and compiles the
+reports in `report/`. `main_scripts/_bootstrap.py` finds the repo root (walking up
+to `pyproject.toml`) and puts `src/` on the path, so every script sees the same
+`ROOT` / `DATA_DIR` / `RESULTS_DIR`.
+
+**Per-run result PDF.** For a standardized one-document-per-cell view of the saved
+posteriors in `results/runs/`, run:
+
+```bash
+python main_scripts/18_build_each_result.py --compile
+```
+
+Each cell PDF (under `results/each_result/<cell>/`) collects: the posterior
+coefficient table, prior-vs-posterior panels for every parameter, the time-varying
+`κ_t` / `θ_t` paths, the competition-state decomposition, the LOO/WAIC precision
+comparison, and the R-hat / bulk-ESS convergence table. Omit `--compile` to write
+only the `.tex` + tables + figures.
+
+**Tests — `tests/<name>/`.** Each subdirectory is a self-contained experiment
+("テスト"): `functions.py` (its own estimation functions — omitted when it reuses
+only `nkpc_hsa.phillips`), `run.py` (the runner), `config.yaml` (its settings),
+`results/` (its outputs), and `README.md` (its description). Run one with:
+
+```bash
+python tests/observed_hhi/run.py --quick     # smoke
+python tests/observed_hhi/run.py             # full
+```
+
+Every `run.py` self-bootstraps (it finds the repo root via `pyproject.toml`), so it
+runs from any directory. Bundles import as `tests.<name>` and pull the heavy
+engine from `nkpc_hsa`; they never write outside their own `results/`, which is
+git-ignored and reproducible — including the raw MCMC `draws/`.
+[`tests/README.md`](tests/README.md) indexes every experiment (what each one asks,
+its inputs, and how they depend on each other).
+
+**Adding an experiment.** Copy an existing bundle directory under `tests/`, keep
+the four files (`functions.py` / `run.py` / `config.yaml` / `README.md`), import
+shared pieces from `nkpc_hsa`, and write outputs to the bundle's own `results/`.
+Put genuinely shared logic in `nkpc_hsa/phillips/`, not in the bundle.
+
+**One data set, many indicators.** `data/processed/model_ready.csv` carries every
+series (CPI / PPI / core, markup, output- and unemployment-gaps, HHI, …).
+Production and each experiment select the columns they need through their config,
+so the data is never forked per experiment.
 
 ---
 
@@ -123,13 +150,13 @@ the source and the output. Compile from inside `report/` — the `.tex` refers t
 
 ### Nine-cell design in `report/design.tex`
 
-The revised identification-first design is the `tests/experiments/design/` bundle. It
+The revised identification-first design is the `tests/design/` bundle. It
 uses the existing Dropbox data root and the repository's path/config helpers, and
-keeps its output inside the bundle at `tests/experiments/design/results/`:
+keeps its output inside the bundle at `tests/design/results/`:
 
 ```bash
-python production/main_scripts/15_build_extension_data.py
-python tests/experiments/design/run.py --test-run --compile
+python main_scripts/15_build_extension_data.py
+python tests/design/run.py --test-run --compile
 ```
 
 The test run completes the full data/state/cell/report call chain with deliberately
@@ -151,9 +178,9 @@ The headline result is **HSA steady, core CPI, negative unemployment gap,
 mixed-frequency**. End to end:
 
 ```bash
-python production/main_scripts/01_build_data.py
-python production/main_scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency quarterly_interpolated --no-build
-python production/main_scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency annual_q4 --compile
+python main_scripts/01_build_data.py
+python main_scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency quarterly_interpolated --no-build
+python main_scripts/13_estimate_cpi_ppi_report.py --jobs 6 --competition-frequency annual_q4 --compile
 ```
 
 Step 2 estimates the 77 interpolated cells, step 3 the 61 mixed-frequency ones,
@@ -172,9 +199,9 @@ their output is redirected, so a log file does not fill up with redraws:
 
 | command | what the bar measures |
 |---|---|
-| `production/main_scripts/run_restriction_production.py` | one line per theory cell plus an overall bar, advancing **per draw** — each cell reports its own iteration count back to the driver |
-| `production/main_scripts/10_estimate_theory_models.py` | a single per-draw bar spanning every chain of the cell |
-| `production/main_scripts/13_estimate_cpi_ppi_report.py` | one bar over the cell set, advancing **per completed cell** — the cells run in separate worker processes with no channel back |
+| `main_scripts/run_restriction_production.py` | one line per theory cell plus an overall bar, advancing **per draw** — each cell reports its own iteration count back to the driver |
+| `main_scripts/10_estimate_theory_models.py` | a single per-draw bar spanning every chain of the cell |
+| `main_scripts/13_estimate_cpi_ppi_report.py` | one bar over the cell set, advancing **per completed cell** — the cells run in separate worker processes with no channel back |
 
 All three take `--progress {auto,bar,plain,stream,off}`, and `NKPC_HSA_PROGRESS`
 sets the default. Use `plain` for a periodic summary line under `nohup` or in
@@ -192,13 +219,13 @@ driver crosses five price indices, four activity/slack measures, four empirical
 competition-channel models, and six fast-state timings:
 
 ```bash
-python tests/experiments/nolag_price_gap/run.py --quick
-python tests/experiments/nolag_price_gap/run.py
-python tests/experiments/nolag_price_gap/run.py --theory-faithful
+python tests/nolag_price_gap/run.py --quick
+python tests/nolag_price_gap/run.py
+python tests/nolag_price_gap/run.py --theory-faithful
 ```
 
 The production command reuses the retained 20,000-iteration/5,000-warmup state
-posterior written by `tests/experiments/n_gustavo_state_space/run.py`; it does not
+posterior written by `tests/n_gustavo_state_space/run.py`; it does not
 smooth the competition state again using inflation. The stable PDF is written
 to `output/pdf/nolag_price_gap_model_tests.pdf`. The `--theory-faithful`
 variant fixes the standalone empirical slow-level nuisance `psi` exactly to
@@ -207,7 +234,7 @@ zero and writes `output/pdf/theory_faithful_nolag_model_tests.pdf`.
 ### Rebuilding the report without re-estimating
 
 ```bash
-python production/main_scripts/build_report.py --compile
+python main_scripts/build_report.py --compile
 ```
 
 `build_report.py` is the **single entry point for every report artifact**, and
@@ -234,7 +261,7 @@ shipped. `--skip-predictive` reuses the existing scores instead of recomputing
 them. `12_build_cpi_ppi_report.py` fails loudly if a report cell is missing —
 pass `--allow-incomplete` to build partial tables anyway.
 
-The 12 estimations behind `production/main_scripts/prior_decomposition_rho_delta.py` are deliberately
+The 12 estimations behind `main_scripts/prior_decomposition_rho_delta.py` are deliberately
 **not** part of the report build (~45 minutes). `build_report.py` runs that script with
 `--macros-only`, which refreshes `prior_decomposition_macros.tex` from the existing
 factorial CSVs without re-estimating them. Run the script directly when the sweep changes.
@@ -257,7 +284,7 @@ the two firm-count states — `corr(N̄₀, N̂₀) = −0.9996`, against `+0.13
 
 The restored BDS/BED files support a separate HSA const-theta experiment aimed at
 the weakly identified quarterly `Nhat` AR(2) and `theta` blocks. BED establishment births and deaths
-are quarterly flows, so `production/main_scripts/01_build_data.py` reconstructs the end-of-quarter
+are quarterly flows, so `main_scripts/01_build_data.py` reconstructs the end-of-quarter
 stock from 1993Q2 onward. The experimental data spec uses exactly 1993Q2–2012Q4
 (79 quarters), decomposes transformed `E` with an HP filter, and adds
 
@@ -276,9 +303,9 @@ Treat it as a model-development diagnostic, not as identified evidence for
 `theta`; the competing regions are documented in the experiment note.
 
 ```bash
-python production/main_scripts/01_build_data.py
-python production/main_scripts/14_estimate_establishment_augmented.py --quick --chains 1 --no-save
-python production/main_scripts/14_estimate_establishment_augmented.py
+python main_scripts/01_build_data.py
+python main_scripts/14_estimate_establishment_augmented.py --quick --chains 1 --no-save
+python main_scripts/14_estimate_establishment_augmented.py
 ```
 
 The first command is required after changing the raw BED/BDS inputs. See
@@ -288,12 +315,12 @@ for the stock convention, equations, and current limitations.
 ### Supporting analyses (not part of the report build)
 
 ```bash
-python production/main_scripts/03_run_diagnostics.py             # trace / autocorr plots, R-hat, ESS per run
-python production/main_scripts/09_identification_diagnostics.py
-python production/main_scripts/chib_marginal_likelihood.py       # conditional marginal likelihood
-python production/main_scripts/appendix_particle_gibbs_hsa_full.py validate|pilot|produce
-python production/main_scripts/er_01_diagnose.py                  # overlapping-inflation error diagnostics
-python production/main_scripts/er_02_estimate.py --quick          # MA(3) error-structure smoke test
+python main_scripts/03_run_diagnostics.py             # trace / autocorr plots, R-hat, ESS per run
+python main_scripts/09_identification_diagnostics.py
+python main_scripts/chib_marginal_likelihood.py       # conditional marginal likelihood
+python main_scripts/appendix_particle_gibbs_hsa_full.py validate|pilot|produce
+python main_scripts/er_01_diagnose.py                  # overlapping-inflation error diagnostics
+python main_scripts/er_02_estimate.py --quick          # MA(3) error-structure smoke test
 ```
 
 ### Observed inverse-HHI model tests
@@ -306,8 +333,8 @@ deterministic predicted-level/innovation decomposition of the same observed
 HHI series. The latter is not a latent measurement model.
 
 ```bash
-python tests/experiments/observed_hhi/run.py --jobs 4
-python tests/experiments/observed_hhi/run.py --reuse-existing
+python tests/observed_hhi/run.py --jobs 4
+python tests/observed_hhi/run.py --reuse-existing
 ```
 
 The formal PDF is written to `output/pdf/observed_hhi_model_tests.pdf`; full
@@ -322,8 +349,8 @@ state-space model. QCEW, SEC HHI, deterministic quarterly interpolation, and
 inflation feedback into the state smoother are excluded.
 
 ```bash
-python tests/experiments/n_gustavo_state_space/run.py
-python tests/experiments/n_gustavo_state_space/run.py --reuse-existing
+python tests/n_gustavo_state_space/run.py
+python tests/n_gustavo_state_space/run.py --reuse-existing
 ```
 
 The formal PDF is written to
@@ -380,10 +407,10 @@ resolved relative to `NKPC_HSA_PROJECT_DIR`; raw and processed data use
 `<NKPC_HSA_DROPBOX_DIR>/data`; sampling and report outputs use
 `<NKPC_HSA_DROPBOX_DIR>/results`.
 
-`production/main_scripts/build_report.py` creates or verifies the repository-local `results`
+`main_scripts/build_report.py` creates or verifies the repository-local `results`
 symlink needed by the LaTeX source's relative paths.
 
-`production/main_scripts/01_build_data.py` turns `data/raw/` into
+`main_scripts/01_build_data.py` turns `data/raw/` into
 `data/processed/model_ready.csv`. Each production estimation cell selects six
 columns and drops missing values **jointly**, so the report specifications have
 **T = 124** quarters, 1982Q1–2012Q4. The establishment-augmented experimental
@@ -461,7 +488,7 @@ Shared machinery:
 | dispatch, data prep, saving | [`inference/wrappers.py`](src/nkpc_hsa/inference/wrappers.py) — `run_model` |
 | public facade | [`models/`](src/nkpc_hsa/models) |
 
-`inference/wrappers.py` and `production/main_scripts/12_build_cpi_ppi_report.py` are the two
+`inference/wrappers.py` and `main_scripts/12_build_cpi_ppi_report.py` are the two
 files to open first.
 
 ### Internal scaling
@@ -486,7 +513,7 @@ block by block.
 ## Conventions worth knowing before changing anything
 
 - **`results/` is git-ignored** and must never be committed; the whole tree is
-  reproducible from `production/main_scripts/`.
+  reproducible from `main_scripts/`.
 - **`data/raw/` is never written by scripts.**
 - Run directories are named `model_spec_prior_frequency` with **no timestamp** —
   one directory per cell, re-estimated in place. `load_report_runs` selects on

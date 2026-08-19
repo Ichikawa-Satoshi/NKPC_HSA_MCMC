@@ -5,7 +5,7 @@ section sweeps. These were previously typed into the .tex by hand, which is how 
 prior table can silently disagree with the YAML the sampler actually loaded --
 every number here is read from the config files at build time instead.
 
-    python production/main_scripts/make_spec_tables.py
+    python main_scripts/make_spec_tables.py
 """
 from __future__ import annotations
 

@@ -19,7 +19,7 @@ for all nine price-index x activity-measure cells under the main mixed-frequency
 The runs are written with ``constraint_spec = "alpha_zero"``, so the report's run selector
 (which requires ``unrestricted``) cannot pick them up by accident.
 
-    python production/main_scripts/rerun_hsa_steady_no_inertia.py [--quick]
+    python main_scripts/rerun_hsa_steady_no_inertia.py [--quick]
 """
 from __future__ import annotations
 

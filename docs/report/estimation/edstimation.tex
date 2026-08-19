@@ -1,0 +1,2301 @@
+\documentclass[11pt]{article}
+\usepackage[landscape,margin=0.8in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{xcolor}
+% The auto-generated \input tables still carry some Japanese header labels,
+% so we compile with xelatex + xeCJK. English body text is unaffected.
+\usepackage[hidelinks]{hyperref}
+\usepackage{etoolbox}
+% Start every top-level section on a new page
+\pretocmd{\section}{\clearpage}{}{}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\kt}{\kappa_t}
+\newcommand{\Nbar}{\bar N}
+\newcommand{\Nhat}{\hat N}
+\graphicspath{{../results/figures/}}
+
+\title{\textbf{Market Concentration and the Flattening of the Phillips Curve}\\[2pt]
+\large A Theory-Motivated, Semi-Structural State-Space Assessment of the HSA Mechanism}
+\author{Satoshi Ichikawa}
+\date{Draft --- August 2026}
+
+\begin{document}
+% ================================================================
+\section{Research Questions}
+% ================================================================
+
+The empirical analysis is organized around a semi-structural state-space
+representation of the HSA mechanism. The objective is not to estimate the
+complete structural model or to recover the underlying HSA demand system.
+Instead, the analysis asks whether the central empirical implications of the
+HSA Phillips curve are supported by U.S. aggregate data.
+
+Throughout this section, the competition measure is oriented so that a larger
+value of $N_t$ represents a more competitive environment, or equivalently a
+larger effective number of firms. Hence, a decline in $N_t$ corresponds to
+greater market concentration. If a concentration measure such as an HHI is
+used directly instead, the directional signs stated below must be reversed.
+
+Let the observed competition measure admit the state-space representation
+
+\begin{equation}
+N_t^{\mathrm{obs}}
+=
+\bar N_t
++
+\hat N_t
++
+\nu_t^{N},
+\label{eq:competition_measurement}
+\end{equation}
+
+where $\bar N_t$ denotes a slow-moving competitive environment,
+$\hat N_t$ denotes a stationary latent deviation around that environment,
+and $\nu_t^{N}$ denotes measurement error.
+
+For interpretation and reporting, define
+
+\begin{equation}
+\tilde N_t
+=
+\bar N_t-N_0,
+\label{eq:competition_center}
+\end{equation}
+
+where $N_0$ is a fixed reporting center.
+
+The empirical Phillips curve is represented as
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_t x_t
++
+\theta_t \hat N_t
++
+\varepsilon_t,
+\label{eq:empirical_nkpc}
+\end{equation}
+
+where $x_t$ denotes the Phillips-curve forcing variable. The two
+competition-dependent coefficients are parameterized locally as
+
+\begin{equation}
+\kappa_t
+=
+\kappa_0+\delta\tilde N_t,
+\label{eq:kappa_state}
+\end{equation}
+
+and
+
+\begin{equation}
+\theta_t
+=
+\theta_0+\gamma\tilde N_t.
+\label{eq:theta_state}
+\end{equation}
+
+The coefficients $\kappa_t$ and $\theta_t$ are empirical varying
+coefficients. Their structural interpretation is conditional on the
+maintained mapping between the observed competition measure, the latent
+competition states, and the competitive environment in the HSA model.
+
+The directional implications below are not imposed mechanically in the
+baseline estimation. The parameters are estimated without sign restrictions,
+and the posterior probability assigned to the theory-consistent region is
+reported as an empirical measure of mechanism consistency.
+
+% ------------------------------------------------
+\subsection{RQ1: Competition-Dependent Phillips-Curve Slope}
+% ------------------------------------------------
+
+\subsubsection*{Does the conditional response of inflation to the forcing variable vary systematically with the competitive environment?}
+
+The first research question concerns the slow-moving component of the
+Phillips-curve slope. Equation~\eqref{eq:kappa_state} allows the conditional
+slope to vary with the competitive environment:
+
+\begin{equation}
+\kappa_t
+=
+\kappa_0+\delta\tilde N_t.
+\end{equation}
+
+The parameter $\delta$ measures how the conditional Phillips-curve slope
+changes with the slow-moving competition state.
+
+Under the maintained HSA interpretation, greater market concentration
+reduces the structural slope of the Phillips curve. Since larger values of
+$N_t$ are defined here to represent greater competition, the directional
+hypothesis is
+
+\begin{equation}
+H_0^{(1)}:\delta\leq0
+\qquad\text{against}\qquad
+H_1^{(1)}:\delta>0.
+\label{eq:hyp_delta}
+\end{equation}
+
+Thus, a positive $\delta$ implies that the Phillips curve becomes steeper
+when competition increases and flatter when market concentration rises.
+
+In the Bayesian analysis, the corresponding posterior quantity of interest is
+
+\begin{equation}
+\Pr\!\left(
+\delta>0
+\mid
+\mathcal D
+\right),
+\end{equation}
+
+where $\mathcal D$ denotes the observed data.
+
+% ------------------------------------------------
+\subsection{RQ2: Short-Run Direct Competition Channel}
+% ------------------------------------------------
+
+\subsubsection*{Does the stationary competition state contain inflation-relevant information beyond the standard Phillips-curve forcing variable?}
+
+The second research question concerns the direct loading of inflation on the
+stationary competition state. Holding the interaction in
+Equation~\eqref{eq:theta_state} fixed at the reporting center gives
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_t x_t
++
+\theta_0\hat N_t
++
+\varepsilon_t.
+\end{equation}
+
+The coefficient $\theta_0$ measures the direct short-run association between
+the stationary competition state and inflation after conditioning on expected
+inflation and the Phillips-curve forcing variable.
+
+In the HSA mechanism, endogenous movements in the number of firms generate a
+cost-push component distinct from the conventional marginal-cost term. With
+$N_t$ oriented so that larger values correspond to greater competition, the
+theory-consistent direct loading is negative. The directional hypothesis is
+therefore
+
+\begin{equation}
+H_0^{(2)}:\theta_0\geq0
+\qquad\text{against}\qquad
+H_1^{(2)}:\theta_0<0.
+\label{eq:hyp_theta}
+\end{equation}
+
+The corresponding posterior quantity is
+
+\begin{equation}
+\Pr\!\left(
+\theta_0<0
+\mid
+\mathcal D
+\right).
+\end{equation}
+
+In the baseline empirical interpretation, $\theta_0$ is treated
+conservatively as a direct latent-state loading. Its interpretation as the
+endogenous-entry or participation channel of the HSA model is conditional on
+the maintained theoretical mapping.
+
+% ------------------------------------------------
+\subsection{RQ3: Competition-Dependent Dynamic Effect}
+% ------------------------------------------------
+
+\subsubsection*{Does the strength of the short-run competition channel itself vary with the slow-moving competitive environment?}
+
+The third research question asks whether the direct competition loading is
+itself state dependent:
+
+\begin{equation}
+\theta_t
+=
+\theta_0+\gamma\tilde N_t.
+\end{equation}
+
+The coefficient $\gamma$ measures how the short-run effect associated with
+$\hat N_t$ changes as the economy moves across different competitive
+environments.
+
+Under the maintained HSA interpretation with the relevant pass-through
+channel, greater concentration strengthens the magnitude of the negative
+endogenous competition effect. Since lower values of $N_t$ represent greater
+concentration, this implies that $\theta_t$ should become more negative as
+$\bar N_t$ falls. In the linear approximation above, the resulting
+directional hypothesis is
+
+\begin{equation}
+H_0^{(3)}:\gamma\leq0
+\qquad\text{against}\qquad
+H_1^{(3)}:\gamma>0.
+\label{eq:hyp_gamma}
+\end{equation}
+
+A positive $\gamma$ therefore implies
+
+\begin{equation}
+\bar N_t\downarrow
+\quad\Longrightarrow\quad
+\theta_t\downarrow,
+\end{equation}
+
+so that the direct short-run competition channel becomes more negative as
+market concentration increases.
+
+The corresponding posterior quantity is
+
+\begin{equation}
+\Pr\!\left(
+\gamma>0
+\mid
+\mathcal D
+\right).
+\end{equation}
+
+This prediction is stronger than the existence of the direct effect itself.
+The sign of $\theta_0$ is motivated by the endogenous cost-push channel,
+whereas the directional prediction for $\gamma$ additionally requires that
+the magnitude of that channel varies systematically with the competitive
+environment.
+
+% ------------------------------------------------
+\subsection{RQ4: Joint HSA Mechanism Consistency}
+% ------------------------------------------------
+
+\subsubsection*{Are the slope and dynamic competition channels jointly organized in the direction implied by the HSA mechanism?}
+
+The fourth research question evaluates the mechanism jointly rather than
+testing each coefficient in isolation. The empirical Phillips curve contains
+two conceptually distinct competition channels:
+
+\begin{equation}
+\underbrace{\kappa_t x_t}_{\text{competition-dependent slope channel}}
+\qquad\text{and}\qquad
+\underbrace{\theta_t\hat N_t}_{\text{direct dynamic competition channel}}.
+\end{equation}
+
+The first channel captures systematic variation in the conditional
+Phillips-curve slope across competitive environments. The second captures a
+direct inflation contribution from short-run competition dynamics that is not
+absorbed by the conventional forcing variable.
+
+For the orientation of $N_t$ maintained above, the full theory-consistent
+sign configuration is
+
+\begin{equation}
+\delta>0,
+\qquad
+\theta_0<0,
+\qquad
+\gamma>0.
+\label{eq:hsa_sign_region}
+\end{equation}
+
+Rather than reducing this multidimensional restriction to a single
+coefficient test, the Bayesian analysis evaluates the joint posterior
+probability
+
+\begin{equation}
+\Pr\!\left(
+\delta>0,\,
+\theta_0<0,\,
+\gamma>0
+\mid
+\mathcal D
+\right).
+\label{eq:joint_hsa_probability}
+\end{equation}
+
+This quantity measures how much posterior probability is assigned to the
+region in which all three directional implications of the empirical HSA
+mechanism hold simultaneously.
+
+The analysis also reports the three marginal directional probabilities
+
+\begin{equation}
+\Pr(\delta>0\mid\mathcal D),
+\qquad
+\Pr(\theta_0<0\mid\mathcal D),
+\qquad
+\Pr(\gamma>0\mid\mathcal D),
+\end{equation}
+
+so that a failure of joint mechanism consistency can be traced to a
+particular empirical channel.
+
+% ------------------------------------------------
+\subsection{Nested Model Interpretation}
+% ------------------------------------------------
+
+The research questions generate a nested sequence of empirical
+specifications:
+
+\begin{align}
+\text{Model 1:}\qquad
+& \delta=\theta_0=\gamma=0,
+\\
+\text{Model 2:}\qquad
+& \delta\ \text{free},
+\qquad
+\theta_0=\gamma=0,
+\\
+\text{Model 3:}\qquad
+& \delta,\theta_0\ \text{free},
+\qquad
+\gamma=0,
+\\
+\text{Model 4:}\qquad
+& \delta,\theta_0,\gamma\ \text{free}.
+\end{align}
+
+Model 1 is the competition-invariant benchmark. It allows a conventional
+Phillips-curve relationship but rules out both competition channels.
+
+Model 2 introduces the competition-dependent slope channel and therefore
+addresses RQ1.
+
+Model 3 additionally introduces the direct stationary competition channel
+and therefore addresses RQ2 while retaining the slope channel from Model 2.
+
+Model 4 allows the direct competition coefficient itself to vary with the
+slow-moving competitive environment and therefore addresses RQ3 and the full
+joint mechanism in RQ4.
+
+The sequence can therefore be summarized as
+
+\begin{equation}
+\text{Competition-Invariant}
+\;\longrightarrow\;
+\text{Slope Channel}
+\;\longrightarrow\;
+\text{Slope + Direct Channel}
+\;\longrightarrow\;
+\text{Full State-Dependent HSA}.
+\end{equation}
+
+Model comparison is based on posterior parameter distributions, marginal
+likelihoods, and predictive performance. The purpose is not only to determine
+whether a time-varying Phillips curve fits the data better, but also to
+determine whether its time variation is systematically linked to the
+competitive environment in the direction implied by the HSA mechanism.
+
+% ------------------------------------------------
+\subsection{Mechanism Decomposition}
+% ------------------------------------------------
+
+Conditional on the estimated state paths, Equation~\eqref{eq:empirical_nkpc}
+permits the competition-related contribution to inflation to be separated
+into two components.
+
+The slope channel is
+
+\begin{equation}
+C_t^{\mathrm{slope}}
+=
+\left(
+\kappa_t-\kappa_0
+\right)x_t
+=
+\delta\tilde N_t x_t,
+\end{equation}
+
+while the direct dynamic channel is
+
+\begin{equation}
+C_t^{\mathrm{dynamic}}
+=
+\theta_t\hat N_t
+=
+\left(
+\theta_0+\gamma\tilde N_t
+\right)\hat N_t.
+\end{equation}
+
+Their sum,
+
+\begin{equation}
+C_t^{\mathrm{HSA}}
+=
+C_t^{\mathrm{slope}}
++
+C_t^{\mathrm{dynamic}},
+\end{equation}
+
+provides an empirical decomposition of the competition-related component of
+fitted inflation.
+
+This decomposition distinguishes a change in the conditional transmission
+of the forcing variable from a separate short-run competition contribution.
+It therefore provides the empirical basis for assessing whether the observed
+flattening is primarily associated with a changing Phillips-curve slope, a
+distinct dynamic competition channel, or both.
+
+% ================================================================
+\section{Case 1: Quarterly Joint Estimation with Capital IQ Competition Data}
+% ================================================================
+
+Capital IQ provides a quarterly competition measure, so inflation and
+competition are jointly observed at the quarterly frequency. The competition
+series is decomposed into a slow-moving component and a stationary cyclical
+component.
+
+\begin{equation}
+\mathbf{s}_t
+=
+\begin{bmatrix}
+\tilde N_t \\
+\hat N_t
+\end{bmatrix},
+\qquad
+\tilde N_t=\bar N_t-N_0,
+\qquad
+n_t^{\mathrm{CIQ}}=N_t^{\mathrm{CIQ}}-N_0.
+\end{equation}
+
+The transition equation is
+
+\begin{equation}
+\mathbf{s}_t
+=
+\mathbf F\mathbf{s}_{t-1}
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf F
+=
+\begin{bmatrix}
+1 & 0 \\
+0 & \rho_N
+\end{bmatrix},
+\qquad
+|\rho_N|<1.
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\eta}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf Q),
+\qquad
+\mathbf Q
+=
+\begin{bmatrix}
+\sigma_{\bar N}^2 & 0 \\
+0 & \sigma_{\hat N}^2
+\end{bmatrix}.
+\end{equation}
+
+The joint observation vector and measurement disturbances are
+
+\begin{equation}
+\mathbf y_t
+=
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{CIQ}}
+\end{bmatrix},
+\qquad
+\boldsymbol{\varepsilon}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf R),
+\qquad
+\mathbf R
+=
+\begin{bmatrix}
+\sigma_\pi^2 & 0 \\
+0 & \sigma_{\nu,N}^2
+\end{bmatrix}.
+\end{equation}
+
+For compact notation, define
+
+\begin{equation}
+\mathbf d_t
+=
+\begin{bmatrix}
+\alpha E_t\pi_{t+1}+\kappa_0x_t \\
+0
+\end{bmatrix}.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 0: CES}
+% ------------------------------------------------
+
+The CES benchmark imposes a constant Phillips-curve slope and excludes any
+direct competition channel.
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+0 & 0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\delta=\theta_0=\gamma=0.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 1: HSA Competition Effect on Slope}
+% ------------------------------------------------
+
+Model 1 allows the slow-moving competitive environment to change the
+Phillips-curve slope.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+\delta x_t & 0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t.
+\end{equation}
+
+The specification remains conditionally linear and Gaussian because $x_t$
+is observed.
+
+
+% ------------------------------------------------
+\subsection{Model 2: HSA Direct Competition Channel}
+% ------------------------------------------------
+
+Model 2 keeps the Phillips-curve slope constant but allows the stationary
+competition state to affect inflation directly.
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+0 & \theta_0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\delta=\gamma=0.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 3: HSA Competition Dynamic Effect}
+% ------------------------------------------------
+
+Model 3 allows the loading on the stationary competition state to depend on
+the slow-moving competitive environment.
+
+\begin{equation}
+\theta_t=\theta_0+\gamma\tilde N_t,
+\qquad
+\delta=0.
+\end{equation}
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\mathbf h_3(\mathbf s_t)
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\mathbf h_3(\mathbf s_t)
+=
+\begin{bmatrix}
+\theta_0\hat N_t+\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}.
+\end{equation}
+
+Because the inflation equation contains the product
+$\tilde N_t\hat N_t$, the measurement equation is bilinear in the latent
+states.
+
+
+% ------------------------------------------------
+\subsection{Model 4: HSA Joint Competition Effect on Slope and Direct Competition Channel}
+% ------------------------------------------------
+
+Model 4 combines the competition-dependent slope and the state-dependent
+direct competition channel.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\theta_t=\theta_0+\gamma\tilde N_t.
+\end{equation}
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\mathbf h_4(\mathbf s_t)
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\mathbf h_4(\mathbf s_t)
+=
+\begin{bmatrix}
+\delta x_t\tilde N_t
++\theta_0\hat N_t
++\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}.
+\end{equation}
+
+The competition-related contribution to inflation can be decomposed as
+
+\begin{equation}
+C_t^{\mathrm{slope}}=\delta\tilde N_t x_t,
+\qquad
+C_t^{\mathrm{direct}}=\theta_0\hat N_t,
+\qquad
+C_t^{\mathrm{interaction}}=\gamma\tilde N_t\hat N_t.
+\end{equation}
+
+\begin{equation}
+C_t^{\mathrm{dynamic}}
+=
+C_t^{\mathrm{direct}}+C_t^{\mathrm{interaction}},
+\qquad
+C_t^{\mathrm{HSA}}
+=
+C_t^{\mathrm{slope}}+C_t^{\mathrm{dynamic}}.
+\end{equation}
+
+
+
+% ================================================================
+\section{Case 2: Quarterly Joint Estimation with Interpolated Gustavo Competition Data}
+% ================================================================
+
+The annual Gustavo competition series is first interpolated to the quarterly
+frequency. The resulting quarterly series is treated as the observed
+competition measure in the joint state-space system.
+
+\begin{equation}
+\mathbf{s}_t
+=
+\begin{bmatrix}
+\tilde N_t \\
+\hat N_t
+\end{bmatrix},
+\qquad
+\tilde N_t=\bar N_t-N_0,
+\qquad
+n_t^{\mathrm{G,PCHIP}}
+=
+N_t^{\mathrm{G,PCHIP}}-N_0.
+\end{equation}
+
+\begin{equation}
+\mathbf{s}_t
+=
+\mathbf F\mathbf{s}_{t-1}
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf F
+=
+\begin{bmatrix}
+1 & 0 \\
+0 & \rho_N
+\end{bmatrix},
+\qquad
+|\rho_N|<1.
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\eta}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf Q),
+\qquad
+\mathbf Q
+=
+\begin{bmatrix}
+\sigma_{\bar N}^2 & 0 \\
+0 & \sigma_{\hat N}^2
+\end{bmatrix}.
+\end{equation}
+
+\begin{equation}
+\mathbf y_t
+=
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,PCHIP}}
+\end{bmatrix},
+\qquad
+\mathbf d_t
+=
+\begin{bmatrix}
+\alpha E_t\pi_{t+1}+\kappa_0x_t \\
+0
+\end{bmatrix}.
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\varepsilon}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf R),
+\qquad
+\mathbf R
+=
+\begin{bmatrix}
+\sigma_\pi^2 & 0 \\
+0 & \sigma_{\nu,N}^2
+\end{bmatrix}.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 0: CES}
+% ------------------------------------------------
+
+The CES benchmark excludes both HSA competition channels.
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+0 & 0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\delta=\theta_0=\gamma=0.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 1: HSA Competition Effect on Slope}
+% ------------------------------------------------
+
+The slow competition state shifts the conditional Phillips-curve slope.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+\delta x_t & 0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 2: HSA Direct Competition Channel}
+% ------------------------------------------------
+
+The stationary competition state enters inflation directly.
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+0 & \theta_0 \\
+1 & 1
+\end{bmatrix}
+\mathbf s_t
++
+\boldsymbol{\varepsilon}_t,
+\qquad
+\delta=\gamma=0.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 3: HSA Competition Dynamic Effect}
+% ------------------------------------------------
+
+The direct competition loading varies with the slow competitive environment.
+
+\begin{equation}
+\theta_t=\theta_0+\gamma\tilde N_t,
+\qquad
+\delta=0.
+\end{equation}
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+\theta_0\hat N_t+\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\boldsymbol{\varepsilon}_t.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 4: HSA Joint Competition Effect on Slope and Direct Competition Channel}
+% ------------------------------------------------
+
+The full HSA specification allows both competition channels to operate
+simultaneously.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\theta_t=\theta_0+\gamma\tilde N_t.
+\end{equation}
+
+\begin{equation}
+\mathbf y_t
+=
+\mathbf d_t
++
+\begin{bmatrix}
+\delta x_t\tilde N_t
++\theta_0\hat N_t
++\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\boldsymbol{\varepsilon}_t.
+\end{equation}
+
+\begin{equation}
+C_t^{\mathrm{slope}}=\delta\tilde N_t x_t,
+\qquad
+C_t^{\mathrm{direct}}=\theta_0\hat N_t,
+\qquad
+C_t^{\mathrm{interaction}}=\gamma\tilde N_t\hat N_t.
+\end{equation}
+
+
+
+% ================================================================
+\section{Case 3: Mixed-Frequency Joint Estimation with Gustavo Competition Data}
+% ================================================================
+
+The annual Gustavo competition measure is not interpolated. Instead, the
+observed annual value is assigned to Q4, while Q1--Q3 are left missing.
+The underlying competition process is nevertheless defined at the quarterly
+frequency and estimated jointly within the state-space model.
+
+\begin{equation}
+\mathbf s_t
+=
+\begin{bmatrix}
+\tilde N_t \\
+\hat N_t
+\end{bmatrix},
+\qquad
+\tilde N_t=\bar N_t-N_0.
+\end{equation}
+
+The quarterly latent competition states evolve according to
+
+\begin{equation}
+\mathbf s_t
+=
+\mathbf F\mathbf s_{t-1}
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf F
+=
+\begin{bmatrix}
+1 & 0 \\
+0 & \rho_N
+\end{bmatrix},
+\qquad
+|\rho_N|<1.
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\eta}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf Q),
+\qquad
+\mathbf Q
+=
+\begin{bmatrix}
+\sigma_{\bar N}^{2} & 0 \\
+0 & \sigma_{\hat N}^{2}
+\end{bmatrix}.
+\end{equation}
+
+The observed annual competition series is
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}
+=
+\begin{cases}
+N_t^{\mathrm G}-N_0,
+& t\in\mathcal Q_4, \\[4pt]
+\text{missing},
+& t\in\mathcal Q_1\cup\mathcal Q_2\cup\mathcal Q_3.
+\end{cases}
+\end{equation}
+
+Its measurement equation is
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}
+=
+\tilde N_t+\hat N_t+\nu_t^N,
+\qquad
+\nu_t^N\sim\mathcal N(0,\sigma_{\nu,N}^{2}),
+\qquad
+t\in\mathcal Q_4.
+\end{equation}
+
+For Q1--Q3, the competition observation is missing and therefore contributes
+no measurement density. The quarterly latent states continue to evolve
+through the transition equation and are inferred jointly from the complete
+state-space system.
+
+The inflation equation is observed every quarter. Define
+
+\begin{equation}
+d_t
+=
+\alpha E_t\pi_{t+1}+\kappa_0x_t,
+\qquad
+\varepsilon_t^\pi\sim\mathcal N(0,\sigma_\pi^2).
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 0: CES}
+% ------------------------------------------------
+
+The CES benchmark excludes competition from the inflation equation.
+
+\begin{equation}
+\pi_t
+=
+d_t+\varepsilon_t^\pi,
+\qquad
+\delta=\theta_0=\gamma=0.
+\end{equation}
+
+Together with the competition measurement equation,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+\nu_t^N
+\end{bmatrix},
+\qquad
+t\in\mathcal Q_4.
+\end{equation}
+
+For Q1--Q3 only the first measurement equation is observed.
+
+
+% ------------------------------------------------
+\subsection{Model 1: HSA Competition Effect on Slope}
+% ------------------------------------------------
+
+The slow-moving competition state changes the Phillips-curve slope.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\pi_t
+=
+d_t+\delta x_t\tilde N_t+\varepsilon_t^\pi.
+\end{equation}
+
+Thus, in Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\delta x_t\tilde N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+\nu_t^N
+\end{bmatrix}.
+\end{equation}
+
+In Q1--Q3, $n_t^{\mathrm{G,obs}}$ remains missing while the latent quarterly
+competition states are propagated by the transition equation.
+
+
+% ------------------------------------------------
+\subsection{Model 2: HSA Direct Competition Channel}
+% ------------------------------------------------
+
+The stationary competition state enters inflation directly.
+
+\begin{equation}
+\pi_t
+=
+d_t+\theta_0\hat N_t+\varepsilon_t^\pi,
+\qquad
+\delta=\gamma=0.
+\end{equation}
+
+In Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\theta_0\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+\nu_t^N
+\end{bmatrix}.
+\end{equation}
+
+In Q1--Q3, quarterly inflation helps update the latent competition state
+through its direct loading even though the annual competition observation
+is missing.
+
+
+% ------------------------------------------------
+\subsection{Model 3: HSA Competition Dynamic Effect}
+% ------------------------------------------------
+
+The direct loading itself varies with the slow-moving competition state.
+
+\begin{equation}
+\theta_t=\theta_0+\gamma\tilde N_t,
+\qquad
+\pi_t
+=
+d_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+In Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\theta_0\hat N_t+\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+\nu_t^N
+\end{bmatrix}.
+\end{equation}
+
+Because $\tilde N_t\hat N_t$ enters the inflation equation, this specification
+has a bilinear measurement equation.
+
+
+% ------------------------------------------------
+\subsection{Model 4: HSA Joint Competition Effect on Slope and Direct Competition Channel}
+% ------------------------------------------------
+
+The full specification combines the slope and dynamic competition channels.
+
+\begin{equation}
+\kappa_t=\kappa_0+\delta\tilde N_t,
+\qquad
+\theta_t=\theta_0+\gamma\tilde N_t.
+\end{equation}
+
+\begin{equation}
+\pi_t
+=
+d_t
++
+\delta x_t\tilde N_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+In Q4, the complete measurement system is
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t
++\delta x_t\tilde N_t
++\theta_0\hat N_t
++\gamma\tilde N_t\hat N_t
+\\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+\nu_t^N
+\end{bmatrix}.
+\end{equation}
+
+In Q1--Q3,
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}=\text{missing},
+\end{equation}
+
+so only the quarterly inflation measurement is used. The latent competition
+states are not interpolated beforehand; their quarterly paths are inferred
+inside the state-space model from the transition dynamics, the Q4 competition
+observations, and the quarterly inflation equation.
+
+\begin{equation}
+C_t^{\mathrm{slope}}=\delta\tilde N_t x_t,
+\qquad
+C_t^{\mathrm{direct}}=\theta_0\hat N_t,
+\qquad
+C_t^{\mathrm{interaction}}=\gamma\tilde N_t\hat N_t.
+\end{equation}
+
+% ================================================================
+\section{Case 4: Mixed-Frequency Joint Estimation with Gustavo Competition Data and Number of Establishments}
+% ================================================================
+
+The annual Gustavo competition measure is observed only in Q4 and is not
+interpolated. Quarterly movements between the annual observations are inferred
+within the state-space model using both the latent competition dynamics and
+quarterly changes in the number of establishments.
+
+Let $E_t$ denote the quarterly number of establishments and define the
+demeaned quarterly establishment-growth signal as
+
+\begin{equation}
+g_t^{E}
+=
+\Delta\log E_t
+-
+\overline{\Delta\log E}.
+\end{equation}
+
+The establishment series is used as an auxiliary signal for short-run
+business-demography movements rather than as a direct measure of competition.
+
+The latent competition state is
+
+\begin{equation}
+\mathbf s_t
+=
+\begin{bmatrix}
+\tilde N_t \\
+\hat N_t
+\end{bmatrix},
+\qquad
+\tilde N_t=\bar N_t-N_0.
+\end{equation}
+
+The quarterly transition equation is
+
+\begin{equation}
+\mathbf s_t
+=
+\mathbf F\mathbf s_{t-1}
++
+\mathbf B g_t^{E}
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf F
+=
+\begin{bmatrix}
+1 & 0 \\
+0 & \rho_N
+\end{bmatrix},
+\qquad
+\mathbf B
+=
+\begin{bmatrix}
+0 \\
+\lambda_E
+\end{bmatrix}.
+\end{equation}
+
+Equivalently,
+
+\begin{equation}
+\tilde N_t
+=
+\tilde N_{t-1}+\eta_t^{\bar N},
+\qquad
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\lambda_E g_t^{E}
++
+\eta_t^{\hat N},
+\qquad
+|\rho_N|<1.
+\end{equation}
+
+The state innovations satisfy
+
+\begin{equation}
+\boldsymbol{\eta}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf Q),
+\qquad
+\mathbf Q
+=
+\begin{bmatrix}
+\sigma_{\bar N}^{2} & 0 \\
+0 & \sigma_{\hat N}^{2}
+\end{bmatrix}.
+\end{equation}
+
+Thus, $\rho_N$ captures persistence in short-run competition dynamics, while
+$\lambda_E$ determines how quarterly establishment fluctuations inform the
+latent competition state.
+
+The annual Gustavo observation is retained only in Q4:
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}
+=
+\begin{cases}
+N_t^{\mathrm G}-N_0,
+& t\in\mathcal Q_4, \\[4pt]
+\text{missing},
+& t\in\mathcal Q_1\cup\mathcal Q_2\cup\mathcal Q_3.
+\end{cases}
+\end{equation}
+
+At every observed Q4, the latent states are required to reproduce the Gustavo
+competition measure exactly:
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}
+=
+\begin{bmatrix}
+1 & 1
+\end{bmatrix}
+\mathbf s_t
+=
+\tilde N_t+\hat N_t,
+\qquad
+t\in\mathcal Q_4.
+\end{equation}
+
+Hence, the annual observations act as exact anchors for the quarterly latent
+competition path. In Q1--Q3, no artificial competition observation is created;
+the missing quarterly values are inferred from the transition dynamics,
+establishment fluctuations, and the inflation equation.
+
+For compact notation, define
+
+\begin{equation}
+d_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t,
+\qquad
+\varepsilon_t^\pi
+\sim
+\mathcal N(0,\sigma_\pi^2).
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 0: CES}
+% ------------------------------------------------
+
+The CES benchmark uses establishment growth only to recover the latent
+competition path; competition does not enter the inflation equation.
+
+\begin{equation}
+\pi_t
+=
+d_t+\varepsilon_t^\pi,
+\qquad
+\delta=\theta_0=\gamma=0.
+\end{equation}
+
+In Q4, the joint measurement system is
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t \\
+1 & 1
+\end{bmatrix}
+\begin{bmatrix}
+1 \\
+\mathbf s_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+0
+\end{bmatrix},
+\qquad
+t\in\mathcal Q_4.
+\end{equation}
+
+In Q1--Q3, the second observation is missing.
+
+
+% ------------------------------------------------
+\subsection{Model 1: HSA Competition Effect on Slope}
+% ------------------------------------------------
+
+The slow-moving competition state determines the time-varying
+Phillips-curve slope.
+
+\begin{equation}
+\kappa_t
+=
+\kappa_0+\delta\tilde N_t,
+\qquad
+\pi_t
+=
+d_t+\delta x_t\tilde N_t+\varepsilon_t^\pi.
+\end{equation}
+
+In Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\delta x_t\tilde N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+0
+\end{bmatrix}.
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{Model 2: HSA Direct Competition Channel}
+% ------------------------------------------------
+
+The stationary competition state directly affects quarterly inflation.
+
+\begin{equation}
+\pi_t
+=
+d_t+\theta_0\hat N_t+\varepsilon_t^\pi,
+\qquad
+\delta=\gamma=0.
+\end{equation}
+
+In Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\theta_0\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+0
+\end{bmatrix}.
+\end{equation}
+
+In Q1--Q3, both establishment growth and quarterly inflation provide
+information about the unobserved competition state.
+
+
+% ------------------------------------------------
+\subsection{Model 3: HSA Competition Dynamic Effect}
+% ------------------------------------------------
+
+The direct competition loading varies with the slow-moving competition
+environment.
+
+\begin{equation}
+\theta_t
+=
+\theta_0+\gamma\tilde N_t,
+\qquad
+\delta=0.
+\end{equation}
+
+\begin{equation}
+\pi_t
+=
+d_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+In Q4,
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t+\theta_0\hat N_t+\gamma\tilde N_t\hat N_t \\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+0
+\end{bmatrix}.
+\end{equation}
+
+The interaction $\tilde N_t\hat N_t$ makes the inflation measurement equation
+bilinear in the latent states.
+
+
+% ------------------------------------------------
+\subsection{Model 4: HSA Joint Competition Effect on Slope and Direct Competition Channel}
+% ------------------------------------------------
+
+The full specification combines the competition-dependent slope and dynamic
+competition channels.
+
+\begin{equation}
+\kappa_t
+=
+\kappa_0+\delta\tilde N_t,
+\qquad
+\theta_t
+=
+\theta_0+\gamma\tilde N_t.
+\end{equation}
+
+\begin{equation}
+\pi_t
+=
+d_t
++
+\delta x_t\tilde N_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+In Q4, the complete measurement system is
+
+\begin{equation}
+\begin{bmatrix}
+\pi_t \\
+n_t^{\mathrm{G,obs}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+d_t
++\delta x_t\tilde N_t
++\theta_0\hat N_t
++\gamma\tilde N_t\hat N_t
+\\
+\tilde N_t+\hat N_t
+\end{bmatrix}
++
+\begin{bmatrix}
+\varepsilon_t^\pi \\
+0
+\end{bmatrix}.
+\end{equation}
+
+In Q1--Q3,
+
+\begin{equation}
+n_t^{\mathrm{G,obs}}=\text{missing},
+\qquad
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\lambda_E g_t^E
++
+\eta_t^{\hat N}.
+\end{equation}
+
+The latent quarterly competition path therefore combines three sources of
+information: persistence in competition, quarterly business-demography
+movements, and the inflation equation, while every observed Q4 value remains
+exactly anchored to the original annual Gustavo series.
+
+\begin{equation}
+C_t^{\mathrm{slope}}=\delta\tilde N_t x_t,
+\qquad
+C_t^{\mathrm{direct}}=\theta_0\hat N_t,
+\qquad
+C_t^{\mathrm{interaction}}=\gamma\tilde N_t\hat N_t.
+\end{equation}
+
+% ================================================================
+\section{How to Estimate the Model}
+% ================================================================
+
+The estimation strategy is Bayesian. The computational method is organized
+according to the structure of each model:
+
+\begin{equation}
+\text{CES}
+\;:\;
+\text{Gibbs Sampling},
+\qquad
+\text{HSA Models 1--2}
+\;:\;
+\text{Gibbs Sampling + FFBS},
+\end{equation}
+
+\begin{equation}
+\text{HSA Models 3--4}
+\;:\;
+\text{Gibbs Sampling + Blocked Conditional FFBS}.
+\end{equation}
+
+This strategy applies to all four data cases. Case 4 differs only in its
+state transition equation, which additionally uses quarterly establishment
+growth as an observed transition input.
+
+% ------------------------------------------------
+\subsection{CES Benchmark: Gibbs Sampling}
+% ------------------------------------------------
+
+The CES benchmark is
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t
++
+\varepsilon_t^\pi,
+\qquad
+\varepsilon_t^\pi
+\sim
+\mathcal N(0,\sigma_\pi^2).
+\end{equation}
+
+Define
+
+\begin{equation}
+\boldsymbol{\beta}_0
+=
+\begin{bmatrix}
+\alpha\\
+\kappa_0
+\end{bmatrix},
+\qquad
+\mathbf z_t
+=
+\begin{bmatrix}
+E_t\pi_{t+1}\\
+x_t
+\end{bmatrix}.
+\end{equation}
+
+Stacking over $t$ gives
+
+\begin{equation}
+\boldsymbol{\pi}
+=
+\mathbf Z\boldsymbol{\beta}_0
++
+\boldsymbol{\varepsilon}^{\pi},
+\qquad
+\boldsymbol{\varepsilon}^{\pi}
+\sim
+\mathcal N
+\left(
+\mathbf 0,
+\sigma_\pi^2\mathbf I
+\right).
+\end{equation}
+
+With
+
+\begin{equation}
+\boldsymbol{\beta}_0
+\sim
+\mathcal N(\mathbf b_0,\mathbf V_0),
+\qquad
+\sigma_\pi^2
+\sim
+\operatorname{IG}(a_{\pi,0},b_{\pi,0}),
+\end{equation}
+
+the posterior coefficient update is
+
+\begin{equation}
+\mathbf V_n^{-1}
+=
+\mathbf V_0^{-1}
++
+\frac{1}{\sigma_\pi^2}
+\mathbf Z^\prime\mathbf Z,
+\end{equation}
+
+\begin{equation}
+\mathbf b_n
+=
+\mathbf V_n
+\left(
+\mathbf V_0^{-1}\mathbf b_0
++
+\frac{1}{\sigma_\pi^2}
+\mathbf Z^\prime\boldsymbol{\pi}
+\right),
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\beta}_0\mid\cdot
+\sim
+\mathcal N(\mathbf b_n,\mathbf V_n).
+\end{equation}
+
+The variance update is
+
+\begin{equation}
+\sigma_\pi^2\mid\cdot
+\sim
+\operatorname{IG}
+\left(
+a_{\pi,0}+\frac{T}{2},
+\;
+b_{\pi,0}
++
+\frac12
+(\boldsymbol{\pi}-\mathbf Z\boldsymbol{\beta}_0)^\prime
+(\boldsymbol{\pi}-\mathbf Z\boldsymbol{\beta}_0)
+\right).
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{HSA Models 1--2: Gibbs Sampling with FFBS}
+% ------------------------------------------------
+
+For Cases 1--3, the latent competition state is
+
+\begin{equation}
+\mathbf s_t
+=
+\begin{bmatrix}
+\tilde N_t\\
+\hat N_t
+\end{bmatrix},
+\end{equation}
+
+with transition equation
+
+\begin{equation}
+\mathbf s_t
+=
+\mathbf F\mathbf s_{t-1}
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf F
+=
+\begin{bmatrix}
+1&0\\
+0&\rho_N
+\end{bmatrix}.
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\eta}_t
+\sim
+\mathcal N(\mathbf 0,\mathbf Q),
+\qquad
+\mathbf Q
+=
+\begin{bmatrix}
+\sigma_{\bar N}^2&0\\
+0&\sigma_{\hat N}^2
+\end{bmatrix}.
+\end{equation}
+
+For Case 4, establishment growth enters the state transition as an observed
+input:
+
+\begin{equation}
+\mathbf s_t
+=
+\mathbf F\mathbf s_{t-1}
++
+\mathbf B g_t^E
++
+\boldsymbol{\eta}_t,
+\qquad
+\mathbf B
+=
+\begin{bmatrix}
+0\\
+\lambda_E
+\end{bmatrix}.
+\end{equation}
+
+Thus,
+
+\begin{equation}
+\tilde N_t
+=
+\tilde N_{t-1}
++
+\eta_t^{\bar N},
+\qquad
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\lambda_Eg_t^E
++
+\eta_t^{\hat N}.
+\end{equation}
+
+Models 1 and 2 are conditionally linear Gaussian.
+
+For Model 1,
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t
++
+\delta x_t\tilde N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+For Model 2,
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t
++
+\theta_0\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+The complete state path is therefore drawn jointly by FFBS.
+
+% ------------------------------------------------
+\subsubsection{Forward Filtering}
+% ------------------------------------------------
+
+Write the conditional linear-Gaussian system as
+
+\begin{equation}
+\mathbf s_t
+=
+\mathbf c_t
++
+\mathbf F_t\mathbf s_{t-1}
++
+\mathbf w_t,
+\qquad
+\mathbf y_t
+=
+\mathbf d_t
++
+\mathbf H_t\mathbf s_t
++
+\mathbf v_t,
+\end{equation}
+
+with
+
+\begin{equation}
+\mathbf w_t\sim\mathcal N(\mathbf 0,\mathbf Q_t),
+\qquad
+\mathbf v_t\sim\mathcal N(\mathbf 0,\mathbf R_t).
+\end{equation}
+
+If
+
+\begin{equation}
+\mathbf s_{t-1}\mid\mathbf y_{1:t-1}
+\sim
+\mathcal N(\mathbf m_{t-1},\mathbf C_{t-1}),
+\end{equation}
+
+then the prediction step is
+
+\begin{equation}
+\mathbf a_t
+=
+\mathbf c_t+\mathbf F_t\mathbf m_{t-1},
+\qquad
+\mathbf P_t
+=
+\mathbf F_t\mathbf C_{t-1}\mathbf F_t^\prime+\mathbf Q_t.
+\end{equation}
+
+The innovation is
+
+\begin{equation}
+\mathbf v_t^y
+=
+\mathbf y_t-\mathbf d_t-\mathbf H_t\mathbf a_t,
+\qquad
+\mathbf S_t^y
+=
+\mathbf H_t\mathbf P_t\mathbf H_t^\prime+\mathbf R_t.
+\end{equation}
+
+The Kalman gain and filtering update are
+
+\begin{equation}
+\mathbf K_t
+=
+\mathbf P_t\mathbf H_t^\prime
+(\mathbf S_t^y)^{-1},
+\end{equation}
+
+\begin{equation}
+\mathbf m_t
+=
+\mathbf a_t+\mathbf K_t\mathbf v_t^y,
+\qquad
+\mathbf C_t
+=
+\mathbf P_t
+-
+\mathbf K_t\mathbf S_t^y\mathbf K_t^\prime.
+\end{equation}
+
+For mixed-frequency Cases 3 and 4, the competition observation is missing in
+Q1--Q3. The missing measurement row is simply omitted from the Kalman update.
+No quarterly competition observation is interpolated.
+
+% ------------------------------------------------
+\subsubsection{Backward Simulation}
+% ------------------------------------------------
+
+At the final period,
+
+\begin{equation}
+\mathbf s_T
+\sim
+\mathcal N(\mathbf m_T,\mathbf C_T).
+\end{equation}
+
+For $t=T-1,\ldots,1$,
+
+\begin{equation}
+\mathbf J_t
+=
+\mathbf C_t\mathbf F_{t+1}^\prime
+\mathbf P_{t+1}^{-1}.
+\end{equation}
+
+Then
+
+\begin{equation}
+\mathbf s_t
+\mid
+\mathbf s_{t+1},\mathbf y_{1:T}
+\sim
+\mathcal N
+\left(
+\mathbf m_t
++
+\mathbf J_t
+(\mathbf s_{t+1}-\mathbf a_{t+1}),
+\;
+\mathbf C_t
+-
+\mathbf J_t\mathbf P_{t+1}\mathbf J_t^\prime
+\right).
+\end{equation}
+
+
+% ------------------------------------------------
+\subsection{HSA Models 3--4: Gibbs Sampling with Blocked Conditional FFBS}
+% ------------------------------------------------
+
+Models 3 and 4 contain the bilinear term
+
+\begin{equation}
+\gamma\tilde N_t\hat N_t.
+\end{equation}
+
+The complete two-dimensional system is therefore not jointly linear in the
+latent states. Conditional on either latent state path, however, the other
+state enters linearly.
+
+For Model 3,
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+Conditional on $\hat N_{1:T}$,
+
+\begin{equation}
+\pi_t
+-
+\alpha E_t\pi_{t+1}
+-
+\kappa_0x_t
+-
+\theta_0\hat N_t
+=
+\gamma\hat N_t\tilde N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+Conditional on $\tilde N_{1:T}$,
+
+\begin{equation}
+\pi_t
+-
+\alpha E_t\pi_{t+1}
+-
+\kappa_0x_t
+=
+(\theta_0+\gamma\tilde N_t)\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+For Model 4,
+
+\begin{equation}
+\pi_t
+=
+\alpha E_t\pi_{t+1}
++
+\kappa_0x_t
++
+\delta x_t\tilde N_t
++
+\theta_0\hat N_t
++
+\gamma\tilde N_t\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+Conditional on $\hat N_{1:T}$,
+
+\begin{equation}
+\pi_t
+-
+\alpha E_t\pi_{t+1}
+-
+\kappa_0x_t
+-
+\theta_0\hat N_t
+=
+(\delta x_t+\gamma\hat N_t)\tilde N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+Conditional on $\tilde N_{1:T}$,
+
+\begin{equation}
+\pi_t
+-
+\alpha E_t\pi_{t+1}
+-
+\kappa_0x_t
+-
+\delta x_t\tilde N_t
+=
+(\theta_0+\gamma\tilde N_t)\hat N_t
++
+\varepsilon_t^\pi.
+\end{equation}
+
+Hence the Gibbs sampler alternates between two exact conditional FFBS draws:
+
+\begin{equation}
+\tilde N_{1:T}^{(g)}
+\sim
+p
+\left(
+\tilde N_{1:T}
+\mid
+\hat N_{1:T}^{(g-1)},
+\boldsymbol{\Theta}^{(g-1)},
+\mathcal D
+\right),
+\end{equation}
+
+\begin{equation}
+\hat N_{1:T}^{(g)}
+\sim
+p
+\left(
+\hat N_{1:T}
+\mid
+\tilde N_{1:T}^{(g)},
+\boldsymbol{\Theta}^{(g-1)},
+\mathcal D
+\right).
+\end{equation}
+
+The same blocked conditional FFBS strategy is used in Case 4. The
+establishment-growth term simply enters the conditional transition mean of
+$\hat N_t$.
+
+
+% ------------------------------------------------
+\subsection{Transition-Parameter Gibbs Updates}
+% ------------------------------------------------
+
+For Cases 1--3,
+
+\begin{equation}
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\eta_t^{\hat N}.
+\end{equation}
+
+For Case 4,
+
+\begin{equation}
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\lambda_E g_t^E
++
+\eta_t^{\hat N}.
+\end{equation}
+
+Thus Case 4 can be written as the Gaussian regression
+
+\begin{equation}
+\mathbf r_E
+=
+\mathbf X_E
+\begin{bmatrix}
+\rho_N\\
+\lambda_E
+\end{bmatrix}
++
+\boldsymbol{\eta}^{\hat N},
+\end{equation}
+
+where
+
+\begin{equation}
+\mathbf r_E
+=
+\begin{bmatrix}
+\hat N_2\\
+\vdots\\
+\hat N_T
+\end{bmatrix},
+\qquad
+\mathbf X_E
+=
+\begin{bmatrix}
+\hat N_1 & g_2^E\\
+\vdots & \vdots\\
+\hat N_{T-1} & g_T^E
+\end{bmatrix}.
+\end{equation}
+
+With a Gaussian prior, $(\rho_N,\lambda_E)$ has a Gaussian conditional
+posterior, truncated only to enforce $|\rho_N|<1$.
+
+The state residuals are
+
+\begin{equation}
+u_t^{\bar N}
+=
+\tilde N_t-\tilde N_{t-1},
+\end{equation}
+
+and
+
+\begin{equation}
+u_t^{\hat N}
+=
+\begin{cases}
+\hat N_t-\rho_N\hat N_{t-1},
+& \text{Cases 1--3},\\[4pt]
+\hat N_t-\rho_N\hat N_{t-1}-\lambda_Eg_t^E,
+& \text{Case 4}.
+\end{cases}
+\end{equation}
+
+The corresponding innovation variances are updated from inverse-gamma full
+conditionals.
+
+
+% ------------------------------------------------
+\subsection{Complete Gibbs Sweep}
+% ------------------------------------------------
+
+For HSA Models 1 and 2:
+
+\begin{enumerate}
+\item Draw the complete state path $\mathbf s_{1:T}$ by FFBS.
+\item Draw the inflation coefficients conditional on the state path.
+\item Draw $\sigma_\pi^2$.
+\item Draw the transition parameters $\rho_N$ and, in Case 4, $\lambda_E$.
+\item Draw the state-innovation variances and applicable measurement variance.
+\item Store the post-warm-up draw.
+\end{enumerate}
+
+For HSA Models 3 and 4:
+
+\begin{enumerate}
+\item Draw $\tilde N_{1:T}$ by FFBS conditional on $\hat N_{1:T}$.
+\item Draw $\hat N_{1:T}$ by FFBS conditional on $\tilde N_{1:T}$.
+\item Draw the inflation coefficients conditional on both state paths.
+\item Draw $\sigma_\pi^2$.
+\item Draw the transition parameters $\rho_N$ and, in Case 4, $\lambda_E$.
+\item Draw the state-innovation variances and applicable measurement variance.
+\item Store the post-warm-up draw.
+\end{enumerate}
+
+
+% ------------------------------------------------
+\subsection{Convergence and Computational Validation}
+% ------------------------------------------------
+
+All models are estimated using multiple dispersed chains. Convergence is
+assessed using
+
+\begin{equation}
+\widehat R,
+\qquad
+ESS_{\mathrm{bulk}},
+\qquad
+ESS_{\mathrm{tail}},
+\end{equation}
+
+together with trace plots and autocorrelation summaries.
+
+For Models 1 and 2, the full two-dimensional FFBS is used directly. For
+Models 3 and 4, the blocked conditional FFBS implementation is validated
+against the linear special case obtained by setting $\gamma=0$.
+
+For mixed-frequency Cases 3 and 4, Q1--Q3 remain missing throughout the
+estimation. The quarterly latent competition path is inferred by the
+state-space smoother rather than constructed by deterministic interpolation.
+
+\end{document}

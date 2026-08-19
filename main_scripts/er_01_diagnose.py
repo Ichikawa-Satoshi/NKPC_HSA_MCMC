@@ -23,8 +23,8 @@ at posterior-mean coefficients from the i.i.d. runs, so they are indicative
 rather than a joint posterior comparison. The order conclusion is not close
 enough for that to matter; the magnitudes are.
 
-    python production/main_scripts/er_01_diagnose.py                # all three
-    python production/main_scripts/er_01_diagnose.py --skip-monte-carlo
+    python main_scripts/er_01_diagnose.py                # all three
+    python main_scripts/er_01_diagnose.py --skip-monte-carlo
 """
 from __future__ import annotations
 
@@ -255,7 +255,7 @@ def main() -> None:
 
     if not glob.glob(args.runs_glob):
         raise SystemExit(
-            f"no runs matched {args.runs_glob}; run production/main_scripts/02_estimate_models.py first"
+            f"no runs matched {args.runs_glob}; run main_scripts/02_estimate_models.py first"
         )
 
     print("residual autocorrelation and order selection...")

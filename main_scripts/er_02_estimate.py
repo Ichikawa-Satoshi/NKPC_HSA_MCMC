@@ -1,6 +1,6 @@
 """Estimate the MA(3) error-structure runs.
 
-The error_robustness counterpart of ``production/main_scripts/02_estimate_models.py``. It reads
+The error_robustness counterpart of ``main_scripts/02_estimate_models.py``. It reads
 data specs from ``configs/models.yaml`` (via ``configs/error_robustness.yaml``),
 merges the psi prior into the chosen ``priors_*.yaml``, and writes run
 directories under ``results/error_robustness/runs/`` using the *same* directory
@@ -8,10 +8,10 @@ names ``results/runs/`` uses, so the two trees can be compared cell by cell.
 
 Nothing in ``results/runs/`` is read for writing or modified.
 
-    python production/main_scripts/er_02_estimate.py --quick                  # smoke test
-    python production/main_scripts/er_02_estimate.py                          # every configured cell
-    python production/main_scripts/er_02_estimate.py --model hsa_steady --data-spec unemployment_gap_core
-    python production/main_scripts/er_02_estimate.py --ma-order 0             # the nested iid control
+    python main_scripts/er_02_estimate.py --quick                  # smoke test
+    python main_scripts/er_02_estimate.py                          # every configured cell
+    python main_scripts/er_02_estimate.py --model hsa_steady --data-spec unemployment_gap_core
+    python main_scripts/er_02_estimate.py --ma-order 0             # the nested iid control
 """
 from __future__ import annotations
 

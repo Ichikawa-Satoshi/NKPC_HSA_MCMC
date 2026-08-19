@@ -3,7 +3,7 @@
 Particle Gibbs is now the ``run_model("hsa_full")`` state sampler for BOTH
 observation designs (see ``src/nkpc_hsa/models/hsa_full.py``). Previously only
 the 15 PCHIP cells had Particle-Gibbs runs, produced out-of-band by a monkeypatch
-in ``production/main_scripts/appendix_pg_full_runs.py``; the 15 annual-Q4 cells were still
+in ``main_scripts/appendix_pg_full_runs.py``; the 15 annual-Q4 cells were still
 alternating FFBS, so the PCHIP-vs-annual-Q4 comparison confounded the observation
 scheme with the sampler.
 
@@ -12,7 +12,7 @@ ordinary pipeline. Existing runs are never overwritten: each new run goes to its
 own directory with a ``_pg`` run-id suffix, and the report's run selector keeps
 the newest run-id per (model, data spec, prior) key.
 
-    python production/main_scripts/rerun_hsa_full_particle_gibbs.py [--quick]
+    python main_scripts/rerun_hsa_full_particle_gibbs.py [--quick]
 """
 from __future__ import annotations
 

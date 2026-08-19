@@ -15,7 +15,7 @@ from nkpc_hsa.dataprep.sec_hhi import (
 
 # The aggregate the estimated equation implies; see sec_hhi.SEC_INVERSE_HHI_COLUMNS.
 REQUIRED_SEC_COLUMN = "N_SEC_inverse_HHI_logrevw"
-REBUILD_HINT = "PYTHONPATH=src python production/main_scripts/calculate_sec_hhi_quarterly.py [--from-panel]"
+REBUILD_HINT = "PYTHONPATH=src python main_scripts/calculate_sec_hhi_quarterly.py [--from-panel]"
 
 
 def main() -> None:

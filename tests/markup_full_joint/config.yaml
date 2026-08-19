@@ -12,7 +12,7 @@ measurement:
   equation: "delta(qbar_t + qhat_t) = alpha_markup * delta(-log(mu_bus_t)) + r_markup_t + omega_t"
   loading_sign: positive
   markup_error: ar1
-  initialization_posterior: results/markup_measurement_experiment/semi_structural_joint_20260814/posterior/measurement_ar1.npz
+  initialization_posterior: tests/markup_measurement/results/posterior/measurement_ar1.npz
 
 inflation:
   price: core_cpi
