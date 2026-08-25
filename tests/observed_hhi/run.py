@@ -34,7 +34,7 @@ from tests.observed_hhi.functions import (
 
 BUNDLE_DIR = Path(__file__).resolve().parent
 # Results and figures live inside the test bundle (results/, results/figures/,
-# results/tables/). Generated content is git-ignored (see experiments/.gitignore).
+# results/tables/). Generated content is git-ignored (see tests/.gitignore).
 OUTPUT_DIR = BUNDLE_DIR / "results"
 
 
@@ -71,7 +71,7 @@ def _save_draws(fit: "ObservedHHIFit", task: dict[str, object], draws_dir: Path)
 
     Written per task from inside the worker process (distinct filenames, so the
     concurrent writes never collide). These arrays are large and reproducible,
-    so ``experiments/.gitignore`` keeps them out of version control.
+    so ``tests/.gitignore`` keeps them out of version control.
     """
     draws_dir.mkdir(parents=True, exist_ok=True)
     arrays: dict[str, np.ndarray] = {

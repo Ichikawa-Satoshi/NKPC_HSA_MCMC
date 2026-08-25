@@ -1,0 +1,93 @@
+revision: mixed-frequency-gustavo-capitaliq-v1
+
+sample:
+  state_start: 1974Q4
+  state_end: 2013Q4
+  coordinate_reference: 1993Q4
+  nkpc_start: 1993Q2
+  nkpc_end: 2013Q4
+
+data:
+  gustavo: N_Gustavo_annual_q4
+  capital_iq:
+    firm_weighted: N_capitaliq_firmw
+    revenue_weighted: N_capitaliq_revw
+  main_price: ppi
+  main_activity: inverse_markup
+  expectation: genuine_spf_one_quarter_ahead
+
+measurement:
+  gustavo_q4_variance: 0.0
+  omega_prior: [2.0, 8.0]
+  tau_halfnormal_scale_multiple: 1.0
+  damping_bounds: [0.25, 0.95]
+  damping_prior: [4.0, 3.0]
+  period_bounds: [6.0, 24.0]
+  period_prior_mean: 12.0
+  period_prior_sd: 4.0
+  loading_prior_mean: 1.0
+  loading_prior_sd: 1.5
+  intercept_prior_scale_multiple: 1.0
+  measurement_sd_prior_scale_multiple: 1.0
+  stable_raw_weight_max: 3.0
+  prior_covariance_scale: 0.25
+
+backtest:
+  blocks:
+    - [1998Q1, 1999Q4]
+    - [2004Q1, 2005Q4]
+    - [2010Q1, 2011Q4]
+  methods: [equal_allocation, average_allocation, mixed_frequency_state]
+  refit_parameters: true
+
+nkpc:
+  models: [direct_only, free_static_combined]
+  oil: [without_oil, with_oil]
+  error: iid
+
+sampling:
+  seed: 20260901
+  mock:
+    state_iterations: 1200
+    state_warmup: 400
+    state_thin: 2
+    state_chains: 2
+    proposal_scale: 0.18
+    nkpc_iterations: 1000
+    nkpc_warmup: 350
+    nkpc_thin: 2
+    nkpc_chains: 2
+  quick:
+    state_iterations: 5000
+    state_warmup: 1500
+    state_thin: 5
+    state_chains: 4
+    proposal_scale: 0.12
+    nkpc_iterations: 5000
+    nkpc_warmup: 1500
+    nkpc_thin: 5
+    nkpc_chains: 4
+  full:
+    state_iterations: 20000
+    state_warmup: 6000
+    state_thin: 7
+    state_chains: 4
+    proposal_scale: 0.10
+    nkpc_iterations: 12000
+    nkpc_warmup: 4000
+    nkpc_thin: 4
+    nkpc_chains: 4
+
+gates:
+  mock_max_rhat: 1.20
+  mock_min_bulk_ess: 50
+  quick_max_rhat: 1.05
+  quick_min_bulk_ess: 400
+  full_max_rhat: 1.01
+  full_min_bulk_ess: 800
+  max_q4_anchor_error: 1.0e-8
+  backtest_required_relative_rmse_improvement: 0.0
+  structural_p_positive_suggestive: 0.80
+  structural_p_positive_strong: 0.975
+  structural_max_posterior_prior_sd_ratio: 0.75
+

@@ -1,0 +1,94 @@
+revision: gustavo-state-capitaliq-cycle-qoq-v2
+
+sample:
+  state_start: 1974Q4
+  state_end: 2013Q4
+  cycle_start: 1993Q1
+  cycle_end: 2013Q4
+  nkpc_start: 1993Q2
+  nkpc_end: 2013Q4
+  coordinate_reference_year: 1993
+
+data:
+  gustavo: N_Gustavo_annual_q4
+  capital_iq:
+    firm_weighted: N_capitaliq_firmw
+    revenue_weighted: N_capitaliq_revw
+  prices:
+    ppi:
+      inflation: pi_ppi
+      inflation_lag: pi_ppi_lag1
+      expectation: expectation
+  activities:
+    inverse_markup: x_inverse_markup
+    negative_unemployment_gap: x_negative_unemployment_gap
+
+slow_state:
+  law: exact_q4_gaussian_bridge
+  coordinate: 10_log_points_relative_to_1993_gustavo
+  mu_prior_sd: 0.20
+  variance_prior_shape: 3.0
+  variance_prior_scale_multiple: 0.50
+
+capital_iq_cycle:
+  measurement: ciq_coordinate_equals_intercept_plus_loading_times_gustavo_state_plus_ar2_cycle_plus_error
+  coordinate: 10_log_points_relative_to_1993q4_capital_iq
+  slow_feedback: false
+  damping_bounds: [0.20, 0.95]
+  damping_prior: [4.0, 3.0]
+  period_bounds: [6.0, 24.0]
+  period_prior_mean: 12.0
+  period_prior_sd: 4.0
+  intercept_prior_scale: 2.0
+  loading_prior_sd: 2.0
+  cycle_sd_prior_scale: 1.0
+  measurement_sd_prior_scale: 1.0
+  integration_draws: 24
+  proposal_initial_scale: 0.35
+  slice_width: 0.40
+  slice_indices: [2, 3]
+  slice_stride: 3
+
+nkpc:
+  equation: annualized_qoq_constant_slope_plus_free_capital_iq_cycle
+  inflation_observation: 400_log_quarterly_difference
+  expectation: genuine_spf_one_quarter_ahead_annualized_log
+  error_models: [iid, persistent_ar1]
+  primary_error_model: iid
+  ar1_prior_mean: 0.0
+  ar1_prior_sd: 0.50
+  ar1_bounds: [-0.95, 0.95]
+  ar1_slice_width: 0.30
+  coefficient_scale: 0.20
+
+recovery:
+  primary_cycle: firm_weighted
+  modes: [propagated_state, oracle_state]
+  theta_grid: [0.0, 0.10, 0.30, 1.0, 3.0, 10.0]
+  replicates: 3
+  sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75
+  require_interval_excludes_zero: true
+
+sampling:
+  seed: 20260830
+  mock:
+    slow_draws_per_chain: 500
+    slow_chains: 2
+    cycle_iterations: 1800
+    cycle_warmup: 600
+    cycle_thin: 2
+    cycle_chains: 2
+    nkpc_iterations: 1000
+    nkpc_warmup: 350
+    nkpc_thin: 2
+    nkpc_chains: 2
+    recovery_iterations: 1200
+    recovery_warmup: 400
+    recovery_thin: 2
+    recovery_chains: 2
+
+gates:
+  mock_max_rhat: 1.20
+  mock_min_bulk_ess: 50
+  max_gustavo_anchor_error: 1.0e-10

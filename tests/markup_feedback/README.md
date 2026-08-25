@@ -18,9 +18,14 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 ## Run
 
 ```bash
-python experiments/markup_feedback/run.py --quick   # smoke
-python experiments/markup_feedback/run.py           # full
+python tests/markup_measurement/run.py
+python tests/markup_feedback/run.py
 ```
+
+This bundle has no `--quick` switch. It performs the single feedback grid declared
+in `config.yaml` and consumes the saved markup-measurement posterior. The saved
+importance calculation is an exploratory overlap diagnostic, not a full-joint
+MCMC estimate.
 
 ## Consumed input
 

@@ -1,0 +1,64 @@
+revision: capital-iq-quarterly-observed-ar2-v1
+
+data:
+  file: model_ready.csv
+  expectation: Epi
+  n_variants:
+    firm_weighted: N_capitaliq_firmw
+    revenue_weighted: N_capitaliq_revw
+
+# Three representative price/activity cells, following tests/observed_hhi.
+cells:
+  - id: 1
+    inflation: ppi
+    activity: inverse_markup
+    label: PPI / inverse markup
+  - id: 2
+    inflation: cpi
+    activity: output_gap_hp
+    label: CPI / HP output gap
+  - id: 3
+    inflation: core_cpi
+    activity: negative_unemployment_gap
+    label: Core CPI / negative unemployment gap
+
+columns:
+  inflation:
+    ppi: [pi_ppi, pi_ppi_prev]
+    cpi: [pi_cpi, pi_cpi_prev]
+    core_cpi: [pi_cpi_core, pi_cpi_core_prev]
+  activity:
+    inverse_markup: markup_BN_inv
+    output_gap_hp: output_gap_HP
+    negative_unemployment_gap: unemp_gap
+
+design:
+  fast_definition: ar2_innovation
+  environment_definition: total
+  timing: current
+  model_variant: constant_theta
+  error_models: [persistent_ar1, iid]
+  primary_error_model: persistent_ar1
+  zeta_reference: 6.0
+  b_x: 1.0
+
+sampling:
+  iterations: 20000
+  warmup: 5000
+  thin: 5
+  chains: 4
+  seed: 20260818
+
+quick_sampling:
+  iterations: 2000
+  warmup: 500
+  thin: 2
+  chains: 2
+
+gates:
+  smoke:
+    max_rhat: 1.10
+    min_bulk_ess: 50
+  production:
+    max_rhat: 1.01
+    min_bulk_ess: 400

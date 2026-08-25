@@ -1,0 +1,49 @@
+revision: gustavo-state-capitaliq-cycle-qoq-oil-control-v1
+
+oil:
+  source: raw/others/WTISPLC_CPIAUCSL.csv
+  series: WTISPLC_CPIAUCSL
+  interpretation: FRED-derived real WTI-to-CPI index
+  transformation: 400_log_quarterly_difference
+  terms: [current, lag1]
+  coefficient_prior_mean: 0.0
+  standardized_effect_prior_sd: 1.0
+
+prices: [ppi, core_cpi]
+models: [direct_only, free_combined, varying_theta, free_dynamic, hsa_restricted_dynamic]
+
+sampling:
+  static: {iterations: 2000, warmup: 600, thin: 2, chains: 4}
+  dynamic: {iterations: 5000, warmup: 1500, thin: 2, chains: 4}
+  static_recovery: {iterations: 1000, warmup: 350, thin: 2, chains: 2}
+  dynamic_recovery: {iterations: 1200, warmup: 400, thin: 2, chains: 2}
+  seed_offset: 419000000
+
+comparison:
+  holdout_start: 2010Q1
+
+static_recovery:
+  scenarios:
+    "null": [0.00, 0.00]
+    both_observed: [0.06, 0.11]
+    both_moderate: [0.20, 0.20]
+    both_large: [0.40, 0.40]
+  modes: [propagated_state, oracle_state]
+  replicates: 20
+
+dynamic_recovery:
+  scenarios:
+    theta_only: [0.11, 0.00]
+    gamma_observed_scale: [0.11, 0.10]
+    gamma_moderate: [0.11, 0.20]
+  modes: [propagated_state, oracle_state]
+  replicates: 20
+
+gates:
+  observed_max_rhat: 1.05
+  observed_min_bulk_ess: 400
+  recovery_max_rhat: 1.10
+  recovery_min_bulk_ess: 100
+  suggestive_sign_probability: 0.80
+  strong_sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75

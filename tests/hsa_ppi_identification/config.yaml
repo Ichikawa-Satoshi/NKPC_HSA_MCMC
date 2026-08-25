@@ -1,0 +1,55 @@
+revision: hsa-ppi-identification-v1
+
+# The theory-near HSA cell: Capital IQ firm-weighted competition x PPI inflation
+# x inverse-markup activity x SPF expectations. The competition level term (psi)
+# is EXCLUDED: it is an empirical control, not part of the structural HSA NKPC.
+cell:
+  inflation: [pi_ppi, pi_ppi_prev]
+  expectation: Epi_spf_gdp
+  competition: N_capitaliq_firmw    # effective firms N = 1/HHI, firm-weighted
+
+# Two activity cells. inverse_markup is the theory/HSA-restriction cell (b_x maps
+# inverse markup -> marginal cost); neg_unemp_gap is the slack cell where the base
+# slope kappa_0 is theory-consistently positive. The first is the primary cell.
+activities:
+  inverse_markup:
+    column: markup_BN_inv
+    label: "inverse markup (marginal-cost proxy; HSA-restriction cell)"
+  neg_unemp_gap:
+    column: unemp_gap
+    label: "negative unemployment gap (slack; theory-consistent kappa_0)"
+primary_activity: inverse_markup
+
+# Estimation samples. The primary sample drops the 1989-1995 Capital IQ database
+# coverage ramp (artefactual +16%/yr firm-count growth). markup_BN_inv ends 2017Q4.
+samples:
+  full: 1989Q4
+  primary: 1996Q1
+  conservative: 2000Q1
+
+design:
+  fast_definition: ewma_hl8         # cyclical competition = one-sided EWMA innovation, 8q half-life
+  timing: lag1                      # competition affects inflation with a one-quarter lag
+  include_level: false              # psi OFF (not in HSA theory)
+  error_model: persistent_ar1       # AR(1) inflation disturbance
+  zeta_reference: 6.0               # demand elasticity for the HSA restriction kappa_1 = b_x*zeta*theta
+  b_x: 1.0                          # unit-scale inverse-markup -> marginal-cost mapping
+  model_variants: [constant_theta, varying_theta, quadratic_theta, hsa_restricted]
+
+sampling:
+  iterations: 12000
+  warmup: 4000
+  thin: 4
+  chains: 4
+  seed: 20260823
+
+# Temporal-disaggregation competition series (annual Gustavo level + Capital IQ
+# within-year allocation). Runs over the full Gustavo span 1974-2013, which
+# includes the pre-1985 steep-Phillips era.
+gustavo_capiq:
+  samples:
+    long: 1974Q4          # full Gustavo span (incl. steep-Phillips era)
+    ramp_excluded: 1996Q1
+
+gates:
+  max_rhat: 1.05

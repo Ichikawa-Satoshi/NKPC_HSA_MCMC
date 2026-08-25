@@ -18,8 +18,8 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 ## Run
 
 ```bash
-python experiments/nolag_price_gap/run.py --quick   # smoke
-python experiments/nolag_price_gap/run.py           # full
+python tests/nolag_price_gap/run.py --quick   # smoke
+python tests/nolag_price_gap/run.py           # full
 ```
 
 ## Consumed input

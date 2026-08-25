@@ -1,0 +1,43 @@
+revision: gustavo-state-capitaliq-cycle-qoq-dynamic-v1
+
+models: [varying_theta, free_dynamic, hsa_restricted_dynamic]
+
+priors:
+  coefficient_scale: 0.20
+  lambda_mean: 0.0
+  lambda_sd: 10.0
+
+sampling:
+  iterations: 5000
+  warmup: 1500
+  thin: 2
+  chains: 4
+  seed_offset: 131000000
+
+comparison:
+  primary_error_model: iid
+  robustness_error_model: persistent_ar1
+  holdout_start: 2010Q1
+
+varying_theta_recovery:
+  cycle: firm_weighted
+  activity: ppi_negative_unemployment_gap
+  error_model: iid
+  modes: [propagated_state, oracle_state]
+  scenarios:
+    theta_only: [0.11, 0.00]
+    gamma_small: [0.11, 0.05]
+    gamma_observed_scale: [0.11, 0.10]
+    gamma_moderate: [0.11, 0.20]
+    gamma_large: [0.11, 0.40]
+  replicates: 30
+  sampling: {iterations: 1200, warmup: 400, thin: 2, chains: 2}
+  suggestive_sign_probability: 0.80
+  strong_sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75
+
+gates:
+  max_rhat: 1.05
+  min_bulk_ess: 400
+  recovery_max_rhat: 1.10
+  recovery_min_bulk_ess: 100

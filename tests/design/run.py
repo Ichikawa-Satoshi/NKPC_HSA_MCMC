@@ -4,12 +4,12 @@ Examples
 --------
 Software-validation run (short chains, explicitly non-inferential):
 
-    python experiments/design/run.py --test-run --compile
+    python tests/design/run.py --test-run --output-dir tests/design/results --compile
 
 Long-chain core run (still blocked from a complete design claim until every
 mandatory robustness and evidence module in the manifest is implemented):
 
-    python experiments/design/run.py --compile
+    python tests/design/run.py --output-dir tests/design/results --compile
 """
 from __future__ import annotations
 

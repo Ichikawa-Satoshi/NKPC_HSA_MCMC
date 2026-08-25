@@ -1,0 +1,115 @@
+revision: active-firm-stock-bds-bed-v1
+
+sample:
+  state_start: 1978Q1
+  state_end: 2022Q1
+  nkpc_start: 1993Q2
+  nkpc_end: 2013Q4
+  reference_year: 1993
+
+data:
+  bds_file: raw/competition/bds/BDSTIMESERIES_BDSGEO.csv
+  bds_year: Year (time)
+  bds_firms: Number of firms (FIRM)
+  bed_births_file: raw/competition/bed/BLS-bd-BDS0000000000000000120007LQ5.csv
+  bed_deaths_file: raw/competition/bed/BLS-bd-BDS0000000000000000120008LQ5.csv
+  prices:
+    ppi:
+      inflation: pi_ppi
+      inflation_lag: pi_ppi_prev
+      expectation: Epi_spf_gdp
+  activities:
+    inverse_markup: markup_BN_inv
+    negative_unemployment_gap: unemp_gap
+
+state:
+  coordinate: 10_log_points_relative_to_1993_bds_firms
+  bds_timing: q1_march_reference
+  bed_role: standardized_establishment_net_entry_measurement_of_firm_stock_change
+  omega_prior: [2.0, 8.0]
+  damping_bounds: [0.20, 0.95]
+  damping_prior: [4.0, 3.0]
+  period_bounds: [6.0, 24.0]
+  period_prior_mean: 12.0
+  period_prior_sd: 4.0
+  mu_prior_sd_multiple: 2.0
+  bed_intercept_prior_sd: 1.0
+  bed_loading_scaled_prior_sd: 3.0
+  bed_error_prior_scale: 1.0
+  tau_prior_scale_multiple: 3.0
+  bds_error_fixed: 0.005
+  proposal_initial_scale: 0.70
+  slice_width: 0.45
+  slice_indices: [3, 4]
+  slice_stride: 3
+
+nkpc:
+  equation: constant_slope_plus_free_theta_n
+  inflation_error: ma3
+  psi_prior_mean: 0.0
+  psi_prior_sd: 0.50
+  psi_initial_scale: 0.08
+  psi_steps_per_sweep: 2
+  coefficient_scale: 0.20
+
+recovery:
+  modes: [propagated_state, oracle_state]
+  theta_grid: [0.0, 0.05, 0.10, 0.20, 0.30, 1.0, 3.0, 10.0, 20.0, 30.0, 50.0]
+  detection_probability: 0.80
+  sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75
+  require_interval_excludes_zero: true
+
+sampling:
+  seed: 20260829
+  mock:
+    state_iterations: 1200
+    state_warmup: 500
+    state_thin: 2
+    state_chains: 2
+    nkpc_iterations: 700
+    nkpc_warmup: 250
+    nkpc_thin: 2
+    nkpc_chains: 2
+    recovery_replicates: 3
+    recovery_iterations: 500
+    recovery_warmup: 200
+    recovery_thin: 2
+    recovery_chains: 2
+  smoke:
+    state_iterations: 5000
+    state_warmup: 1800
+    state_thin: 4
+    state_chains: 4
+    nkpc_iterations: 3500
+    nkpc_warmup: 1200
+    nkpc_thin: 3
+    nkpc_chains: 4
+    recovery_replicates: 10
+    recovery_iterations: 1000
+    recovery_warmup: 350
+    recovery_thin: 3
+    recovery_chains: 2
+  full:
+    state_iterations: 20000
+    state_warmup: 6000
+    state_thin: 7
+    state_chains: 4
+    nkpc_iterations: 16000
+    nkpc_warmup: 5000
+    nkpc_thin: 5
+    nkpc_chains: 4
+    recovery_replicates: 50
+    recovery_iterations: 2500
+    recovery_warmup: 800
+    recovery_thin: 4
+    recovery_chains: 4
+
+gates:
+  mock_max_rhat: 1.25
+  smoke_max_rhat: 1.05
+  full_max_rhat: 1.01
+  mock_min_bulk_ess: 50
+  smoke_min_bulk_ess: 300
+  full_min_bulk_ess: 800
+  full_min_tail_ess: 800

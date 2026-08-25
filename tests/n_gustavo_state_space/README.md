@@ -18,8 +18,8 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 ## Run
 
 ```bash
-python experiments/n_gustavo_state_space/run.py --quick   # smoke
-python experiments/n_gustavo_state_space/run.py           # full
+python tests/n_gustavo_state_space/run.py --quick   # smoke
+python tests/n_gustavo_state_space/run.py           # full
 ```
 
 ## Producer

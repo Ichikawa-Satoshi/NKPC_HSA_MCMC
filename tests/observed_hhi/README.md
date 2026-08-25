@@ -20,13 +20,13 @@ is imported from `nkpc_hsa`, not copied here.
 ## Run
 
 ```bash
-python experiments/observed_hhi/run.py --quick        # smoke
-python experiments/observed_hhi/run.py --jobs 4       # full
-python experiments/observed_hhi/run.py --no-draws     # skip raw-draw .npz
+python tests/observed_hhi/run.py --quick        # smoke
+python tests/observed_hhi/run.py --jobs 4       # full
+python tests/observed_hhi/run.py --no-draws     # skip raw-draw .npz
 ```
 
 Outputs (report PDF, tables, figures, per-task posterior draws under
-`results/draws/`, manifest) land in `experiments/observed_hhi/results/` — next to
+`results/draws/`, manifest) land in `tests/observed_hhi/results/` — next to
 the code, not under the shared `results/` tree. Raw draws are written per task
 by the worker processes and are git-ignored (reproducible, and large).
 

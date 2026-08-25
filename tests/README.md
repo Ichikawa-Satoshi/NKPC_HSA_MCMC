@@ -1,18 +1,44 @@
 # Tests — experiment index (テスト一覧)
 
-Each subdirectory of `tests/` is one **self-contained experiment bundle**
-(`functions.py` + `run.py` + `config.yaml` + `results/` + `README.md`). Bundles
-import the shared engine from `nkpc_hsa` (sampler, dataprep, the Phillips-curve
-toolkit `nkpc_hsa.phillips`) and write outputs only into their own git-ignored
-`results/`. Run any one with:
+Each subdirectory of `tests/` is one experiment bundle. Most have a `README.md`,
+configuration, executable scripts, and saved output under their own `results/`,
+but script names and sampling profiles differ. Use the exact commands in the
+bundle README rather than assuming every folder has the same `run.py` interface.
+
+Two repository-wide records are mandatory reading:
+
+- [`EXPERIMENT_AUDIT.md`](EXPERIMENT_AUDIT.md) records what every existing test
+  actually did and what its saved results do and do not establish.
+- [`TEST_BUNDLE_TEMPLATE.md`](TEST_BUNDLE_TEMPLATE.md) is the documentation
+  contract for every new test folder.
+
+For bundles that retain the common interface, run from the repository root with:
 
 ```bash
 python tests/<name>/run.py --quick    # smoke
 python tests/<name>/run.py            # full
 ```
 
-`functions.py` present = the experiment has its own estimation code; absent = it
-reuses only `nkpc_hsa.phillips`. See each bundle's own `README.md` for detail.
+`functions.py` present usually means the experiment has its own estimation code;
+absence usually means it reuses shared code. See each bundle README for the actual
+model, sampling length, and inferential status.
+
+## Documentation contract
+
+Every new test folder must contain, from the time it is created:
+
+1. the research question and frozen model equations;
+2. data, sample, transformations, timing, and what is held fixed;
+3. priors, estimands, theory signs, and predeclared pass/fail gates;
+4. mock, quick, and full sampling definitions plus exact runnable commands;
+5. a results section updated after each run with numerical diagnostics;
+6. an explicit conclusion stating whether the output is inferential, diagnostic,
+   failed, or superseded; and
+7. an output inventory, limitations, and changelog.
+
+Mock and quick output must be labelled **not for inference**. A converged sampler
+must not be described as an identified model unless the structural learning gates
+also pass. Failed and legacy runs remain recorded rather than being overwritten.
 
 ## Standardized result PDF
 
@@ -70,6 +96,16 @@ names and the priors table is filled from the SDs saved in each `.npz`.
 | `markup_interpolation` | Zero-sum inverse-markup **timing** sensitivities between exact Q4 anchors (where between anchors the markup info sits). | ✔ | ✔ | — |
 | `beta_convexity` | Hybrid **(β_b, β_f) restriction** (convexity / adding-up) vs baseline — does the backward/forward discipline move δ? (review §4.2) | ✔ | ✔ | — |
 | `design` | The executable **nine-cell** (3×3 price × activity) identification design and its formal report. | design-specific `reporting.py` / `followup.py` | shared `configs/nine_cell_design.yaml` | — |
+| `hsa_ppi_identification` | Separates the fixed-preprocessing PPI signal from fixed/joint-state and five-model latent comparisons. | ✔ | ✔ | — |
+| `hsa_exact_n_decomposition` | Exact `N=Nbar+Nhat`, annual Gustavo constraint, variance-share parameterization, and seven nested NKPC models. | ✔ | ✔ | — |
+| `hsa_lambda_dynamic` | Joint-state static/dynamic HSA models with estimated proportionality coefficient `lambda`. | ✔ | ✔ | — |
+| `hsa_theta_bridge` | Controlled cut/joint × fixed/free-lambda test of why theta appears identified under a restriction. | ✔ | ✔ | — |
+| `hsa_nested_validation` | Active 24-fit PPI/core-CPI nested-validation grid using an exact-N AR(2) state. | ✔ | ✔ | — |
+| `hsa_deep_identification` | Frozen identification-first screen, recovery, exact-N MA(3), QoQ, and restriction audit. | `joint_ma3.py` | ✔ | ← active exact-N inputs |
+| `competition_slope_change` | Competition-only AR(2) slow/cycle block propagated into a semi-structural slope-only MA(3) NKPC, with historical slope-change and timing diagnostics. | ✔ | ✔ | — |
+| `active_firm_stock_bds_bed` | External active-firm state: annual BDS firm levels plus BED establishment-flow timing, cut from inflation, followed by oracle and propagated-state free-`theta_N` recovery. | ✔ | ✔ | — |
+| `gustavo_state_capitaliq_cycle` | Exact annual-Q4 Gustavo slow-state bridge, cut Capital IQ AR(2) cycle, QoQ direct/combined recovery, then an explicitly authorized post-gate varying-theta/free-dynamic/HSA-dynamic diagnostic; YoY archived. | ✔ | ✔ | — |
+| `mixed_frequency_gustavo_capitaliq` | Exact total Gustavo Q4 conditions plus two Capital IQ QoQ-growth measurements in one inflation-cut mixed-frequency state; blocked measurement validation and four free-channel PPI/markup NKPC cells. | ✔ | ✔ | — |
 
 ## Notes
 
@@ -77,10 +113,9 @@ names and the priors table is filled from the SDs saved in each `.npz`.
   produce competition-state posteriors that `nolag_price_gap`,
   `markup_full_joint` and `markup_feedback` read (via each `config.yaml` posterior
   path). To regenerate a consumer end-to-end, run its producer first.
-- **`design` is special.** Unlike the others it builds a formal LaTeX report into
-  `report/` and writes to the shared `results/nine_cell_design/`, not its own
-  bundle `results/` (its report plumbing uses relative paths). It behaves more like
-  the production pipeline than a throwaway test.
+- **`design` is special.** It builds a formal LaTeX report as part of its run and
+  currently has saved audit output under `tests/design/results/`. Check its
+  manifest before treating any other configured output path as current.
 - **Shared config.** `configs/nine_cell_design.yaml` is the common design /
   measurement definition that `nkpc_hsa.phillips.load_design_data` reads by
   default; it is not a per-bundle file.
@@ -124,3 +159,49 @@ names and the priors table is filled from the SDs saved in each `.npz`.
 - **`design`** — the identification-first nine-cell design: `run.py` estimates and
   builds the report, `finalize.py` runs the follow-up (equivalence / secondary-joint
   / smoke) modules; `--test-run` stamps every output NOT FOR INFERENCE.
+- **`hsa_ppi_identification`** — contains three distinct exercises: a converged
+  fixed-preprocessing PPI screen, a fixed-versus-joint state comparison, and a
+  five-model latent comparison. They must not be collapsed into one claim.
+- **`hsa_exact_n_decomposition`** — imposes exact quarterly accounting and the
+  annual Gustavo restriction; it establishes computational feasibility but not
+  structural identification.
+- **`hsa_lambda_dynamic`** — tests estimated lambda in static and dynamic HSA
+  restrictions; its saved full run fails convergence and identification.
+- **`hsa_theta_bridge`** — shows that the main identification loss occurs when the
+  product `lambda*theta` is factorized, not mainly from cut versus joint feedback.
+- **`hsa_nested_validation`** — the current full 24-fit nested grid; legacy 28-fit
+  and AR(1) directories are retained but not part of the active result.
+- **`hsa_deep_identification`** — the latest frozen audit. It found no candidate
+  that passed all convergence, identification, theory-sign, and validation gates;
+  consequently it did not promote a full run or compute formal marginal evidence.
+- **`competition_slope_change`** — the implemented successor baseline: it treats
+  effective-firm concentration as an empirical competition coordinate, estimates
+  the exact competition decomposition without inflation feedback, propagates state
+  draws into four slope-only MA(3) cells, and reports historical `kappa` changes.
+  The full sampler passes strict convergence gates, but all `delta` intervals cross
+  zero, `theta_C` remains prior-wide, and the omega allocation is prior-sensitive.
+- **`active_firm_stock_bds_bed`** — builds the theory-aligned external firm-stock
+  coordinate from annual BDS firm counts and quarterly BED timing without letting
+  inflation update the state. Its smoke state misses the ESS gate, and recovery
+  after state uncertainty is propagated detects none of the injected effects
+  through `theta_N=50`; no full run or HSA restriction is therefore promoted.
+- **`gustavo_state_capitaliq_cycle`** — assigns non-overlapping measurement roles:
+  Gustavo alone fixes the quarterly slow-state bridge and Capital IQ alone
+  supplies a conditional AR(2) cycle. The primary NKPC now uses annualized QoQ
+  PPI and genuine one-quarter-ahead SPF under IID and AR(1) errors; its saved YoY
+  predecessor remains archived. QoQ strengthens the positive direction but all
+  direct-channel intervals include zero and the recovery ESS gate fails. Its
+  separately recorded free-combined extension passes convergence and shows that
+  adding `delta * nbar * x` does not remove the positive `theta_CIQ` update;
+  `delta` itself remains sign-uncertain. Its 640-fit staged recovery fails the
+  observed-effect promotion gate. A later explicitly authorized diagnostic runs
+  varying theta, free dynamic, and HSA-restricted dynamic anyway: computation
+  passes, but gamma, lambda, and both derived HSA slope coefficients remain
+  sign-unidentified, and all dynamic models lose holdout ELPD to constant theta.
+- **`mixed_frequency_gustavo_capitaliq`** — lets Gustavo constrain total
+  `nbar+nhat` at Q4 while Capital IQ growth informs the within-year total path;
+  the average quarterly allocation is a transition mean, not an observation.
+  Its retained mock fails both state convergence and the prespecified blocked
+  Capital IQ forecast: mean RMSE is 7.1% worse than average allocation. All four
+  free `theta_N` means have the wrong HSA orientation. It is not promoted to
+  quick and no HSA restriction is estimated.

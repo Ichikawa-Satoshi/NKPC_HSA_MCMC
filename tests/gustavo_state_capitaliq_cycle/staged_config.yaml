@@ -1,0 +1,47 @@
+revision: gustavo-state-capitaliq-cycle-staged-validation-v1
+
+primary:
+  cycle: firm_weighted
+  activity: ppi_negative_unemployment_gap
+  error_model: iid
+
+recovery:
+  scenarios:
+    "null": [0.00, 0.00]
+    direct_observed: [0.00, 0.11]
+    slope_observed: [0.06, 0.00]
+    both_observed: [0.06, 0.11]
+    theta_moderate: [0.06, 0.20]
+    delta_moderate: [0.20, 0.11]
+    both_moderate: [0.20, 0.20]
+    both_large: [0.40, 0.40]
+  primary_modes: [propagated_state, oracle_state]
+  primary_replicates: 30
+  robustness:
+    - {activity: ppi_negative_unemployment_gap, error_model: persistent_ar1, mode: propagated_state, replicates: 10}
+    - {activity: ppi_inverse_markup, error_model: iid, mode: propagated_state, replicates: 10}
+  sampling: {iterations: 1000, warmup: 350, thin: 2, chains: 2}
+  suggestive_sign_probability: 0.80
+  strong_sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75
+
+promotion_gate:
+  scenario: both_observed
+  mode: propagated_state
+  minimum_suggestive_rate_each_coefficient: 0.80
+  minimum_interval_coverage_each_coefficient: 0.80
+  maximum_null_false_positive_rate_each_coefficient: 0.10
+  maximum_rhat: 1.10
+  minimum_bulk_ess: 100
+
+comparison:
+  error_model: iid
+  holdout_start: 2010Q1
+  loo_pareto_k_warning: 0.70
+  nested_bayes_factor_method: savage_dickey_gaussian_kde
+
+dynamic_hsa:
+  run_only_if_recovery_gate_passes: true
+  lambda_prior_mean: 0.0
+  lambda_prior_sd: 10.0
+  models: [free_dynamic, hsa_restricted_dynamic]

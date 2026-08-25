@@ -1,0 +1,52 @@
+revision: hsa-lambda-dynamic-v1
+
+data:
+  inflation: pi_ppi
+  inflation_lag: pi_ppi_prev
+  expectation: Epi_spf_gdp
+  activity: unemp_gap
+  competition: N_capitaliq_firmw
+  sample_start: 1974Q4
+
+competition_allocation:
+  stable_raw_weight_max: 3.0
+  # Reliability is |annual change| / sum(|quarterly changes|).  It shrinks
+  # cancellation-dominated annual ratios toward the robust average profile.
+  coherence_shrinkage: true
+
+priors:
+  coefficient_scale: 0.20
+  lambda_mean: 0.0
+  lambda_sd: 10.0
+  phi_mean: 0.0
+  phi_sd: 0.35
+  # Keeps the cyclical state distinct from the random-walk slow state.
+  rho_lower: -0.95
+  rho_upper: 0.95
+
+sampling:
+  quick:
+    iterations: 1200
+    warmup: 400
+    thin: 2
+    chains: 2
+    particles: 1200
+  full:
+    iterations: 24000
+    warmup: 8000
+    thin: 8
+    chains: 4
+    particles: 5000
+  seed: 20260824
+
+models:
+  - ces
+  - slope
+  - direct
+  - free_static
+  - hsa_static
+  - free_dynamic
+  - hsa_dynamic
+
+gates:
+  max_rhat: 1.05

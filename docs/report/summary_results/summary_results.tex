@@ -1,30 +1,27 @@
 \documentclass[11pt]{article}
-\usepackage[landscape,margin=0.8in]{geometry}
+\usepackage[margin=0.9in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{makecell}
 \usepackage{caption}
 \usepackage{float}
 \usepackage{xcolor}
-% The auto-generated \input tables still carry some Japanese header labels,
-% so we compile with xelatex + xeCJK. English body text is unaffected.
 \usepackage[hidelinks]{hyperref}
 \usepackage{etoolbox}
-% Start every top-level section on a new page
 \pretocmd{\section}{\clearpage}{}{}
-
-\newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\kt}{\kappa_t}
+\captionsetup{font=small}
 \newcommand{\Nbar}{\bar N}
 \newcommand{\Nhat}{\hat N}
 \graphicspath{{../results/figures/}}
-
 \title{\textbf{Market Concentration and the Flattening of the Phillips Curve}\\[2pt]
-\large A Theory-Motivated, Semi-Structural State-Space Assessment of the HSA Mechanism}
+\large A Theory-Motivated, Semi-Structural State-Space Assessment of the HSA Mechanism\\[4pt]
+\normalsize Estimation Results Summary}
 \author{Satoshi Ichikawa}
 \date{Draft --- August 2026}
-
 \begin{document}
+\maketitle
+\begin{center}\textit{Hybrid NKPC specification: the inflation equation adds an intercept $c$ and lagged inflation $\alpha_b\pi_{t-1}$ to the forward-looking term $\alpha E_t\pi_{t+1}$.}\end{center}
 
 \section{Data Specifications}
 
@@ -39,129 +36,218 @@ throughout the estimation.
 \label{tab:data_specs}
 \small
 \renewcommand{\arraystretch}{1.3}
-
-% --------------------------------------------------
-% Panel A
-% --------------------------------------------------
-\begin{tabular}{@{}p{0.28\textwidth}p{0.55\textwidth}@{}}
+\begin{tabular}{@{}p{0.30\textwidth}p{0.55\textwidth}@{}}
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Panel A. Inflation--Expectation Pairs}} \\
 \textbf{Inflation Measure} & \textbf{Expected Inflation Measure} \\
 \midrule
-PPI
-& GDP price index inflation forecast \\
-
-Headline CPI
-& CPI inflation forecast \\
-
-Core CPI
-& CPI inflation forecast \\
+PPI & GDP price index inflation forecast \\
+Headline CPI & CPI inflation forecast \\
+Core CPI & CPI inflation forecast \\
+\bottomrule
 \end{tabular}
 
-\vspace{1.5em}
+\vspace{1.2em}
 
-% --------------------------------------------------
-% Panel B
-% --------------------------------------------------
-\begin{tabular}{@{}p{0.28\textwidth}p{0.55\textwidth}@{}}
+\begin{tabular}{@{}p{0.34\textwidth}p{0.50\textwidth}@{}}
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Panel B. Phillips-Curve Forcing Variables}} \\
 \textbf{Measure} & \textbf{Interpretation} \\
 \midrule
-Inverse markup
-& Proxy for real marginal cost \\
-
-Negative unemployment gap
-& Labor-market slack measure \\
-
-Beveridge--Nelson output gap
-& Output-gap measure based on the Beveridge--Nelson decomposition \\
-
-Hodrick--Prescott output gap
-& Output-gap measure based on the Hodrick--Prescott filter \\
+Inverse markup & Proxy for real marginal cost \\
+Negative unemployment gap & Labor-market slack measure \\
+Beveridge--Nelson output gap & BN-decomposition output gap \\
+Hodrick--Prescott output gap & HP-filter output gap \\
 \bottomrule
 \end{tabular}
-
 \end{table}
 
-Each inflation--expectation pair is combined with the alternative forcing-variable
-measures in the model specifications below. This structure allows the estimated
-Phillips-curve relationship to be compared across both inflation measurement
-and the empirical proxy used for economic slack or real marginal cost.
+The results below report the primary specification (PPI, inverse markup) for
+each case. The remaining inflation and forcing combinations enter the full
+robustness grid.
 
 \section{Case 1: Quarterly Joint Estimation with Capital IQ Competition Data}
+
 \subsection{Coefficient Table}
+
+\input{../results/tables/case1_coeff.tex}
 
 \subsubsection{Marginal Likelihoods}
 
+Models are compared by the log marginal likelihood $\log m(y)$ (higher is better; Laplace--Metropolis estimator with the exact Kalman integrated likelihood for the linear Models 0--2 and a particle-filter likelihood for the bilinear Models 3--4) and by the Widely Applicable Information Criterion (WAIC; lower is better). The directional probabilities in the same table summarize the RQ1--RQ4 posterior evidence.
+
+\input{../results/tables/case1_cmp.tex}
+
 \subsubsection{Predictive Distributions}
 
-\subsection{Coefficient: \texorpdfstring{$\alpha$}{alpha}}
+\begin{center}\includegraphics[width=0.9\linewidth]{case1_predictive.png}\end{center}
 
-\subsection{Coefficient: \texorpdfstring{$\kappa$}{kappa}}
+\subsection{Coefficient: $\alpha$}
 
-\subsubsection{
-Coefficient: \texorpdfstring{$\delta$}{delta}
-and Time-Varying \texorpdfstring{$\kappa_t$}{kappa(t)}
-}
+\begin{center}\includegraphics[width=0.6\linewidth]{case1_alpha_forest.png}\end{center}
 
-\subsection{Coefficient: \texorpdfstring{$\theta$}{theta}}
+\subsection{Coefficient: $\kappa$}
 
-\subsubsection{
-Coefficient: \texorpdfstring{$\gamma$}{gamma}
-and Time-Varying \texorpdfstring{$\theta_t$}{theta(t)}
-}
+\begin{center}\includegraphics[width=0.6\linewidth]{case1_kappa_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\delta$ and Time-Varying $\kappa_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case1_delta_path.png}\end{center}
+
+\subsection{Coefficient: $\theta$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case1_theta_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\gamma$ and Time-Varying $\theta_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case1_gamma_path.png}\end{center}
 
 \subsubsection{Decomposed Competition}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case1_decomposition.png}\end{center}
+
+\subsection{Robustness Across Specifications}
+
+The detailed results above use the primary specification (PPI, inverse markup). Table~\ref{tab:case1_robust} summarizes the joint-model directional evidence across every estimated inflation and forcing combination.
+
+\input{../results/tables/case1_robust.tex}
 
 \section{Case 2: Quarterly Joint Estimation with Interpolated Gustavo Competition Data}
+
 \subsection{Coefficient Table}
+
+\input{../results/tables/case2_coeff.tex}
 
 \subsubsection{Marginal Likelihoods}
 
+Models are compared by the log marginal likelihood $\log m(y)$ (higher is better; Laplace--Metropolis estimator with the exact Kalman integrated likelihood for the linear Models 0--2 and a particle-filter likelihood for the bilinear Models 3--4) and by the Widely Applicable Information Criterion (WAIC; lower is better). The directional probabilities in the same table summarize the RQ1--RQ4 posterior evidence.
+
+\input{../results/tables/case2_cmp.tex}
+
 \subsubsection{Predictive Distributions}
 
-\subsection{Coefficient: \texorpdfstring{$\alpha$}{alpha}}
+\begin{center}\includegraphics[width=0.9\linewidth]{case2_predictive.png}\end{center}
 
-\subsection{Coefficient: \texorpdfstring{$\kappa$}{kappa}}
+\subsection{Coefficient: $\alpha$}
 
-\subsubsection{
-Coefficient: \texorpdfstring{$\delta$}{delta}
-and Time-Varying \texorpdfstring{$\kappa_t$}{kappa(t)}
-}
+\begin{center}\includegraphics[width=0.6\linewidth]{case2_alpha_forest.png}\end{center}
 
-\subsection{Coefficient: \texorpdfstring{$\theta$}{theta}}
+\subsection{Coefficient: $\kappa$}
 
-\subsubsection{
-Coefficient: \texorpdfstring{$\gamma$}{gamma}
-and Time-Varying \texorpdfstring{$\theta_t$}{theta(t)}
-}
+\begin{center}\includegraphics[width=0.6\linewidth]{case2_kappa_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\delta$ and Time-Varying $\kappa_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case2_delta_path.png}\end{center}
+
+\subsection{Coefficient: $\theta$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case2_theta_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\gamma$ and Time-Varying $\theta_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case2_gamma_path.png}\end{center}
 
 \subsubsection{Decomposed Competition}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case2_decomposition.png}\end{center}
+
+\subsection{Robustness Across Specifications}
+
+The detailed results above use the primary specification (PPI, inverse markup). Table~\ref{tab:case2_robust} summarizes the joint-model directional evidence across every estimated inflation and forcing combination.
+
+\input{../results/tables/case2_robust.tex}
+
 \section{Case 3: Mixed Frequency Joint Estimation with Gustavo Competition Data}
+
 \subsection{Coefficient Table}
+
+\input{../results/tables/case3_coeff.tex}
+
 \subsubsection{Marginal Likelihoods}
+
+Models are compared by the log marginal likelihood $\log m(y)$ (higher is better; Laplace--Metropolis estimator with the exact Kalman integrated likelihood for the linear Models 0--2 and a particle-filter likelihood for the bilinear Models 3--4) and by the Widely Applicable Information Criterion (WAIC; lower is better). The directional probabilities in the same table summarize the RQ1--RQ4 posterior evidence.
+
+\input{../results/tables/case3_cmp.tex}
+
 \subsubsection{Predictive Distributions}
-\subsection{Coefficient: \texorpdfstring{$\alpha$}{alpha}}
-\subsection{Coefficient: \texorpdfstring{$\kappa$}{kappa}}
-\subsubsection{Coefficient: \texorpdfstring{$\delta$}{delta}
-and Time-Varying \texorpdfstring{$\kappa_t$}{kappa(t)}}
-\subsection{Coefficient: \texorpdfstring{$\theta$}{theta}}
-\subsubsection{Coefficient: \texorpdfstring{$\gamma$}{gamma}
-and Time-Varying \texorpdfstring{$\theta_t$}{theta(t)}}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case3_predictive.png}\end{center}
+
+\subsection{Coefficient: $\alpha$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case3_alpha_forest.png}\end{center}
+
+\subsection{Coefficient: $\kappa$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case3_kappa_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\delta$ and Time-Varying $\kappa_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case3_delta_path.png}\end{center}
+
+\subsection{Coefficient: $\theta$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case3_theta_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\gamma$ and Time-Varying $\theta_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case3_gamma_path.png}\end{center}
+
 \subsubsection{Decomposed Competition}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case3_decomposition.png}\end{center}
+
+\subsection{Robustness Across Specifications}
+
+The detailed results above use the primary specification (PPI, inverse markup). Table~\ref{tab:case3_robust} summarizes the joint-model directional evidence across every estimated inflation and forcing combination.
+
+\input{../results/tables/case3_robust.tex}
 
 \section{Case 4: Mixed Frequency Joint Estimation with Gustavo Competition Data and Number of Establishments}
-\subsection{Coefficient Table}
-\subsubsection{Marginal Likelihoods}
-\subsubsection{Predictive Distributions}
-\subsection{Coefficient: \texorpdfstring{$\alpha$}{alpha}}
-\subsection{Coefficient: \texorpdfstring{$\kappa$}{kappa}}
-\subsubsection{Coefficient: \texorpdfstring{$\delta$}{delta}
-and Time-Varying \texorpdfstring{$\kappa_t$}{kappa(t)}}
-\subsection{Coefficient: \texorpdfstring{$\theta$}{theta}}
-\subsubsection{Coefficient: \texorpdfstring{$\gamma$}{gamma}
-and Time-Varying \texorpdfstring{$\theta_t$}{theta(t)}}
-\subsubsection{Decomposed Competition}
-\end{document}
 
+\subsection{Coefficient Table}
+
+\input{../results/tables/case4_coeff.tex}
+
+\subsubsection{Marginal Likelihoods}
+
+Models are compared by the log marginal likelihood $\log m(y)$ (higher is better; Laplace--Metropolis estimator with the exact Kalman integrated likelihood for the linear Models 0--2 and a particle-filter likelihood for the bilinear Models 3--4) and by the Widely Applicable Information Criterion (WAIC; lower is better). The directional probabilities in the same table summarize the RQ1--RQ4 posterior evidence.
+
+\input{../results/tables/case4_cmp.tex}
+
+\subsubsection{Predictive Distributions}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case4_predictive.png}\end{center}
+
+\subsection{Coefficient: $\alpha$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case4_alpha_forest.png}\end{center}
+
+\subsection{Coefficient: $\kappa$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case4_kappa_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\delta$ and Time-Varying $\kappa_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case4_delta_path.png}\end{center}
+
+\subsection{Coefficient: $\theta$}
+
+\begin{center}\includegraphics[width=0.6\linewidth]{case4_theta_0_forest.png}\end{center}
+
+\subsubsection{Coefficient: $\gamma$ and Time-Varying $\theta_t$}
+
+\begin{center}\includegraphics[width=0.98\linewidth]{case4_gamma_path.png}\end{center}
+
+\subsubsection{Decomposed Competition}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{case4_decomposition.png}\end{center}
+
+\subsection{Robustness Across Specifications}
+
+The detailed results above use the primary specification (PPI, inverse markup). Table~\ref{tab:case4_robust} summarizes the joint-model directional evidence across every estimated inflation and forcing combination.
+
+\input{../results/tables/case4_robust.tex}
+
+\end{document}

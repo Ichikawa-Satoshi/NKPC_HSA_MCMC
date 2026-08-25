@@ -299,6 +299,26 @@ def _write_report(out: Path, config: dict, audit: pd.DataFrame, summary: pd.Data
         for row in audit.itertuples()
     )
     mode = "SMOKE - NOT FOR INFERENCE" if quick else "PRODUCTION"
+    fast_def = str(config["design"]["fast_definition"])
+    if fast_def.startswith("ewma_hl"):
+        fast_desc = (
+            f"the current one-sided EWMA forecast error with a "
+            f"{_tex_escape(fast_def.removeprefix('ewma_hl'))}-quarter half-life"
+        )
+    elif fast_def == "ar2_innovation":
+        fast_desc = (
+            "the current AR(2) innovation, i.e. the residual of $q_t$ regressed on "
+            "a constant, $q_{t-1}$, and $q_{t-2}$"
+        )
+    elif fast_def == "ar1_innovation":
+        fast_desc = (
+            "the current AR(1) innovation, i.e. the residual of $q_t$ regressed on "
+            "a constant and $q_{t-1}$"
+        )
+    elif fast_def == "first_difference":
+        fast_desc = "the current first difference $q_t-q_{t-1}$"
+    else:
+        fast_desc = _tex_escape(fast_def)
     tex = rf"""\documentclass[11pt]{{article}}
 \usepackage[margin=0.80in]{{geometry}}
 \usepackage{{booktabs,array,graphicx,xcolor,amsmath,microtype,hyperref,needspace}}
@@ -346,8 +366,7 @@ nor the QCEW measurement block.
 \section*{{2. Estimating equation}}
 Following the observed-HHI test bundle, the competition coordinate is
 $q_t=10\log N_t$, centered in each complete-case sample. Its fast component
-$c_t$ is the current one-sided EWMA forecast error with an eight-quarter
-half-life. Each cell estimates
+$c_t$ is {fast_desc}. Each cell estimates
 \[
 \pi_t=a+\beta_b\pi_{{t-1}}+\beta_fE_t\pi_{{t+1}}+\psi q_t
 +(\kappa_0+\kappa_1q_t)x_t-\theta_0c_t+\varepsilon_t.

@@ -18,8 +18,8 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 ## Run
 
 ```bash
-python experiments/markup_measurement/run.py --quick   # smoke
-python experiments/markup_measurement/run.py           # full
+python tests/markup_measurement/run.py --quick   # smoke
+python tests/markup_measurement/run.py           # full
 ```
 
 ## Producer

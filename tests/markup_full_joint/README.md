@@ -18,8 +18,8 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 ## Run
 
 ```bash
-python experiments/markup_full_joint/run.py --quick   # smoke
-python experiments/markup_full_joint/run.py           # full
+python tests/markup_full_joint/run.py --quick   # smoke
+python tests/markup_full_joint/run.py           # full
 ```
 
 ## Consumed input

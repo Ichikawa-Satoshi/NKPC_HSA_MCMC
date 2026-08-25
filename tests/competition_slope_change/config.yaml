@@ -1,0 +1,120 @@
+revision: competition-slope-change-v1
+
+sample:
+  start: 1974Q4
+  end: 2013Q4
+  coordinate_reference_year: 1984
+  counterfactual_reference_start: 1974Q4
+  counterfactual_reference_end: 1979Q4
+  endpoint_windows:
+    full_sample: [1974Q4, 2013Q4]
+    post_1982: [1982Q1, 2013Q4]
+    capital_iq_coverage: [1996Q1, 2013Q4]
+
+data:
+  prices:
+    ppi:
+      inflation: pi_ppi
+      inflation_lag: pi_ppi_prev
+      expectation: Epi_spf_gdp
+    core_cpi:
+      inflation: pi_cpi_core
+      inflation_lag: pi_cpi_core_prev
+      expectation: Epi_spf_gdp
+  activities:
+    inverse_markup: markup_BN_inv
+    negative_unemployment_gap: unemp_gap
+  annual_competition: N_Gustavo_annual_q4
+  quarterly_indicator: N_capitaliq_firmw
+  competition_coordinate: 10_log_relative_to_fixed_1984_gustavo_value
+
+allocation:
+  stable_raw_weight_max: 3.0
+  covariance_scale: 0.25
+  observed_year_update: coherence_shrinkage
+  missing_year_mean: robust_average_quarterly_profile
+  inflation_feedback: false
+
+state:
+  primary_law: ar2_stochastic_cycle
+  slow_law: annual_allocation_random_walk
+  identity: exact
+  omega_prior: [2.0, 8.0]
+  omega_prior_sensitivity:
+    uniform: [1.0, 1.0]
+    balanced: [2.0, 2.0]
+  omega_mh_sd: 0.50
+  omega_slice_width: 0.50
+  tau2_prior_shape: 3.0
+  tau2_scale_fraction: 0.15
+  cycle_damping_bounds: [0.25, 0.98]
+  cycle_damping_prior: [8.0, 2.0]
+  cycle_damping_initial: 0.70
+  cycle_damping_mh_sd: 0.50
+  cycle_period_bounds_quarters: [6.0, 20.0]
+  cycle_period_prior_mean: 12.0
+  cycle_period_prior_sd: 4.0
+  cycle_period_initial: 12.0
+  cycle_period_mh_sd: 0.90
+  collapsed_stride: 5
+  ar1_rho_mean: 0.70
+  ar1_rho_sd: 0.20
+  ar1_rho_bounds: [-0.95, 0.95]
+
+nkpc:
+  primary_model: slope_only
+  diagnostic_model: slope_plus_competition_cycle
+  primary_cells:
+    - ppi_inverse_markup
+    - ppi_negative_unemployment_gap
+  robustness_cells:
+    - core_cpi_inverse_markup
+    - core_cpi_negative_unemployment_gap
+  direct_timing: [current, lag1, lead1]
+  inflation_error: ma3
+  psi_prior_mean: 0.0
+  psi_prior_sd: 0.50
+  psi_initial_scale: 0.08
+  psi_steps_per_sweep: 2
+
+priors:
+  coefficient_scale: 0.20
+  unrestricted_signs: true
+
+sampling:
+  seed: 20260827
+  smoke:
+    state_iterations: 3000
+    state_warmup: 1000
+    state_thin: 3
+    state_chains: 2
+    sensitivity_iterations: 1500
+    sensitivity_warmup: 500
+    sensitivity_thin: 2
+    nkpc_iterations: 1400
+    nkpc_warmup: 500
+    nkpc_thin: 2
+    nkpc_chains: 2
+  full:
+    state_iterations: 20000
+    state_warmup: 6000
+    state_thin: 7
+    state_chains: 4
+    sensitivity_iterations: 6000
+    sensitivity_warmup: 2000
+    sensitivity_thin: 4
+    nkpc_iterations: 16000
+    nkpc_warmup: 5000
+    nkpc_thin: 5
+    nkpc_chains: 4
+
+gates:
+  smoke_max_rhat: 1.20
+  full_max_rhat: 1.01
+  smoke_min_bulk_ess: 100
+  full_min_bulk_ess: 800
+  full_min_tail_ess: 800
+  max_exact_identity_error: 1.0e-10
+  structural_interval_probability: 0.95
+  theory_sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75

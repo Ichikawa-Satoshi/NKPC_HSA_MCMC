@@ -107,6 +107,10 @@ def fast_component(q: np.ndarray, definition: str) -> np.ndarray:
         x = np.column_stack((np.ones(q.size - 1), q[:-1]))
         beta = np.linalg.lstsq(x, q[1:], rcond=None)[0]
         return np.r_[np.nan, q[1:] - x @ beta]
+    if definition == "ar2_innovation":
+        x = np.column_stack((np.ones(q.size - 2), q[1:-1], q[:-2]))
+        beta = np.linalg.lstsq(x, q[2:], rcond=None)[0]
+        return np.r_[np.nan, np.nan, q[2:] - x @ beta]
     raise ValueError(f"Unknown fast-component definition: {definition}")
 
 
@@ -178,6 +182,7 @@ def _prior_sds(names: Iterable[str], q_scale: float, x_scale: float) -> dict[str
         "psi": 1.5 / q_scale,
         "kappa_0": 2.0 / x_scale,
         "kappa_1": 1.0 / (q_scale * x_scale),
+        "kappa_2": 1.0 / (q_scale**2 * x_scale),
         "theta_0": 1.0 / q_scale,
         "gamma": 1.0 / q_scale**2,
         "theta_hsa": 1.0 / q_scale,
@@ -193,10 +198,17 @@ def build_observed_design(
     timing: str,
     model_variant: str,
     no_lag: bool = False,
+    include_level: bool = True,
     zeta_reference: float = 6.0,
     b_x: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, tuple[str, ...], np.ndarray]:
-    """Return y, X, names, and retained-row mask for an observed-HHI model."""
+    """Return y, X, names, and retained-row mask for an observed-HHI model.
+
+    ``include_level`` controls the standalone competition-level term (``psi``).
+    It is an empirical control, NOT part of the structural HSA NKPC (which enters
+    competition only through the slope interaction, the direct fast channel, and
+    the bilinear term); set it False for the theory-faithful specification.
+    """
     raw_fast = fast_component(sample.q, fast_definition)
     fast = timed_fast_component(raw_fast, timing)
     if environment_definition == "total":
@@ -214,8 +226,10 @@ def build_observed_design(
     if not no_lag:
         columns.append(sample.pi_lag)
         names.append("beta_b")
-    columns.extend((sample.expectation, z, sample.activity))
-    names.extend(("beta_f", "psi", "kappa_0"))
+    columns.append(sample.expectation); names.append("beta_f")
+    if include_level:
+        columns.append(z); names.append("psi")
+    columns.append(sample.activity); names.append("kappa_0")
     if model_variant == "no_theta":
         columns.append(z * sample.activity)
         names.append("kappa_1")
@@ -225,6 +239,11 @@ def build_observed_design(
     elif model_variant == "varying_theta":
         columns.extend((z * sample.activity, -fast, -z * fast))
         names.extend(("kappa_1", "theta_0", "gamma"))
+    elif model_variant == "quadratic_theta":
+        # Nonlinear competition-dependent slope: kappa(q) = kappa_0 + kappa_1 q + kappa_2 q^2.
+        # The marginal effect of competition on the slope is itself competition-dependent.
+        columns.extend((z * sample.activity, z * z * sample.activity, -fast))
+        names.extend(("kappa_1", "kappa_2", "theta_0"))
     elif model_variant == "hsa_restricted":
         columns.append(b_x * zeta_reference * z * sample.activity - fast)
         names.append("theta_hsa")
@@ -270,6 +289,7 @@ def fit_observed_hhi_model(
     chains: int,
     seed: int,
     no_lag: bool = False,
+    include_level: bool = True,
     zeta_reference: float = 6.0,
     b_x: float = 1.0,
 ) -> ObservedHHIFit:
@@ -284,6 +304,7 @@ def fit_observed_hhi_model(
         timing=timing,
         model_variant=model_variant,
         no_lag=no_lag,
+        include_level=include_level,
         zeta_reference=zeta_reference,
         b_x=b_x,
     )

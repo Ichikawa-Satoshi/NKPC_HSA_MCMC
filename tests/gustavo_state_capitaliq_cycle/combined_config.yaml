@@ -1,0 +1,21 @@
+revision: gustavo-state-capitaliq-cycle-qoq-free-combined-v1
+
+model:
+  name: free_combined
+  slow_state_centering: within_draw_sample_mean
+  equation: annualized_qoq_time_varying_slope_plus_free_capital_iq_cycle
+  hsa_restriction: false
+
+sampling:
+  iterations: 2000
+  warmup: 600
+  thin: 2
+  chains: 4
+  seed_offset: 71000000
+
+gates:
+  max_rhat: 1.05
+  min_bulk_ess: 200
+  theta_persistence_probability_floor: 0.70
+  theta_posterior_prior_sd_ratio_ceiling: 0.75
+  severe_delta_theta_correlation: 0.80

@@ -16,24 +16,26 @@ The heavy shared engine (samplers, dataprep, the shared Phillips-curve toolkit
 
 ## Output location (design is special)
 
-Unlike the other bundles, `design` produces a **formal compiled report**. Its
-LaTeX plumbing writes into `report/` and references `results/nine_cell_design/`
-by relative path, so its outputs stay at the shared `results/nine_cell_design/`
-location (via `run_nine_cell_design`'s default), **not** inside the bundle. Pass
-`--output-dir` to override. In this respect it behaves more like the production
-pipeline than a throwaway test.
+Unlike the other bundles, `design` produces a **formal compiled report**. The
+currently audited output is under `tests/design/results/`. Pass this path
+explicitly when reproducing it so the shared engine's default output location
+cannot change where the bundle is written.
 
 ## Run
 
 ```bash
-python experiments/design/run.py --quick   # smoke
-python experiments/design/run.py           # full
+python tests/design/run.py --test-run --output-dir tests/design/results --compile
+python tests/design/run.py --output-dir tests/design/results --compile
 ```
 
 ## Extra entry point
 
 ```bash
-python experiments/design/finalize.py --config ...   # follow-up modules
+python tests/design/finalize.py \
+  --config configs/nine_cell_design.yaml \
+  --baseline-dir tests/design/results \
+  --output-dir tests/design/results \
+  --test-run
 ```
 
 `reporting.py` and `followup.py` are this experiment's design-specific functions; the shared estimator is `nkpc_hsa.phillips.estimation.run_nine_cell_design`.

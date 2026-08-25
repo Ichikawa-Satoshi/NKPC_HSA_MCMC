@@ -1,0 +1,118 @@
+revision: hsa-nested-validation-v4-ar2-cycle
+
+samples:
+  start: 1974Q4
+  end: 2013Q4
+  complete_case_within_cell: true
+
+data:
+  prices:
+    ppi:
+      inflation: pi_ppi
+      inflation_lag: pi_ppi_prev
+      expectation: Epi_spf_gdp
+    core_cpi:
+      inflation: pi_cpi_core
+      inflation_lag: pi_cpi_core_prev
+      expectation: Epi_spf_gdp
+  activities:
+    negative_unemployment_gap: unemp_gap
+    inverse_markup: markup_BN_inv
+  annual_competition: N_Gustavo_annual_q4
+  quarterly_indicator: N_capitaliq_firmw
+  competition_transform: 10log_centered_fixed_measurement_mean
+  annual_observation_timing: q4_stock
+
+allocation:
+  stable_raw_weight_max: 3.0
+  covariance_scale: 0.25
+  observed_year_update: coherence_shrinkage
+  missing_year_mean: stable_profile_median
+  inflation_feedback: false
+
+state:
+  identity: exact
+  slow_law: random_walk
+  cycle_law: ar2_stochastic_cycle
+  omega_prior: [2.0, 8.0]
+  omega_mh_sd: 0.50
+  tau2_prior_shape: 3.0
+  tau2_scale_fraction: 0.15
+  cycle_damping_bounds: [0.25, 0.98]
+  cycle_damping_prior: [8.0, 2.0]
+  cycle_damping_initial: 0.80
+  cycle_damping_mh_sd: 0.50
+  cycle_period_bounds_quarters: [6.0, 20.0]
+  cycle_period_prior_mean: 12.0
+  cycle_period_prior_sd: 4.0
+  cycle_period_initial: 12.0
+  cycle_period_mh_sd: 0.90
+  treatment: joint_state_split
+
+inflation_error:
+  model: ar1
+  phi_prior_mean: 0.0
+  phi_prior_sd: 0.35
+  phi_bounds: [-0.98, 0.98]
+
+models:
+  primary: [ces, slow_slope, direct, free_static_combined]
+  benchmark:
+    - ces
+    - slow_slope
+    - direct
+    - free_static_combined
+  hsa_lambda_grid: [3.0, 6.0, 9.0]
+  legacy_bridge_lambda: 6.0
+  free_lambda_diagnostic: true
+  dynamic_confirmatory: false
+
+priors:
+  coefficient_scale: 0.20
+  intercept_scale: 2.0
+  kappa0_scale: 0.50
+  sigma_pi_scale: 0.75
+  unrestricted_signs: true
+
+sampling:
+  seed: 20260826
+  mock:
+    iterations: 800
+    warmup: 300
+    thin: 2
+    chains: 2
+  quick:
+    iterations: 3000
+    warmup: 1000
+    thin: 4
+    chains: 2
+  full:
+    iterations: 20000
+    warmup: 6000
+    thin: 7
+    chains: 4
+
+gates:
+  mock_max_rhat: 1.25
+  quick_max_rhat: 1.05
+  full_max_rhat: 1.01
+  min_bulk_ess: 400
+  min_tail_ess: 400
+  max_exact_identity_error: 1.0e-10
+
+diagnostic:
+  lambda_prior_mean: 0.0
+  lambda_prior_sd: 10.0
+
+restriction_equivalence:
+  rms_inflation_pp: 0.10
+  minimum_probability: 0.80
+
+predictive:
+  blocked_psis_loo: true
+  loo_block_quarters: 4
+  pareto_k_refit_threshold: 0.70
+  waic_secondary_only: true
+  annual_origin_first: 2003Q4
+  annual_origin_last: 2012Q4
+  horizon_quarters: 4

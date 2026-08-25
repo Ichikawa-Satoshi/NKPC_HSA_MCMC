@@ -1,0 +1,55 @@
+revision: hsa-theta-bridge-v1
+
+# The bridge deliberately holds these ingredients fixed across all four cells.
+data:
+  inflation: pi_ppi
+  inflation_lag: pi_ppi_prev
+  expectation: Epi_spf_gdp
+  activity: unemp_gap
+  competition: N_capitaliq_firmw
+  sample_start: 1974Q4
+
+allocation:
+  stable_raw_weight_max: 3.0
+  prior_covariance_scale: 0.25
+
+state_priors:
+  omega_a: 2.0
+  omega_b: 8.0
+  tau_shape: 3.0
+  tau_scale_fraction: 0.15
+  rho_mean: 0.75
+  rho_sd: 0.15
+  rho_lower: -0.90
+  rho_upper: 0.90
+
+coefficient_priors:
+  coefficient_scale: 0.20
+  lambda_fixed: 6.0
+  lambda_mean: 0.0
+  lambda_sd: 10.0
+  phi_mean: 0.0
+  phi_sd: 0.35
+
+sampling:
+  quick:
+    state_iterations: 3000
+    state_warmup: 1000
+    state_thin: 4
+    model_iterations: 2500
+    model_warmup: 800
+    model_thin: 2
+    chains: 2
+  full:
+    state_iterations: 20000
+    state_warmup: 6000
+    state_thin: 7
+    model_iterations: 16000
+    model_warmup: 5000
+    model_thin: 5
+    chains: 4
+  seed: 20260825
+
+gates:
+  max_rhat: 1.05
+

@@ -2298,4 +2298,338 @@ For mixed-frequency Cases 3 and 4, Q1--Q3 remain missing throughout the
 estimation. The quarterly latent competition path is inferred by the
 state-space smoother rather than constructed by deterministic interpolation.
 
+% ================================================================
+\section{Prior Distributions}
+% ================================================================
+
+The prior specification is weakly informative and is designed to regularize
+the state-space decomposition without imposing the theory-predicted signs of
+the HSA coefficients. Coefficient priors are defined on economically
+comparable contribution scales rather than on raw coefficient scales.
+
+For each empirical specification, define the robust scales
+
+\begin{equation}
+s_x=\frac{\operatorname{IQR}(x_t)}{1.349},
+\qquad
+s_N=\frac{\operatorname{IQR}(N_t^{\mathrm{obs}})}{1.349},
+\qquad
+s_\pi=\frac{\operatorname{IQR}(\pi_t)}{1.349}.
+\end{equation}
+
+For Case 4, additionally define
+
+\begin{equation}
+s_E
+=
+\frac{\operatorname{IQR}(g_t^E)}{1.349}.
+\end{equation}
+
+The scale $s_N$ is computed from the native observed competition series.
+For the Gustavo cases, the annual observed series is used to define $s_N$,
+rather than the interpolated quarterly series.
+
+% ------------------------------------------------
+\subsection{Inflation-Equation Coefficients}
+% ------------------------------------------------
+
+The expectation coefficient receives a separate prior because it is not
+naturally centered at zero:
+
+\begin{equation}
+\alpha
+\sim
+\mathcal N(0.9,0.2^2).
+\end{equation}
+
+The baseline Phillips-curve slope is given a somewhat wider prior,
+
+\begin{equation}
+\kappa_0 s_x
+\sim
+\mathcal N(0,0.5^2),
+\end{equation}
+
+while the competition-related coefficients receive symmetric shrinkage priors
+
+\begin{equation}
+\delta s_xs_N
+\sim
+\mathcal N(0,0.2^2),
+\qquad
+\theta_0s_N
+\sim
+\mathcal N(0,0.2^2),
+\qquad
+\gamma s_N^2
+\sim
+\mathcal N(0,0.2^2).
+\end{equation}
+
+Equivalently, on the raw coefficient scale,
+
+\begin{equation}
+\kappa_0
+\sim
+\mathcal N
+\left(
+0,\frac{0.5^2}{s_x^2}
+\right),
+\qquad
+\delta
+\sim
+\mathcal N
+\left(
+0,\frac{0.2^2}{s_x^2s_N^2}
+\right),
+\end{equation}
+
+\begin{equation}
+\theta_0
+\sim
+\mathcal N
+\left(
+0,\frac{0.2^2}{s_N^2}
+\right),
+\qquad
+\gamma
+\sim
+\mathcal N
+\left(
+0,\frac{0.2^2}{s_N^4}
+\right).
+\end{equation}
+
+These priors do not impose the HSA sign restrictions. In particular,
+$\delta$, $\theta_0$, and $\gamma$ are all allowed to take either sign.
+
+% ------------------------------------------------
+\subsection{Competition-State Persistence}
+% ------------------------------------------------
+
+The stationary competition component follows an AR(1), so its persistence
+parameter is restricted to the stationary region:
+
+\begin{equation}
+\rho_N
+\sim
+\mathcal N(0.5,0.25^2)
+\mathbf 1\{-1<\rho_N<1\}.
+\end{equation}
+
+This prior allows substantial uncertainty about persistence while avoiding
+excessive prior mass on nearly explosive quarterly state dynamics.
+
+% ------------------------------------------------
+\subsection{Establishment-Growth Loading}
+% ------------------------------------------------
+
+For Case 4, establishment growth enters the stationary competition transition
+through
+
+\begin{equation}
+\hat N_t
+=
+\rho_N\hat N_{t-1}
++
+\lambda_Eg_t^E
++
+\eta_t^{\hat N}.
+\end{equation}
+
+The prior is defined so that a one-standard-deviation establishment-growth
+movement has a prior effect of approximately $0.2$ standard deviations of the
+competition coordinate:
+
+\begin{equation}
+\frac{\lambda_Es_E}{s_N}
+\sim
+\mathcal N(0,0.2^2).
+\end{equation}
+
+Equivalently,
+
+\begin{equation}
+\lambda_E
+\sim
+\mathcal N
+\left(
+0,
+0.2^2\frac{s_N^2}{s_E^2}
+\right).
+\end{equation}
+
+% ------------------------------------------------
+\subsection{Innovation and Measurement Variances}
+% ------------------------------------------------
+
+Variance parameters use proper inverse-gamma priors in order to retain
+conjugate Gibbs updates. Throughout, the parameterization is
+
+\begin{equation}
+\sigma^2\sim\operatorname{IG}(a,b),
+\qquad
+E[\sigma^2]=\frac{b}{a-1}.
+\end{equation}
+
+The inflation disturbance variance is assigned
+
+\begin{equation}
+\sigma_\pi^2
+\sim
+\operatorname{IG}
+\left(
+3,\,
+2(0.75s_\pi)^2
+\right).
+\end{equation}
+
+Thus the prior mean of the inflation disturbance variance is
+
+\begin{equation}
+E[\sigma_\pi^2]
+=
+(0.75s_\pi)^2.
+\end{equation}
+
+The slow competition state receives substantially stronger innovation
+shrinkage than the stationary component:
+
+\begin{equation}
+\sigma_{\bar N}^2
+\sim
+\operatorname{IG}
+\left(
+3,\,
+2(0.05s_N)^2
+\right),
+\qquad
+\sigma_{\hat N}^2
+\sim
+\operatorname{IG}
+\left(
+3,\,
+2(0.20s_N)^2
+\right).
+\end{equation}
+
+Hence,
+
+\begin{equation}
+E[\sigma_{\bar N}^2]
+=
+(0.05s_N)^2,
+\qquad
+E[\sigma_{\hat N}^2]
+=
+(0.20s_N)^2.
+\end{equation}
+
+For Cases 1--3, the competition measurement-error variance is
+
+\begin{equation}
+\sigma_{\nu,N}^2
+\sim
+\operatorname{IG}
+\left(
+3,\,
+2(0.10s_N)^2
+\right).
+\end{equation}
+
+Case 4 has no prior for $\sigma_{\nu,N}^2$ because the observed Gustavo Q4
+values are treated as exact anchors:
+
+\begin{equation}
+N_t^{\mathrm{G,obs}}
+=
+\tilde N_t+\hat N_t,
+\qquad
+t\in\mathcal Q_4.
+\end{equation}
+
+% ------------------------------------------------
+\subsection{Initial States}
+% ------------------------------------------------
+
+The initial slow state receives a diffuse prior relative to the observed
+competition scale:
+
+\begin{equation}
+\tilde N_1
+\sim
+\mathcal N
+\left(
+0,(2s_N)^2
+\right).
+\end{equation}
+
+Conditional on $\rho_N$ and $\sigma_{\hat N}^2$, the initial stationary
+component is initialized from its stationary distribution:
+
+\begin{equation}
+\hat N_1
+\mid
+\rho_N,\sigma_{\hat N}^2
+\sim
+\mathcal N
+\left(
+0,
+\frac{\sigma_{\hat N}^2}{1-\rho_N^2}
+\right).
+\end{equation}
+
+% ------------------------------------------------
+\subsection{Prior Independence}
+% ------------------------------------------------
+
+Except for the stationary initial-state distribution, the baseline prior
+factorizes as
+
+\begin{equation}
+p(\boldsymbol{\Theta})
+=
+p(\alpha)
+p(\kappa_0)
+p(\delta)
+p(\theta_0)
+p(\gamma)
+p(\rho_N)
+p(\sigma_\pi^2)
+p(\sigma_{\bar N}^2)
+p(\sigma_{\hat N}^2)
+p(\sigma_{\nu,N}^2),
+\end{equation}
+
+with the additional factor $p(\lambda_E)$ in Case 4 and without
+$p(\sigma_{\nu,N}^2)$ in Case 4.
+
+% ------------------------------------------------
+\subsection{Prior Sensitivity}
+% ------------------------------------------------
+
+The baseline coefficient scale of $0.2$ is accompanied by two pre-declared
+sensitivity specifications:
+
+\begin{equation}
+0.1
+\qquad\text{and}\qquad
+0.4
+\end{equation}
+
+for the prior standard deviations of the HSA mechanism contributions
+$\delta s_xs_N$, $\theta_0s_N$, and $\gamma s_N^2$.
+
+The target standard deviations underlying the variance priors are similarly
+multiplied by
+
+\begin{equation}
+0.5
+\qquad\text{and}\qquad
+2.
+\end{equation}
+
+All prior specifications are fixed before model comparison and are kept
+identical across Models 0--4 within the same empirical case whenever the
+corresponding parameter is present.
 \end{document}

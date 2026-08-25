@@ -1,0 +1,11 @@
+\begin{table}[H]\centering\small
+\caption{Case 1: model comparison by WAIC (lower is better) and log marginal likelihood $\log m(y)$ (higher is better), with the posterior directional probabilities addressing RQ1--RQ4: $P(\delta>0)$, $P(\theta_0>0)$, $P(\gamma>0)$, and the joint HSA probability $P(\delta>0,\theta_0>0,\gamma>0)$. $\hat R$ is the largest structural-coefficient convergence statistic; $\dagger$ marks $\hat R>1.1$ (not fully converged).}
+\label{tab:case1_cmp}
+\begin{tabular}{lrrrrrrr}\toprule
+Model & $\hat R$ & WAIC & $\log m(y)$ & $P(\delta{>}0)$ & $P(\theta_0{>}0)$ & $P(\gamma{>}0)$ & $P(\text{joint})$ \\\midrule
+CES & 1.00 & 565.4 & -477.0 & -- & -- & -- & -- \\
+Slope & 1.00 & 565.9 & -477.2 & 0.598 & -- & -- & -- \\
+Direct & 1.00 & 565.7 & -476.5 & -- & 0.532 & -- & -- \\
+Dynamic & 1.01 & 565.7 & -765.7 & -- & 0.520 & 0.447 & -- \\
+Joint & 1.00 & 566.3 & -621.2 & 0.599 & 0.482 & 0.431 & 0.110 \\
+\bottomrule\end{tabular}\end{table}

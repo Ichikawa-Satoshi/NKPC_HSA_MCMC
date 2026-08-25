@@ -1,0 +1,53 @@
+revision: gustavo-state-capitaliq-cycle-core-cpi-qoq-v1
+
+price:
+  name: core_cpi
+  inflation: pi_core_cpi
+  inflation_lag: pi_core_cpi_lag1
+  expectation: expectation_cpi
+  expectation_source: Philadelphia_Fed_SPF_CPI3_headline_proxy
+  expectation_interpretation: one_quarter_ahead_headline_CPI_proxy_for_core_CPI
+
+models: [direct_only, free_combined, varying_theta, free_dynamic, hsa_restricted_dynamic]
+
+sampling:
+  static: {iterations: 2000, warmup: 600, thin: 2, chains: 4}
+  dynamic: {iterations: 5000, warmup: 1500, thin: 2, chains: 4}
+  static_recovery: {iterations: 1000, warmup: 350, thin: 2, chains: 2}
+  dynamic_recovery: {iterations: 1200, warmup: 400, thin: 2, chains: 2}
+  seed_offset: 271000000
+
+comparison:
+  holdout_start: 2010Q1
+
+static_recovery:
+  scenarios:
+    "null": [0.00, 0.00]
+    direct_observed: [0.00, 0.11]
+    slope_observed: [0.06, 0.00]
+    both_observed: [0.06, 0.11]
+    theta_moderate: [0.06, 0.20]
+    delta_moderate: [0.20, 0.11]
+    both_moderate: [0.20, 0.20]
+    both_large: [0.40, 0.40]
+  modes: [propagated_state, oracle_state]
+  replicates: 30
+
+dynamic_recovery:
+  scenarios:
+    theta_only: [0.11, 0.00]
+    gamma_small: [0.11, 0.05]
+    gamma_observed_scale: [0.11, 0.10]
+    gamma_moderate: [0.11, 0.20]
+    gamma_large: [0.11, 0.40]
+  modes: [propagated_state, oracle_state]
+  replicates: 30
+
+gates:
+  observed_max_rhat: 1.05
+  observed_min_bulk_ess: 400
+  recovery_max_rhat: 1.10
+  recovery_min_bulk_ess: 100
+  suggestive_sign_probability: 0.80
+  strong_sign_probability: 0.975
+  posterior_prior_sd_ratio: 0.75
